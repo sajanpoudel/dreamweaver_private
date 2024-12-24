@@ -1,30 +1,31 @@
-import "./globals.css";
-import { Inter } from "next/font/google";
-import { Providers } from "@/components/providers";
-import Navigation from "@/components/nav/Navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "./api/auth/[...nextauth]/route";
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import { Providers } from '@/components/providers';
+import { Navigation } from '@/components/nav/Navigation';
+import './globals.css';
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ['latin'] });
 
-export const metadata = {
-  title: "Dream Weaver",
-  description: "Capture and analyze your dreams with AI-powered insights",
+export const metadata: Metadata = {
+  title: 'Dream Weaver',
+  description: 'AI-powered dream journal and analysis',
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession(authOptions);
-
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <Providers>
-          {session && <Navigation />}
-          {children}
+          <div className="relative min-h-screen flex flex-col">
+            <Navigation />
+            <main className="flex-1">
+              {children}
+            </main>
+          </div>
         </Providers>
       </body>
     </html>

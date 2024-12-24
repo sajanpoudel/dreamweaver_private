@@ -1,8 +1,12 @@
-import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { prisma } from "@/lib/prisma";
-import DreamView from "@/components/dreams/DreamView";
+import { redirect } from 'next/navigation';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import prisma from '@/lib/prisma';
+import { DreamAnalysis } from '@/components/dreams/DreamAnalysis';
+import { DreamMetadata } from '@/components/dreams/DreamMetadata';
+import { ExtractMetadata } from '@/components/dreams/ExtractMetadata';
+import { Card } from '@/components/ui/card';
+import { formatDate } from '@/lib/utils';
 
 export default async function DreamPage({
   params,
@@ -10,43 +14,56 @@ export default async function DreamPage({
   params: { id: string };
 }) {
   const session = await getServerSession(authOptions);
-
-  if (!session?.user?.email) {
-    redirect("/auth/signin");
+  if (!session?.user?.id) {
+    redirect('/api/auth/signin');
   }
 
   const dream = await prisma.dream.findUnique({
     where: {
       id: params.id,
+      userId: session.user.id,
     },
     include: {
       symbols: true,
-      emotions: true,
       themes: true,
+      emotions: true,
     },
   });
 
   if (!dream) {
-    redirect("/dashboard");
+    redirect('/dashboard');
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-gray-900">
-              {dream.title || "Untitled Dream"}
-            </h1>
-          </div>
-        </div>
-      </header>
+  const hasMetadata = dream.symbols.length > 0 || dream.themes.length > 0 || dream.emotions.length > 0;
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <DreamView dream={dream} />
+  return (
+    <div className="container mx-auto py-8 max-w-4xl space-y-8">
+      <div className="space-y-4">
+        <h1 className="text-3xl font-bold">{dream.title}</h1>
+        <p className="text-sm text-gray-500">
+          Recorded on {formatDate(dream.createdAt)}
+        </p>
+      </div>
+
+      <Card className="p-6">
+        <p className="whitespace-pre-wrap">{dream.content}</p>
+      </Card>
+
+      {!hasMetadata && (
+        <div className="flex justify-end">
+          <ExtractMetadata dreamId={dream.id} />
         </div>
-      </main>
+      )}
+
+      {hasMetadata && (
+        <DreamMetadata
+          symbols={dream.symbols}
+          themes={dream.themes}
+          emotions={dream.emotions}
+        />
+      )}
+
+      <DreamAnalysis dreamId={dream.id} initialAnalysis={dream.analysis} />
     </div>
   );
 } 

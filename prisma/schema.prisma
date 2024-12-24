@@ -14,17 +14,19 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String          @id @default(cuid())
   name          String?
-  email         String    @unique
-  password      String
+  email         String          @unique
+  password      String?
   emailVerified DateTime?
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
   dreams        Dream[]
   accounts      Account[]
   sessions      Session[]
+  dreamPatterns DreamPattern[]
+  insights      UserInsight[]
 }
 
 model Account {
@@ -55,38 +57,94 @@ model Session {
 }
 
 model Dream {
-  id          String    @id @default(cuid())
-  title       String?
-  content     String    @db.Text
-  audioUrl    String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  symbols     Symbol[]
-  themes      Theme[]
-  emotions    Emotion[]
-  isPublic    Boolean   @default(false)
+  id            String            @id @default(cuid())
+  title         String?
+  content       String            @db.Text
+  analysis      String?           @db.Text
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  userId        String
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbols       Symbol[]
+  themes        Theme[]
+  emotions      Emotion[]
+  isPublic      Boolean           @default(false)
+  dreamPatterns DreamPattern[]
+  connections   DreamConnection[] @relation("SourceDream")
+  relatedTo     DreamConnection[] @relation("RelatedDream")
 }
 
 model Symbol {
-  id          String  @id @default(cuid())
-  name        String  @unique
-  description String  @db.Text
+  id          String         @id @default(cuid())
+  name        String         @unique
+  description String         @db.Text
   dreams      Dream[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  patterns    DreamPattern[]
 }
 
 model Theme {
-  id          String  @id @default(cuid())
-  name        String  @unique
-  description String? @db.Text
+  id          String         @id @default(cuid())
+  name        String         @unique
+  description String?        @db.Text
   dreams      Dream[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  patterns    DreamPattern[]
 }
 
 model Emotion {
-  id          String  @id @default(cuid())
-  name        String  @unique
-  intensity   Float   @default(0)
-  description String? @db.Text
+  id          String         @id @default(cuid())
+  name        String         @unique
+  intensity   Float          @default(0)
+  description String?        @db.Text
   dreams      Dream[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  patterns    DreamPattern[]
+}
+
+model DreamPattern {
+  id          String        @id @default(cuid())
+  name        String
+  description String        @db.Text
+  frequency   Int           @default(1)
+  confidence  Float         @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dreams      Dream[]
+  symbols     Symbol[]
+  themes      Theme[]
+  emotions    Emotion[]
+  insights    UserInsight[]
+}
+
+model DreamConnection {
+  id          String   @id @default(cuid())
+  dreamId     String
+  sourceDream Dream    @relation("SourceDream", fields: [dreamId], references: [id], onDelete: Cascade)
+  relatedId   String
+  relatedDream Dream   @relation("RelatedDream", fields: [relatedId], references: [id], onDelete: Cascade)
+  strength    Float    @default(0)
+  type        String   // e.g., "symbol", "theme", "emotion"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model UserInsight {
+  id             String         @id @default(cuid())
+  title          String
+  description    String         @db.Text
+  confidence     Float          @default(0)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patterns       DreamPattern[]
+  category       String         // e.g., "psychological", "emotional", "behavioral"
+  actionable     Boolean        @default(false)
+  recommendation String?        @db.Text
 }
