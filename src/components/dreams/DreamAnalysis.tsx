@@ -1,260 +1,325 @@
 'use client';
 
 import { useState } from 'react';
-import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Sparkles, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 
-interface DreamAnalysisProps {
-  dreamId: string;
-  initialAnalysis?: string | null;
+interface Symbol {
+  name: string;
+  meaning: string;
+}
+
+interface Emotion {
+  name: string;
+  intensity: number;
+}
+
+interface Pattern {
+  name: string;
+  description: string;
+  confidence: number;
+}
+
+interface Insight {
+  title: string;
+  description: string;
+  confidence: number;
+  category: string;
+  actionable: boolean;
+  recommendation?: string;
 }
 
 interface Analysis {
-  symbols: Array<{ name: string; meaning: string }>;
+  symbols: Symbol[];
   themes: string[];
-  emotions: Array<{ name: string; intensity: number }>;
-  patterns: Array<{ name: string; description: string; confidence: number }>;
-  insights: Array<{
-    title: string;
-    description: string;
-    confidence: number;
-    category: string;
-    actionable: boolean;
-    recommendation?: string;
-  }>;
+  emotions: Emotion[];
+  patterns: Pattern[];
+  insights: Insight[];
 }
 
-interface AnalysisResponse {
-  analysis: Analysis;
-  patterns: Array<{
-    name: string;
-    description: string;
-    confidence: number;
-    frequency: number;
-  }>;
-  insights: Array<{
-    title: string;
-    description: string;
-    confidence: number;
-    category: string;
-    actionable: boolean;
-    recommendation?: string;
-  }>;
-}
-
-function tryParseJSON(jsonString: string | null): Analysis | null {
-  if (!jsonString) return null;
-  try {
-    return JSON.parse(jsonString);
-  } catch (error) {
-    console.error('Failed to parse initial analysis:', error);
-    return null;
-  }
+interface DreamAnalysisProps {
+  dreamId: string;
+  initialAnalysis: string | null;
 }
 
 export function DreamAnalysis({ dreamId, initialAnalysis }: DreamAnalysisProps) {
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [analysis, setAnalysis] = useState<Analysis | null>(
-    tryParseJSON(initialAnalysis)
+    initialAnalysis ? JSON.parse(initialAnalysis) : null
   );
-  const [patterns, setPatterns] = useState<AnalysisResponse['patterns']>([]);
-  const [insights, setInsights] = useState<AnalysisResponse['insights']>([]);
-  const [error, setError] = useState<string | null>(null);
 
-  const analyzeDream = async () => {
+  const analyzeHandler = async () => {
     try {
-      setIsAnalyzing(true);
-      setError(null);
-
-      const response = await axios.post<AnalysisResponse>(`/api/dreams/analyze`, {
-        dreamId,
+      setIsLoading(true);
+      const response = await fetch(`/api/dreams/analyze?dreamId=${dreamId}`, {
+        method: 'POST',
       });
 
-      setAnalysis(response.data.analysis);
-      setPatterns(response.data.patterns);
-      setInsights(response.data.insights);
-    } catch (err) {
-      console.error('Error analyzing dream:', err);
-      setError('Failed to analyze dream. Please try again.');
+      if (!response.ok) {
+        throw new Error('Failed to analyze dream');
+      }
+
+      const data = await response.json();
+      console.log('Raw API response:', {
+        data,
+        type: typeof data.analysis,
+        content: data.analysis
+      });
+
+      if (!data.analysis) {
+        throw new Error('No analysis data received');
+      }
+
+      try {
+        let parsedAnalysis = JSON.parse(data.analysis) as Analysis;
+        console.log('Before processing:', parsedAnalysis);
+        
+        // Create a new object with default values
+        const processedAnalysis: Analysis = {
+          symbols: Array.isArray(parsedAnalysis.symbols) ? parsedAnalysis.symbols : [],
+          themes: Array.isArray(parsedAnalysis.themes) ? parsedAnalysis.themes : [],
+          emotions: Array.isArray(parsedAnalysis.emotions) ? 
+            parsedAnalysis.emotions.map(emotion => ({
+              name: emotion.name || '',
+              intensity: typeof emotion.intensity === 'number' ? emotion.intensity : 5
+            })) : [],
+          patterns: Array.isArray(parsedAnalysis.patterns) ? parsedAnalysis.patterns : [],
+          insights: Array.isArray(parsedAnalysis.insights) ? parsedAnalysis.insights : []
+        };
+
+        console.log('After processing:', processedAnalysis);
+        setAnalysis(processedAnalysis);
+        toast.success('Dream analyzed successfully');
+      } catch (parseError) {
+        console.error('Analysis parsing error:', {
+          error: parseError,
+          rawAnalysis: data.analysis
+        });
+        toast.error('Invalid analysis data received');
+      }
+    } catch (error) {
+      console.error('Error analyzing dream:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to analyze dream');
     } finally {
-      setIsAnalyzing(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <Card className="p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-semibold">Dream Analysis</h3>
-          <Button
-            onClick={analyzeDream}
-            disabled={isAnalyzing}
-            className="flex items-center gap-2"
-          >
-            {isAnalyzing && <Loader2 className="h-4 w-4 animate-spin" />}
-            {isAnalyzing ? 'Analyzing...' : 'Analyze Dream'}
-          </Button>
-        </div>
-
-        {error && (
-          <p className="text-sm text-red-500 mb-4">{error}</p>
-        )}
-
-        {analysis ? (
-          <div className="space-y-6">
+    <div className="relative">
+      <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 rounded-2xl blur-3xl"></div>
+      <Card className="relative backdrop-blur-lg bg-white/5 rounded-2xl shadow-[0_0_15px_rgba(168,85,247,0.15)] border border-purple-500/20 overflow-hidden">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
             <div>
-              <h4 className="font-medium mb-2">Symbols</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {analysis.symbols.map((symbol, index) => (
-                  <div key={index} className="p-3 bg-muted rounded-lg">
-                    <p className="font-medium">{symbol.name}</p>
-                    <p className="text-sm text-muted-foreground">{symbol.meaning}</p>
-                  </div>
-                ))}
-              </div>
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 text-transparent bg-clip-text">
+                Dream Analysis
+              </h2>
+              <p className="text-purple-200/80 text-sm">
+                Uncover the deeper meaning of your dream
+              </p>
             </div>
+            {!analysis && (
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="relative group"
+              >
+                <div className="absolute -inset-1 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-200"></div>
+                <Button
+                  onClick={analyzeHandler}
+                  disabled={isLoading}
+                  className="relative bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white border-0 flex items-center gap-2 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 transition-all duration-200"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" />
+                      Analyze Dream
+                    </>
+                  )}
+                </Button>
+              </motion.div>
+            )}
+          </div>
 
-            <div>
-              <h4 className="font-medium mb-2">Themes</h4>
-              <div className="flex flex-wrap gap-2">
-                {analysis.themes.map((theme, index) => (
-                  <span
-                    key={index}
-                    className="px-2 py-1 bg-primary/10 text-primary rounded-full text-sm"
+          <AnimatePresence mode="wait">
+            {analysis ? (
+              <motion.div
+                key="analysis"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="relative space-y-8"
+              >
+                <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full filter blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 w-64 h-64 bg-pink-500/10 rounded-full filter blur-3xl"></div>
+                
+                {/* Symbols Section */}
+                <div className="relative">
+                  <h3 className="text-lg font-semibold text-purple-200 mb-4">Symbols</h3>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {analysis.symbols.map((symbol: Symbol, index: number) => (
+                      <motion.div
+                        key={symbol.name}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="relative group"
+                      >
+                        <div className="absolute inset-0 bg-purple-500/5 rounded-xl blur-sm"></div>
+                        <div className="relative p-4 rounded-xl border border-purple-500/20 backdrop-blur-sm">
+                          <h4 className="font-medium text-purple-200 mb-2">{symbol.name}</h4>
+                          <p className="text-sm text-purple-200/80">{symbol.meaning}</p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Themes Section */}
+                <div className="relative">
+                  <h3 className="text-lg font-semibold text-purple-200 mb-4">Themes</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {analysis.themes.map((theme: string, index: number) => (
+                      <motion.span
+                        key={theme}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="px-3 py-1.5 rounded-full bg-indigo-500/20 text-indigo-200 border border-indigo-500/20 text-sm"
+                      >
+                        {theme}
+                      </motion.span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Emotions Section */}
+                <div className="relative">
+                  <h3 className="text-lg font-semibold text-purple-200 mb-4">Emotions</h3>
+                  <div className="space-y-4">
+                    {analysis.emotions.map((emotion: Emotion, index: number) => (
+                      <motion.div
+                        key={emotion.name}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="relative"
+                      >
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-purple-200">{emotion.name}</span>
+                          <span className="text-sm text-purple-200/80">
+                            Intensity: {emotion.intensity}/10
+                          </span>
+                        </div>
+                        <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(emotion.intensity / 10) * 100}%` }}
+                            transition={{ delay: index * 0.1 + 0.3, duration: 0.5 }}
+                            className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
+                          />
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Insights Section */}
+                <div className="relative">
+                  <h3 className="text-lg font-semibold text-purple-200 mb-4">Insights</h3>
+                  <div className="space-y-4">
+                    {analysis.insights.map((insight: Insight, index: number) => (
+                      <motion.div
+                        key={insight.title}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="relative group"
+                      >
+                        <div className="absolute inset-0 bg-purple-500/5 rounded-xl blur-sm"></div>
+                        <div className="relative p-4 rounded-xl border border-purple-500/20 backdrop-blur-sm">
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-medium text-purple-200">{insight.title}</h4>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs px-2 py-1 rounded-full bg-purple-500/20 text-purple-200 border border-purple-500/20">
+                                {insight.category}
+                              </span>
+                              <span className="text-xs text-purple-200/80">
+                                {(insight.confidence * 100).toFixed(0)}%
+                              </span>
+                            </div>
+                          </div>
+                          <p className="text-sm text-purple-200/80 mb-3">{insight.description}</p>
+                          {insight.actionable && insight.recommendation && (
+                            <div className="mt-2 p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                              <p className="text-sm text-purple-200/90">{insight.recommendation}</p>
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="mt-8 flex justify-end"
+                >
+                  <Button
+                    onClick={analyzeHandler}
+                    disabled={isLoading}
+                    variant="ghost"
+                    className="text-purple-200/80 hover:text-purple-200 hover:bg-purple-500/10 flex items-center gap-2"
                   >
-                    {theme}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h4 className="font-medium mb-2">Emotions</h4>
-              <div className="space-y-2">
-                {analysis.emotions.map((emotion, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <span className="min-w-[100px]">{emotion.name}</span>
-                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-primary"
-                        style={{ width: `${emotion.intensity * 10}%` }}
-                      />
-                    </div>
-                    <span className="text-sm text-muted-foreground">
-                      {emotion.intensity}/10
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h4 className="font-medium mb-2">Patterns</h4>
-              <div className="space-y-4">
-                {analysis.patterns.map((pattern, index) => (
-                  <div key={index} className="p-4 bg-muted rounded-lg">
-                    <div className="flex justify-between items-start mb-2">
-                      <h5 className="font-medium">{pattern.name}</h5>
-                      <span className="text-sm text-muted-foreground">
-                        Confidence: {Math.round(pattern.confidence * 100)}%
-                      </span>
-                    </div>
-                    <p className="text-sm">{pattern.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h4 className="font-medium mb-2">Psychological Insights</h4>
-              <div className="space-y-4">
-                {analysis.insights.map((insight, index) => (
-                  <div key={index} className="p-4 bg-muted rounded-lg">
-                    <div className="flex justify-between items-start mb-2">
-                      <h5 className="font-medium">{insight.title}</h5>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm px-2 py-1 bg-primary/10 rounded-full">
-                          {insight.category}
-                        </span>
-                        <span className="text-sm text-muted-foreground">
-                          {Math.round(insight.confidence * 100)}%
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-sm mb-2">{insight.description}</p>
-                    {insight.actionable && insight.recommendation && (
-                      <div className="mt-2 p-2 bg-background rounded border">
-                        <p className="text-sm font-medium">Recommendation:</p>
-                        <p className="text-sm">{insight.recommendation}</p>
-                      </div>
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Reanalyzing...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4" />
+                        Reanalyze
+                      </>
                     )}
+                  </Button>
+                </motion.div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="placeholder"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-center py-12"
+              >
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-[1px]">
+                  <div className="w-full h-full rounded-full bg-white/5 backdrop-blur-sm flex items-center justify-center">
+                    <Sparkles className="h-8 w-8 text-purple-200" />
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <p className="text-gray-500 italic">
-            Click the analyze button to get insights about your dream.
-          </p>
-        )}
+                </div>
+                <p className="text-lg text-purple-200 mb-2">
+                  Ready to explore your dream?
+                </p>
+                <p className="text-sm text-purple-200/70">
+                  Click the analyze button to uncover hidden meanings and patterns
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </Card>
-
-      {patterns.length > 0 && (
-        <Card className="p-6">
-          <h3 className="text-xl font-semibold mb-4">Your Dream Patterns</h3>
-          <div className="space-y-4">
-            {patterns.map((pattern, index) => (
-              <div key={index} className="p-4 bg-muted rounded-lg">
-                <div className="flex justify-between items-start mb-2">
-                  <h5 className="font-medium">{pattern.name}</h5>
-                  <div className="text-sm text-muted-foreground">
-                    <span className="mr-2">
-                      Frequency: {pattern.frequency}
-                    </span>
-                    <span>
-                      Confidence: {Math.round(pattern.confidence * 100)}%
-                    </span>
-                  </div>
-                </div>
-                <p className="text-sm">{pattern.description}</p>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {insights.length > 0 && (
-        <Card className="p-6">
-          <h3 className="text-xl font-semibold mb-4">Personal Insights</h3>
-          <div className="space-y-4">
-            {insights.map((insight, index) => (
-              <div key={index} className="p-4 bg-muted rounded-lg">
-                <div className="flex justify-between items-start mb-2">
-                  <h5 className="font-medium">{insight.title}</h5>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm px-2 py-1 bg-primary/10 rounded-full">
-                      {insight.category}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      {Math.round(insight.confidence * 100)}%
-                    </span>
-                  </div>
-                </div>
-                <p className="text-sm mb-2">{insight.description}</p>
-                {insight.actionable && insight.recommendation && (
-                  <div className="mt-2 p-2 bg-background rounded border">
-                    <p className="text-sm font-medium">Recommendation:</p>
-                    <p className="text-sm">{insight.recommendation}</p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
     </div>
   );
 } 

@@ -1,127 +1,101 @@
-import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import prisma from "@/lib/prisma";
-import { DreamStats } from "@/components/dreams/DreamStats";
-import { DreamList } from "@/components/dreams/DreamList";
-import { NewDreamButton } from "@/components/dreams/NewDreamButton";
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../api/auth/[...nextauth]/auth';
+import { redirect } from 'next/navigation';
+import { prisma, withConnection } from '@/lib/db';
+import { DashboardContent } from '../../components/dashboard/DashboardContent';
+import React from 'react';
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
-    redirect("/api/auth/signin");
+    redirect('/auth/signin');
   }
 
-  const [
-    dreams,
-    totalDreams,
-    symbolCounts,
-    themeCounts,
-    emotionCounts,
-  ] = await Promise.all([
-    // Get recent dreams
-    prisma.dream.findMany({
-      where: { userId: session.user.id },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        symbols: true,
-        themes: true,
-        emotions: true,
-      },
-      take: 10,
-    }),
+  try {
+    const userId = session.user.id;
 
-    // Get total dreams
-    prisma.dream.count({
-      where: { userId: session.user.id },
-    }),
+    // Get stats using the connection manager
+    const stats = await withConnection(async (client) => {
+      const result = await client.query(`
+        SELECT 
+          (SELECT COUNT(*) FROM "Dream" WHERE "userId" = $1) as "totalDreams",
+          (SELECT json_agg(t) FROM (
+            SELECT s."name", COUNT(*) as count 
+            FROM "Symbol" s 
+            JOIN "_DreamToSymbol" ds ON s.id = ds."B" 
+            JOIN "Dream" d ON d.id = ds."A" 
+            WHERE d."userId" = $1
+            GROUP BY s."name" 
+            ORDER BY count DESC 
+            LIMIT 5
+          ) t) as "topSymbols",
+          (SELECT json_agg(t) FROM (
+            SELECT t."name", COUNT(*) as count 
+            FROM "Theme" t 
+            JOIN "_DreamToTheme" dt ON t.id = dt."B" 
+            JOIN "Dream" d ON d.id = dt."A" 
+            WHERE d."userId" = $1
+            GROUP BY t."name" 
+            ORDER BY count DESC 
+            LIMIT 5
+          ) t) as "topThemes",
+          (SELECT json_agg(t) FROM (
+            SELECT e."name", COUNT(*) as count 
+            FROM "Emotion" e 
+            JOIN "_DreamToEmotion" de ON e.id = de."B" 
+            JOIN "Dream" d ON d.id = de."A" 
+            WHERE d."userId" = $1
+            GROUP BY e."name" 
+            ORDER BY count DESC 
+            LIMIT 5
+          ) t) as "topEmotions"
+      `, [userId]);
+      return result.rows[0];
+    });
 
-    // Get symbol counts
-    prisma.symbol.findMany({
+    // Use Prisma for dreams query
+    const dreams = await prisma.dream.findMany({
+      where: { userId },
       select: {
-        name: true,
-        _count: {
-          select: { dreams: true },
+        id: true,
+        title: true,
+        content: true,
+        createdAt: true,
+        symbols: {
+          select: {
+            id: true,
+            name: true,
+          }
         },
-      },
-      where: {
-        dreams: {
-          some: { userId: session.user.id },
+        themes: {
+          select: {
+            id: true,
+            name: true,
+          }
         },
+        emotions: {
+          select: {
+            id: true,
+            name: true,
+            intensity: true,
+          }
+        }
       },
-      orderBy: {
-        dreams: { _count: 'desc' },
-      },
-      take: 5,
-    }),
-
-    // Get theme counts
-    prisma.theme.findMany({
-      select: {
-        name: true,
-        _count: {
-          select: { dreams: true },
-        },
-      },
-      where: {
-        dreams: {
-          some: { userId: session.user.id },
-        },
-      },
-      orderBy: {
-        dreams: { _count: 'desc' },
-      },
-      take: 5,
-    }),
-
-    // Get emotion counts
-    prisma.emotion.findMany({
-      select: {
-        name: true,
-        _count: {
-          select: { dreams: true },
-        },
-      },
-      where: {
-        dreams: {
-          some: { userId: session.user.id },
-        },
-      },
-      orderBy: {
-        dreams: { _count: 'desc' },
-      },
-      take: 5,
-    }),
-  ]);
-
-  return (
-    <div className="container mx-auto py-8 max-w-7xl space-y-8">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Dream Journal</h1>
-        <NewDreamButton />
-      </div>
-
-      <DreamStats
-        totalDreams={totalDreams}
-        topSymbols={symbolCounts.map((s) => ({
-          name: s.name,
-          count: s._count.dreams,
-        }))}
-        topThemes={themeCounts.map((t) => ({
-          name: t.name,
-          count: t._count.dreams,
-        }))}
-        topEmotions={emotionCounts.map((e) => ({
-          name: e.name,
-          count: e._count.dreams,
-        }))}
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    return (
+      <DashboardContent
+        dreams={dreams}
+        totalDreams={Number(stats.totalDreams)}
+        topSymbols={stats.topSymbols || []}
+        topThemes={stats.topThemes || []}
+        topEmotions={stats.topEmotions || []}
       />
-
-      <div className="space-y-4">
-        <h2 className="text-2xl font-semibold">Recent Dreams</h2>
-        <DreamList dreams={dreams} />
-      </div>
-    </div>
-  );
+    );
+  } catch (error) {
+    console.error('Dashboard error:', error);
+    throw error;
+  }
 } 

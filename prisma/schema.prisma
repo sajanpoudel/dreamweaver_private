@@ -148,3 +148,11 @@ model UserInsight {
   actionable     Boolean        @default(false)
   recommendation String?        @db.Text
 }
+
+model DashboardStats {
+  id         String   @id @default("singleton")
+  topSymbols Json
+  topThemes  Json
+  topEmotions Json
+  updatedAt  DateTime @updatedAt
+}

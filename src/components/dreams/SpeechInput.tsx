@@ -1,8 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Mic, MicOff, Loader2 } from 'lucide-react';
+declare global {
+  interface Window {
+    webkitSpeechRecognition: any;
+  }
+}
+
+import { useState, useCallback } from 'react';
+import { Button } from '../ui/button';
+import { Mic, MicOff } from 'lucide-react';
+import { toast } from 'sonner';
+import React from 'react';
 
 interface SpeechInputProps {
   onTranscript: (text: string) => void;
@@ -10,63 +18,70 @@ interface SpeechInputProps {
 
 export function SpeechInput({ onTranscript }: SpeechInputProps) {
   const [isListening, setIsListening] = useState(false);
-  const [isSupported, setIsSupported] = useState(true);
+  const [recognition, setRecognition] = useState<any>(null);
 
-  useEffect(() => {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      setIsSupported(false);
+  const startListening = useCallback(() => {
+    try {
+      if (!('webkitSpeechRecognition' in window)) {
+        toast.error('Speech recognition is not supported in your browser');
+        return;
+      }
+
+      const recognition = new window.webkitSpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        toast.success('Listening...');
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = Array.from(event.results)
+          .map((result: any) => result[0].transcript)
+          .join(' ');
+        onTranscript(transcript);
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        toast.error('Failed to recognize speech');
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      setRecognition(recognition);
+      recognition.start();
+    } catch (error) {
+      console.error('Error starting speech recognition:', error);
+      toast.error('Failed to start speech recognition');
+      setIsListening(false);
     }
-  }, []);
+  }, [onTranscript]);
 
-  const startListening = () => {
-    const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
-    const recognition = new SpeechRecognition();
-
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    recognition.onstart = () => {
-      setIsListening(true);
-    };
-
-    recognition.onresult = (event) => {
-      const transcript = Array.from(event.results)
-        .map(result => result[0].transcript)
-        .join(' ');
-      onTranscript(transcript);
-    };
-
-    recognition.onerror = (event) => {
-      console.error('Speech recognition error:', event.error);
+  const stopListening = useCallback(() => {
+    if (recognition) {
+      recognition.stop();
       setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
-    recognition.start();
-  };
-
-  if (!isSupported) {
-    return null;
-  }
+      toast.success('Stopped listening');
+    }
+  }, [recognition]);
 
   return (
     <Button
       type="button"
-      variant="outline"
+      variant="ghost"
       size="icon"
-      onClick={startListening}
-      disabled={isListening}
-      title={isListening ? 'Recording...' : 'Click to record your dream'}
-      className="h-10 w-10"
+      onClick={isListening ? stopListening : startListening}
+      className="text-purple-200/80 hover:text-purple-200 hover:bg-purple-500/10"
     >
       {isListening ? (
-        <Loader2 className="h-4 w-4 animate-spin text-red-500" />
+        <MicOff className="h-5 w-5 text-pink-500" />
       ) : (
-        <Mic className="h-4 w-4" />
+        <Mic className="h-5 w-5" />
       )}
     </Button>
   );

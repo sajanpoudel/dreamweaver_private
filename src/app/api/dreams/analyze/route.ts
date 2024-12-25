@@ -1,54 +1,35 @@
-import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../auth/[...nextauth]/route';
-import { OpenAI } from 'openai';
-import { PrismaClient } from '@prisma/client';
+import { authOptions } from '../../auth/[...nextauth]/auth';
+import { prisma } from '../../../../lib/prisma';
+import { NextResponse } from 'next/server';
+import { analyzeDreamWithContext } from '@/lib/dream-analysis';
 
-// Initialize Prisma client
-const prisma = new PrismaClient();
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-interface AnalysisResult {
-  symbols: Array<{ name: string; meaning: string }>;
-  themes: string[];
-  emotions: Array<{ name: string; intensity: number }>;
-  patterns: Array<{ name: string; description: string; confidence: number }>;
-  insights: Array<{
-    title: string;
-    description: string;
-    confidence: number;
-    category: string;
-    actionable: boolean;
-    recommendation?: string;
-  }>;
-}
-
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { dreamId } = await req.json();
+    const { searchParams } = new URL(request.url);
+    const dreamId = searchParams.get('dreamId');
+
     if (!dreamId) {
       return NextResponse.json({ error: 'Dream ID is required' }, { status: 400 });
     }
 
-    // First, verify the dream exists and belongs to the user
+    console.log('Received analysis request for dream:', dreamId);
+
     const dream = await prisma.dream.findFirst({
-      where: { 
-        AND: [
-          { id: dreamId },
-          { userId: session.user.id }
-        ]
+      where: {
+        id: dreamId,
+        userId: session.user.id,
       },
-      select: { 
-        id: true,
-        content: true 
+      include: {
+        symbols: true,
+        themes: true,
+        emotions: true,
       },
     });
 
@@ -56,190 +37,82 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Dream not found' }, { status: 404 });
     }
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [
-        {
-          role: "system",
-          content: "You are an expert dream analyst and psychological advisor. Analyze dreams in the context of psychological principles and provide detailed insights."
-        },
-        {
-          role: "user",
-          content: `Analyze this dream and provide insights about its potential meaning, symbols, themes, and psychological implications:
+    console.log('Found dream:', { id: dream.id, userId: dream.userId });
 
-${dream.content}
+    const analysis = await analyzeDreamWithContext(dream, session.user.id);
+    console.log('Analysis completed successfully');
 
-Return the analysis in the following JSON format exactly:
-{
-  "symbols": [{"name": "symbol name", "meaning": "contextual meaning"}],
-  "themes": ["theme1", "theme2"],
-  "emotions": [{"name": "emotion name", "intensity": number}],
-  "patterns": [{"name": "pattern name", "description": "pattern description", "confidence": number}],
-  "insights": [{
-    "title": "insight title",
-    "description": "detailed insight",
-    "confidence": number,
-    "category": "psychological/emotional/behavioral",
-    "actionable": boolean,
-    "recommendation": "action item if applicable"
-  }]
-}`
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 2000,
+    await prisma.dreamAnalysis.create({
+      data: {
+        dreamId,
+        analysis: JSON.stringify(analysis)
+      }
     });
 
-    if (!response.choices[0]?.message?.content) {
-      throw new Error('Invalid response from OpenAI');
-    }
+    await updateDashboardStats(analysis);
 
-    const analysis: AnalysisResult = JSON.parse(response.choices[0].message.content);
-
-    // Create or update symbols
-    const symbols = await Promise.all(
-      analysis.symbols.map(async symbol => {
-        try {
-          return await prisma.symbol.upsert({
-            where: { name: symbol.name },
-            update: { description: symbol.meaning },
-            create: {
-              name: symbol.name,
-              description: symbol.meaning,
-            },
-          });
-        } catch (error) {
-          console.error('Error upserting symbol:', error);
-          return null;
-        }
-      })
-    ).then(results => results.filter(Boolean));
-
-    // Create or update themes
-    const themes = await Promise.all(
-      analysis.themes.map(async theme => {
-        try {
-          return await prisma.theme.upsert({
-            where: { name: theme },
-            update: {},
-            create: {
-              name: theme,
-              description: null,
-            },
-          });
-        } catch (error) {
-          console.error('Error upserting theme:', error);
-          return null;
-        }
-      })
-    ).then(results => results.filter(Boolean));
-
-    // Create or update emotions
-    const emotions = await Promise.all(
-      analysis.emotions.map(async emotion => {
-        try {
-          return await prisma.emotion.upsert({
-            where: { name: emotion.name },
-            update: { intensity: emotion.intensity },
-            create: {
-              name: emotion.name,
-              intensity: emotion.intensity,
-            },
-          });
-        } catch (error) {
-          console.error('Error upserting emotion:', error);
-          return null;
-        }
-      })
-    ).then(results => results.filter(Boolean));
-
-    // Create patterns one by one to ensure proper creation
-    const patterns = [];
-    for (const pattern of analysis.patterns) {
-      try {
-        const createdPattern = await prisma.dreamPattern.create({
-          data: {
-            name: pattern.name,
-            description: pattern.description,
-            confidence: pattern.confidence,
-            frequency: 1,
-            userId: session.user.id,
-            dreams: {
-              connect: { id: dream.id }
-            },
-            symbols: {
-              connect: symbols.map(symbol => ({ id: symbol.id }))
-            },
-            themes: {
-              connect: themes.map(theme => ({ id: theme.id }))
-            },
-            emotions: {
-              connect: emotions.map(emotion => ({ id: emotion.id }))
-            }
-          },
-        });
-        patterns.push(createdPattern);
-      } catch (error) {
-        console.error('Error creating pattern:', error);
-      }
-    }
-
-    // Create insights one by one to ensure proper creation
-    const insights = [];
-    for (const insight of analysis.insights) {
-      try {
-        const createdInsight = await prisma.userInsight.create({
-          data: {
-            title: insight.title,
-            description: insight.description,
-            confidence: insight.confidence,
-            category: insight.category,
-            actionable: insight.actionable,
-            recommendation: insight.recommendation,
-            userId: session.user.id,
-            patterns: {
-              connect: patterns.map(pattern => ({ id: pattern.id }))
-            }
-          },
-        });
-        insights.push(createdInsight);
-      } catch (error) {
-        console.error('Error creating insight:', error);
-      }
-    }
-
-    // Update the dream with the analysis results
-    try {
-      await prisma.dream.update({
-        where: { id: dream.id },
-        data: {
-          analysis: JSON.stringify(analysis),
-          symbols: {
-            connect: symbols.map(symbol => ({ id: symbol.id }))
-          },
-          themes: {
-            connect: themes.map(theme => ({ id: theme.id }))
-          },
-          emotions: {
-            connect: emotions.map(emotion => ({ id: emotion.id }))
-          }
-        },
-      });
-    } catch (error) {
-      console.error('Error updating dream with analysis:', error);
-    }
-
-    return NextResponse.json({
-      success: true,
-      analysis,
-      patterns,
-      insights,
+    const updatedDream = await prisma.dream.update({
+      where: { id: dreamId },
+      data: { analysis },
+      include: {
+        symbols: true,
+        themes: true,
+        emotions: true,
+      },
     });
+
+    return NextResponse.json(updatedDream);
   } catch (error) {
-    console.error('Error analyzing dream:', error);
+    console.error('Error in analyze route:', error);
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: `Analysis failed: ${error.message}` },
+        { status: 500 }
+      );
+    }
     return NextResponse.json(
-      { error: 'Failed to analyze dream' },
+      { error: 'An unexpected error occurred' },
       { status: 500 }
     );
   }
+}
+
+async function updateDashboardStats(analysis: any) {
+  const stats = await prisma.dashboardStats.findFirst() || { topSymbols: [], topThemes: [], topEmotions: [] };
+
+  const updatedSymbols = updateTopItems(stats.topSymbols, analysis.symbols.map((s: Symbol) => s.name));
+
+  const updatedThemes = updateTopItems(stats.topThemes, analysis.themes);
+
+  const updatedEmotions = updateTopItems(stats.topEmotions, analysis.emotions.map((e: Emotion) => e.name));
+
+  await prisma.dashboardStats.upsert({
+    where: { id: stats.id || 'singleton' },
+    create: {
+      id: 'singleton',
+      topSymbols: updatedSymbols,
+      topThemes: updatedThemes,
+      topEmotions: updatedEmotions
+    },
+    update: {
+      topSymbols: updatedSymbols,
+      topThemes: updatedThemes,
+      topEmotions: updatedEmotions
+    }
+  });
+}
+
+function updateTopItems(existing: TopItem[], newItems: string[]): TopItem[] {
+  const counts = new Map<string, number>();
+  
+  existing.forEach(item => counts.set(item.name, item.count));
+  
+  newItems.forEach(name => {
+    counts.set(name, (counts.get(name) || 0) + 1);
+  });
+  
+  return Array.from(counts.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
 } 

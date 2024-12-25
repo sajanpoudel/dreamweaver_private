@@ -1,56 +1,49 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
-import { SpeechInput } from './SpeechInput';
-
-const dreamSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  content: z.string().min(1, 'Dream content is required'),
-  isPublic: z.boolean().default(false),
-});
-
-type DreamFormData = z.infer<typeof dreamSchema>;
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
+import { Switch } from '../ui/switch';
+import { Label } from '../ui/label';
+import { SpeechInput } from '../dreams/SpeechInput';
+import { toast } from 'sonner'
+import { motion } from 'framer-motion';
+import React from 'react';
 
 export function NewDreamForm() {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    formState: { errors, isSubmitting },
-  } = useForm<DreamFormData>({
-    resolver: zodResolver(dreamSchema),
-    defaultValues: {
-      isPublic: false,
-    },
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    content: '',
+    isPublic: false,
   });
 
-  const content = watch('content');
+  const handleSpeechInput = useCallback((text: string) => {
+    setFormData(prev => ({
+      ...prev,
+      content: (prev.content + ' ' + text).trim(),
+    }));
+  }, []);
 
-  const handleTranscript = (text: string) => {
-    const newContent = content ? `${content} ${text}` : text;
-    setValue('content', newContent, { shouldValidate: true });
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const onSubmit = async (data: DreamFormData) => {
+    if (!formData.title || !formData.content) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
     try {
-      setError(null);
+      setIsLoading(true);
       const response = await fetch('/api/dreams', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
@@ -58,84 +51,103 @@ export function NewDreamForm() {
       }
 
       const dream = await response.json();
+      toast.success('Dream recorded successfully');
       router.push(`/dreams/${dream.id}`);
-    } catch (err) {
-      console.error('Error creating dream:', err);
-      setError('Failed to create dream. Please try again.');
+    } catch (error) {
+      console.error('Error creating dream:', error);
+      toast.error('Failed to record dream');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <Card className="p-6">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="space-y-2">
-          <label
-            htmlFor="title"
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-          >
-            Title
-          </label>
-          <input
-            {...register('title')}
-            type="text"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            placeholder="Give your dream a title"
-          />
-          {errors.title && (
-            <p className="text-sm text-red-500">{errors.title.message}</p>
-          )}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="relative"
+    >
+      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-2xl blur-3xl"></div>
+      <div className="relative backdrop-blur-lg bg-white/5 rounded-2xl p-8 shadow-[0_0_15px_rgba(168,85,247,0.15)] border border-purple-500/20">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 text-transparent bg-clip-text mb-2">
+            Record Your Dream
+          </h1>
+          <p className="text-purple-200/80">
+            Capture the essence of your dreams and unlock their hidden meanings
+          </p>
         </div>
 
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <label
-              htmlFor="content"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              Dream Description
-            </label>
-            <SpeechInput onTranscript={handleTranscript} />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="title" className="text-purple-200">
+              Dream Title
+            </Label>
+            <Input
+              id="title"
+              value={formData.title}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, title: e.target.value }))
+              }
+              placeholder="Give your dream a title"
+              className="bg-white/5 border-purple-500/20 text-purple-100 placeholder:text-purple-200/50"
+              required
+            />
           </div>
-          <textarea
-            {...register('content')}
-            rows={10}
-            className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            placeholder="Describe your dream in detail... You can also use the microphone button to record your dream"
-          />
-          {errors.content && (
-            <p className="text-sm text-red-500">{errors.content.message}</p>
-          )}
-        </div>
 
-        <div className="flex items-center space-x-2">
-          <input
-            {...register('isPublic')}
-            type="checkbox"
-            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-          />
-          <label
-            htmlFor="isPublic"
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-          >
-            Make this dream public
-          </label>
-        </div>
+          <div className="space-y-2">
+            <Label htmlFor="content" className="text-purple-200">
+              Dream Description
+            </Label>
+            <div className="relative">
+              <Textarea
+                id="content"
+                value={formData.content}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, content: e.target.value }))
+                }
+                placeholder="Describe your dream in detail..."
+                className="min-h-[200px] bg-white/5 border-purple-500/20 text-purple-100 placeholder:text-purple-200/50"
+                required
+              />
+              <div className="absolute bottom-4 right-4">
+                <SpeechInput onTranscript={handleSpeechInput} />
+              </div>
+            </div>
+          </div>
 
-        {error && (
-          <p className="text-sm text-red-500">{error}</p>
-        )}
+          <div className="flex items-center gap-2">
+            <Switch
+              id="isPublic"
+              checked={formData.isPublic}
+              onCheckedChange={(checked) =>
+                setFormData((prev) => ({ ...prev, isPublic: checked }))
+              }
+              className="data-[state=checked]:bg-purple-500"
+            />
+            <Label htmlFor="isPublic" className="text-purple-200">
+              Share this dream publicly
+            </Label>
+          </div>
 
-        <div className="flex justify-end">
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="flex items-center gap-2"
-          >
-            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            {isSubmitting ? 'Saving...' : 'Save Dream'}
-          </Button>
-        </div>
-      </form>
-    </Card>
+          <div className="pt-4">
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="relative group"
+            >
+              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-200"></div>
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="relative w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 h-12 text-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all duration-200"
+              >
+                {isLoading ? 'Recording Dream...' : 'Record Dream'}
+              </Button>
+            </motion.div>
+          </div>
+        </form>
+      </div>
+    </motion.div>
   );
 } 

@@ -1,145 +1,133 @@
 "use client";
 
-import { formatDistanceToNow } from "date-fns";
-import { Share2 } from "lucide-react";
+import { formatDate } from '../../lib/utils'
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { DreamActions } from '../dreams/DreamActions';
+import { DreamAnalysis } from '../dreams/DreamAnalysis';
+import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import { Button } from '../ui/button';
+import { Home } from 'lucide-react';
+import React from 'react';
 
-type Symbol = {
-  name: string;
-  description: string;
-};
-
-type Emotion = {
-  name: string;
-  intensity: number;
-  description: string;
-};
-
-type Theme = {
-  name: string;
-  description: string;
-};
-
-type Dream = {
+interface Dream {
   id: string;
   title: string | null;
   content: string;
   createdAt: Date;
-  symbols: Symbol[];
-  emotions: Emotion[];
-  themes: Theme[];
+  analysis: string | null;
+  symbols: Array<{ name: string }>;
+  themes: Array<{ name: string }>;
+  emotions: Array<{ name: string }>;
   isPublic: boolean;
-};
+}
 
-export default function DreamView({ dream }: { dream: Dream }) {
-  const handleShare = async () => {
-    try {
-      await navigator.share({
-        title: dream.title || "My Dream",
-        text: dream.content,
-        url: window.location.href,
-      });
-    } catch (error) {
-      console.error("Error sharing:", error);
-    }
-  };
+interface DreamViewProps {
+  dream: Dream;
+}
+
+export function DreamView({ dream }: DreamViewProps) {
+  const router = useRouter();
 
   return (
-    <div className="bg-white shadow sm:rounded-lg">
-      <div className="px-4 py-5 sm:p-6">
-        <div className="flex justify-between items-start">
-          <div>
-            <h3 className="text-lg leading-6 font-medium text-gray-900">
-              {dream.title || "Untitled Dream"}
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Recorded {formatDistanceToNow(new Date(dream.createdAt), { addSuffix: true })}
-            </p>
-          </div>
-          <button
-            onClick={handleShare}
-            className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+    <div className="min-h-screen bg-gradient-to-br from-[#1a1c2e] via-[#2d2b55] to-[#3c1f52] overflow-hidden">
+      <div className="relative container max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8 space-y-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex justify-between items-center mb-8"
+        >
+          <Button
+            onClick={() => router.push('/dashboard')}
+            variant="ghost"
+            className="text-purple-200/80 hover:text-purple-200 hover:bg-purple-500/10 flex items-center gap-2"
           >
-            <Share2 className="h-4 w-4 mr-1" />
-            Share
-          </button>
-        </div>
+            <Home className="h-4 w-4" />
+            Back to Dashboard
+          </Button>
+          <DreamActions dream={dream} />
+        </motion.div>
 
-        <div className="mt-6 prose max-w-none">
-          <p>{dream.content}</p>
-        </div>
-
-        <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-3">
-          {/* Symbols */}
-          <div>
-            <h4 className="text-lg font-medium text-gray-900 mb-4">Symbols</h4>
-            <div className="space-y-4">
-              {dream.symbols.map((symbol) => (
-                <div
-                  key={symbol.name}
-                  className="bg-blue-50 p-4 rounded-lg"
-                >
-                  <h5 className="text-sm font-medium text-blue-800">
-                    {symbol.name}
-                  </h5>
-                  <p className="mt-1 text-sm text-blue-600">
-                    {symbol.description}
-                  </p>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-2xl blur-3xl"></div>
+          <Card className="relative backdrop-blur-lg bg-white/5 rounded-2xl shadow-[0_0_15px_rgba(168,85,247,0.15)] border border-purple-500/20">
+            <CardHeader>
+              <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 text-transparent bg-clip-text">
+                {dream.title || 'Untitled Dream'}
+              </CardTitle>
+              <p className="text-sm text-purple-200/80">
+                {formatDate(dream.createdAt)}
+              </p>
+            </CardHeader>
+            <CardContent>
+              <p className="text-purple-100 whitespace-pre-wrap">{dream.content}</p>
+              
+              {(dream.symbols.length > 0 || dream.themes.length > 0 || dream.emotions.length > 0) && (
+                <div className="mt-6 space-y-4">
+                  {dream.symbols.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-medium text-purple-200 mb-2">Symbols</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {dream.symbols.map(symbol => (
+                          <span
+                            key={symbol.name}
+                            className="px-2 py-1 text-xs rounded-full bg-purple-500/20 text-purple-200 border border-purple-500/20"
+                          >
+                            {symbol.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {dream.themes.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-medium text-purple-200 mb-2">Themes</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {dream.themes.map(theme => (
+                          <span
+                            key={theme.name}
+                            className="px-2 py-1 text-xs rounded-full bg-blue-500/20 text-blue-200 border border-blue-500/20"
+                          >
+                            {theme.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {dream.emotions.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-medium text-purple-200 mb-2">Emotions</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {dream.emotions.map(emotion => (
+                          <span
+                            key={emotion.name}
+                            className="px-2 py-1 text-xs rounded-full bg-pink-500/20 text-pink-200 border border-pink-500/20"
+                          >
+                            {emotion.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
 
-          {/* Emotions */}
-          <div>
-            <h4 className="text-lg font-medium text-gray-900 mb-4">Emotions</h4>
-            <div className="space-y-4">
-              {dream.emotions.map((emotion) => (
-                <div
-                  key={emotion.name}
-                  className="bg-purple-50 p-4 rounded-lg"
-                >
-                  <div className="flex justify-between items-center">
-                    <h5 className="text-sm font-medium text-purple-800">
-                      {emotion.name}
-                    </h5>
-                    <span className="text-xs text-purple-600">
-                      {Math.round(emotion.intensity * 100)}%
-                    </span>
-                  </div>
-                  <div className="mt-2 w-full bg-purple-200 rounded-full h-2">
-                    <div
-                      className="bg-purple-600 rounded-full h-2"
-                      style={{ width: `${emotion.intensity * 100}%` }}
-                    />
-                  </div>
-                  <p className="mt-2 text-sm text-purple-600">
-                    {emotion.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Themes */}
-          <div>
-            <h4 className="text-lg font-medium text-gray-900 mb-4">Themes</h4>
-            <div className="space-y-4">
-              {dream.themes.map((theme) => (
-                <div
-                  key={theme.name}
-                  className="bg-green-50 p-4 rounded-lg"
-                >
-                  <h5 className="text-sm font-medium text-green-800">
-                    {theme.name}
-                  </h5>
-                  <p className="mt-1 text-sm text-green-600">
-                    {theme.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <DreamAnalysis dreamId={dream.id} initialAnalysis={dream.analysis} />
+        </motion.div>
       </div>
     </div>
   );
