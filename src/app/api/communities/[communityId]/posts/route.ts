@@ -40,7 +40,7 @@ export async function GET(
       skip: cursor ? 1 : 0,
       cursor: cursor ? { id: cursor } : undefined,
       include: {
-        author: {
+        user: {
           select: {
             id: true,
             name: true,
@@ -109,11 +109,11 @@ export async function POST(
     const post = await db.communityPost.create({
       data: {
         content,
-        authorId: session.user.id,
+        userId: session.user.id,
         communityId,
       },
       include: {
-        author: {
+        user: {
           select: {
             id: true,
             name: true,
@@ -172,7 +172,7 @@ export async function PATCH(
       where: { id: postId },
       data: { content },
       include: {
-        author: {
+        user: {
           select: {
             id: true,
             name: true,
