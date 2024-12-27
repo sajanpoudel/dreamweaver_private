@@ -163,7 +163,7 @@ export async function PATCH(
       }),
     ]);
 
-    if (!post || (!membership?.role === 'admin' && post.authorId !== session.user.id)) {
+    if (!post || (membership?.role !== 'admin' && post.userId !== session.user.id)) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
@@ -222,7 +222,7 @@ export async function DELETE(
       }),
     ]);
 
-    if (!post || (!membership?.role === 'admin' && post.authorId !== session.user.id)) {
+    if (!post || (membership?.role !== 'admin' && post.userId !== session.user.id)) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
