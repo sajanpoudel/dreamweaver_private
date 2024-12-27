@@ -52,54 +52,24 @@ export function DreamAnalysis({ dreamId, initialAnalysis }: DreamAnalysisProps) 
   );
 
   const analyzeHandler = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      const response = await fetch(`/api/dreams/analyze?dreamId=${dreamId}`, {
+      const response = await fetch('/api/dreams/analyze', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ dreamId }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to analyze dream');
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to analyze dream');
       }
 
-      const data = await response.json();
-      console.log('Raw API response:', {
-        data,
-        type: typeof data.analysis,
-        content: data.analysis
-      });
-
-      if (!data.analysis) {
-        throw new Error('No analysis data received');
-      }
-
-      try {
-        let parsedAnalysis = JSON.parse(data.analysis) as Analysis;
-        console.log('Before processing:', parsedAnalysis);
-        
-        // Create a new object with default values
-        const processedAnalysis: Analysis = {
-          symbols: Array.isArray(parsedAnalysis.symbols) ? parsedAnalysis.symbols : [],
-          themes: Array.isArray(parsedAnalysis.themes) ? parsedAnalysis.themes : [],
-          emotions: Array.isArray(parsedAnalysis.emotions) ? 
-            parsedAnalysis.emotions.map(emotion => ({
-              name: emotion.name || '',
-              intensity: typeof emotion.intensity === 'number' ? emotion.intensity : 5
-            })) : [],
-          patterns: Array.isArray(parsedAnalysis.patterns) ? parsedAnalysis.patterns : [],
-          insights: Array.isArray(parsedAnalysis.insights) ? parsedAnalysis.insights : []
-        };
-
-        console.log('After processing:', processedAnalysis);
-        setAnalysis(processedAnalysis);
-        toast.success('Dream analyzed successfully');
-      } catch (parseError) {
-        console.error('Analysis parsing error:', {
-          error: parseError,
-          rawAnalysis: data.analysis
-        });
-        toast.error('Invalid analysis data received');
-      }
+      const analysisData = await response.json();
+      setAnalysis(analysisData);
+      toast.success('Dream analyzed successfully!');
     } catch (error) {
       console.error('Error analyzing dream:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to analyze dream');

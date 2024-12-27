@@ -27,6 +27,7 @@ model User {
   sessions      Session[]
   dreamPatterns DreamPattern[]
   insights      UserInsight[]
+  stories       DreamStory[]
 }
 
 model Account {
@@ -72,6 +73,7 @@ model Dream {
   dreamPatterns DreamPattern[]
   connections   DreamConnection[] @relation("SourceDream")
   relatedTo     DreamConnection[] @relation("RelatedDream")
+  stories       DreamStory[]
 }
 
 model Symbol {
@@ -155,4 +157,53 @@ model DashboardStats {
   topThemes  Json
   topEmotions Json
   updatedAt  DateTime @updatedAt
+}
+
+model DreamStory {
+  id        String   @id @default(cuid())
+  dreamId   String
+  userId    String
+  title     String
+  content   String   @db.Text
+  isPublic  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  dream     Dream    @relation(fields: [dreamId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  themes    StoryTheme[]
+  symbols   StorySymbol[]
+
+  @@unique([dreamId, userId])
+  @@index([userId])
+  @@index([dreamId])
+  @@map("dream_stories")
+}
+
+model StoryTheme {
+  id        String    @id @default(cuid())
+  name      String
+  storyId   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  story     DreamStory @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@unique([name, storyId])
+  @@index([storyId])
+  @@map("story_themes")
+}
+
+model StorySymbol {
+  id        String    @id @default(cuid())
+  name      String
+  storyId   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  story     DreamStory @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@unique([name, storyId])
+  @@index([storyId])
+  @@map("story_symbols")
 }

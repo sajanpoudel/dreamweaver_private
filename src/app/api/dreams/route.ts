@@ -1,32 +1,108 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../auth/[...nextauth]/auth';
-import { prisma } from '../../../lib/prisma';
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
+import prisma from '@/lib/prisma';
 
-export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user?.id) {
-    return new NextResponse('Unauthorized', { status: 401 });
-  }
-
+export async function POST(req: Request) {
   try {
-    const json = await request.json();
-    const { title, content, isPublic } = json;
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
 
-    const dream = await prisma.dream.create({
-      data: {
-        title,
-        content,
-        isPublic,
-        userId: session.user.id,
-      },
+    const { title, content, symbols = [], themes = [], emotions = [] } = await req.json();
+
+    if (!content) {
+      return new NextResponse('Dream content is required', { status: 400 });
+    }
+
+    // Create the dream and its relationships in a transaction
+    const dream = await prisma.$transaction(async (tx) => {
+      // Create the dream
+      const newDream = await tx.dream.create({
+        data: {
+          title,
+          content,
+          userId: session.user.id,
+        },
+      });
+
+      // Create or connect symbols
+      if (symbols.length > 0) {
+        await Promise.all(
+          symbols.map(async (symbol: { name: string; description: string }) => {
+            await tx.symbol.upsert({
+              where: { name: symbol.name },
+              update: {},
+              create: {
+                name: symbol.name,
+                description: symbol.description || '',
+                dreams: {
+                  connect: { id: newDream.id },
+                },
+              },
+            });
+          })
+        );
+      }
+
+      // Create or connect themes
+      if (themes.length > 0) {
+        await Promise.all(
+          themes.map(async (theme: { name: string; description?: string }) => {
+            await tx.theme.upsert({
+              where: { name: theme.name },
+              update: {},
+              create: {
+                name: theme.name,
+                description: theme.description || null,
+                dreams: {
+                  connect: { id: newDream.id },
+                },
+              },
+            });
+          })
+        );
+      }
+
+      // Create or connect emotions
+      if (emotions.length > 0) {
+        await Promise.all(
+          emotions.map(async (emotion: { name: string; intensity: number; description?: string }) => {
+            await tx.emotion.upsert({
+              where: { name: emotion.name },
+              update: {},
+              create: {
+                name: emotion.name,
+                intensity: emotion.intensity || 0,
+                description: emotion.description || null,
+                dreams: {
+                  connect: { id: newDream.id },
+                },
+              },
+            });
+          })
+        );
+      }
+
+      // Return the dream with its relationships
+      return tx.dream.findUnique({
+        where: { id: newDream.id },
+        include: {
+          symbols: true,
+          themes: true,
+          emotions: true,
+        },
+      });
     });
 
     return NextResponse.json(dream);
   } catch (error) {
     console.error('Error creating dream:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    return new NextResponse(
+      error instanceof Error ? error.message : 'Failed to create dream',
+      { status: 500 }
+    );
   }
 }
 
@@ -34,44 +110,49 @@ export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
     const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
     const skip = (page - 1) * limit;
 
-    const [dreams, total] = await Promise.all([
-      prisma.dream.findMany({
-        where: { userId: session.user.id },
-        orderBy: { createdAt: "desc" },
-        include: {
-          symbols: true,
-          themes: true,
-          emotions: true,
-        },
-        skip,
-        take: limit,
-      }),
-      prisma.dream.count({
-        where: { userId: session.user.id },
-      }),
-    ]);
+    const dreams = await prisma.dream.findMany({
+      where: {
+        userId: session.user.id,
+      },
+      include: {
+        symbols: true,
+        themes: true,
+        emotions: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      skip,
+      take: limit,
+    });
+
+    const total = await prisma.dream.count({
+      where: {
+        userId: session.user.id,
+      },
+    });
 
     return NextResponse.json({
       dreams,
       pagination: {
         total,
         pages: Math.ceil(total / limit),
-        page,
+        current: page,
         limit,
       },
     });
   } catch (error) {
-    console.error("Error fetching dreams:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch dreams" },
+    console.error('Error fetching dreams:', error);
+    return new NextResponse(
+      error instanceof Error ? error.message : 'Failed to fetch dreams',
       { status: 500 }
     );
   }

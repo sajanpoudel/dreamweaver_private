@@ -1,20 +1,20 @@
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../api/auth/[...nextauth]/auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
+import { DreamView } from '@/components/dreams/DreamView';
 import { redirect } from 'next/navigation';
-import { prisma } from '../../../lib/prisma';
-import { DreamView } from '../../../components/dreams/DreamView';
-import React from 'react';
+import prisma from '@/lib/prisma';
 
-interface DreamPageProps {
+interface PageProps {
   params: {
     id: string;
   };
 }
 
-export default async function DreamPage({ params }: DreamPageProps) {
+export default async function DreamPage({ params }: PageProps) {
   const session = await getServerSession(authOptions);
+
   if (!session?.user?.id) {
-    redirect('/auth/signin');
+    redirect('/login');
   }
 
   const dream = await prisma.dream.findFirst({
@@ -25,35 +25,10 @@ export default async function DreamPage({ params }: DreamPageProps) {
       ]
     },
     include: {
-      symbols: {
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          createdAt: true,
-          updatedAt: true
-        }
-      },
-      themes: {
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          createdAt: true,
-          updatedAt: true
-        }
-      },
-      emotions: {
-        select: {
-          id: true,
-          name: true,
-          intensity: true,
-          description: true,
-          createdAt: true,
-          updatedAt: true
-        }
-      }
-    }
+      symbols: true,
+      themes: true,
+      emotions: true,
+    },
   });
 
   if (!dream) {
