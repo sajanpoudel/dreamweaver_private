@@ -141,7 +141,7 @@ export async function DELETE(request: Request, context: z.infer<typeof routeCont
     }
 
     // Only allow comment owner or story owner to delete
-    if (comment.userId !== session.user.id && comment.story.userId !== session.user.id) {
+    if (comment.userId !== session.user.id && comment.story?.userId !== session.user.id) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
