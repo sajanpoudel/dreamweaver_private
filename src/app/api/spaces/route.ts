@@ -270,7 +270,7 @@ function createSpacesFromSymbols(
       symbolCount: relatedArray.length + 1,
       dreamCount: dreamIds.size,
       primarySymbols: [symbol, ...relatedArray].map(s => 
-        s.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+        s.split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
       ),
       dominantTheme,
       dreamerCount: uniqueDreamers.size
@@ -298,7 +298,7 @@ function generateSpaceName(mainSymbol: string, relatedSymbols: string[], theme: 
 
 function generateSpaceDescription(mainSymbol: string, relatedSymbols: string[], theme: string, dreamerCount: number) {
   const symbolList = [mainSymbol, ...relatedSymbols]
-    .map(s => s.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '))
+    .map(s => s.split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' '))
     .join(', ');
 
   return `Explore dreams featuring ${symbolList} shared by ${dreamerCount} dreamers. Common theme: ${theme}.`;
