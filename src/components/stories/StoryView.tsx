@@ -50,6 +50,15 @@ interface StoryViewProps {
   relatedStories: Story[];
 }
 
+// Helper function to clean HTML content
+const cleanHtmlContent = (html: string) => {
+  // If the content is wrapped in <p> tags, extract the inner content
+  if (html?.startsWith('<p>') && html?.endsWith('</p>')) {
+    return html.slice(3, -4); // Remove <p> and </p>
+  }
+  return html || '';
+};
+
 export function StoryView({ story, isOwner, currentUserId, relatedStories }: StoryViewProps) {
   const router = useRouter();
   const [isLiked, setIsLiked] = useState(false);
@@ -252,7 +261,7 @@ export function StoryView({ story, isOwner, currentUserId, relatedStories }: Sto
 
         <div className="text-center max-w-2xl mx-auto">
           <p className="text-xl text-purple-200/90">
-            {storyContent.introduction}
+            {cleanHtmlContent(storyContent.introduction)}
           </p>
         </div>
 
@@ -295,11 +304,9 @@ export function StoryView({ story, isOwner, currentUserId, relatedStories }: Sto
                 )}
 
                 <div className="prose prose-invert max-w-none">
-                  {section.content.split('\n\n').map((paragraph: string, pIndex: number) => (
-                    <p key={pIndex} className="text-purple-200/90 leading-relaxed">
-                      {paragraph}
-                    </p>
-                  ))}
+                  <p className="text-purple-200/90">
+                    {cleanHtmlContent(section.content)}
+                  </p>
                 </div>
               </div>
             </motion.div>
@@ -312,7 +319,7 @@ export function StoryView({ story, isOwner, currentUserId, relatedStories }: Sto
               Conclusion
             </h2>
             <p className="text-purple-200/90 leading-relaxed">
-              {storyContent.conclusion}
+              {cleanHtmlContent(storyContent.conclusion)}
             </p>
           </div>
         )}
@@ -323,7 +330,7 @@ export function StoryView({ story, isOwner, currentUserId, relatedStories }: Sto
               Dream Interpretation
             </h2>
             <p className="text-purple-200/90">
-              {storyContent.interpretation}
+              {cleanHtmlContent(storyContent.interpretation)}
             </p>
           </div>
         )}
