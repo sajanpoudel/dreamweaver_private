@@ -29,7 +29,7 @@ export function SpeechInput({ onTranscript }: SpeechInputProps) {
 
       const recognition = new window.webkitSpeechRecognition();
       recognition.continuous = true;
-      recognition.interimResults = true;
+      recognition.interimResults = false;
 
       recognition.onstart = () => {
         setIsListening(true);
@@ -37,13 +37,14 @@ export function SpeechInput({ onTranscript }: SpeechInputProps) {
       };
 
       recognition.onresult = (event: any) => {
-        const transcript = Array.from(event.results)
-          .map((result: any) => result[0].transcript)
-          .join(' ');
-        onTranscript(transcript);
+        const lastResult = event.results[event.results.length - 1];
+        if (lastResult.isFinal) {
+          const transcript = lastResult[0].transcript;
+          onTranscript(transcript);
+        }
       };
 
-      recognition.onerror = (event) => {
+      recognition.onerror = (event: { error: string }) => {
         console.error('Speech recognition error:', event.error);
         toast.error('Failed to recognize speech');
         setIsListening(false);

@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/utils';
 import { Heart, MessageCircle, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface DreamFeedProps {
   stories: Array<{
@@ -20,12 +21,15 @@ interface DreamFeedProps {
     themes: Array<{ name: string }>;
     symbols: Array<{ name: string }>;
     relevanceScore: number;
+    likesCount: number;
+    commentsCount: number;
+    hasLiked: boolean;
   }>;
 }
 
 export function DreamFeed({ stories }: DreamFeedProps) {
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container max-w-2xl mx-auto px-4 py-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -44,7 +48,7 @@ export function DreamFeed({ stories }: DreamFeedProps) {
         </div>
       </motion.div>
 
-      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+      <div className="space-y-6">
         {stories.map((story, index) => {
           let storyContent;
           try {
@@ -58,7 +62,7 @@ export function DreamFeed({ stories }: DreamFeedProps) {
 
           if (!storyContent) return null;
 
-          const firstSection = storyContent.sections?.[0] || {};
+          const firstSection = storyContent.sections?.[0];
 
           return (
             <motion.div
@@ -69,23 +73,7 @@ export function DreamFeed({ stories }: DreamFeedProps) {
               className="relative group"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl blur-sm group-hover:blur-md transition-all duration-300" />
-              <Link
-                href={`/stories/${story.id}`}
-                className="relative block p-6 backdrop-blur-sm border border-purple-500/20 rounded-xl"
-              >
-                {firstSection.imageUrl && (
-                  <div className="relative h-48 w-full mb-4 rounded-lg overflow-hidden">
-                    <Image
-                      src={firstSection.imageUrl}
-                      alt={storyContent.title || 'Dream story image'}
-                      fill
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  </div>
-                )}
-
+              <div className="relative block p-6 backdrop-blur-sm border border-purple-500/20 rounded-xl">
                 <div className="flex items-center gap-3 mb-4">
                   <Avatar className="h-8 w-8 border border-purple-500/20">
                     <AvatarImage src={story.user.image || undefined} />
@@ -103,35 +91,55 @@ export function DreamFeed({ stories }: DreamFeedProps) {
                   </div>
                 </div>
 
-                <h2 className="text-xl font-semibold text-purple-100 mb-2">
-                  {storyContent.title || 'Untitled Dream Story'}
-                </h2>
+                <Link href={`/stories/${story.id}`} className="block">
+                  <h2 className="text-xl font-semibold text-purple-100 mb-2">
+                    {storyContent.title || 'Untitled Dream Story'}
+                  </h2>
 
-                <p className="text-purple-200/80 line-clamp-3 mb-4">
-                  {storyContent.introduction || storyContent.summary || 'No description available'}
-                </p>
+                  <p className="text-sm text-purple-200/80 line-clamp-2 mb-4">
+                    {storyContent.introduction || firstSection?.content?.split('\n')[0] || 'No description available'}
+                  </p>
 
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {story.themes.slice(0, 3).map((theme, index) => (
-                    <Badge
-                      key={index}
-                      variant="secondary"
-                      className="bg-purple-500/20 text-purple-200 border-purple-500/20"
-                    >
-                      {theme.name}
-                    </Badge>
-                  ))}
-                </div>
+                  {firstSection?.imageUrl && (
+                    <div className="relative h-[300px] rounded-lg overflow-hidden mb-4">
+                      <Image
+                        src={firstSection.imageUrl}
+                        alt={firstSection.title || 'Dream story image'}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, 768px"
+                        priority={index < 2}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {story.themes.slice(0, 3).map((theme, index) => (
+                      <Badge
+                        key={index}
+                        variant="secondary"
+                        className="bg-purple-500/20 text-purple-200 border-purple-500/20"
+                      >
+                        {theme.name}
+                      </Badge>
+                    ))}
+                  </div>
+
+                  <p className="text-sm text-purple-200/60 hover:text-purple-200">
+                    Read full story →
+                  </p>
+                </Link>
 
                 <div className="flex items-center justify-between pt-4 border-t border-purple-500/20">
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-1 text-purple-200/60">
-                      <Heart className="h-4 w-4" />
-                      <span className="text-sm">0</span>
+                      <Heart className={`h-4 w-4 ${story.hasLiked ? 'fill-current text-pink-500' : ''}`} />
+                      <span className="text-sm">{story.likesCount}</span>
                     </div>
                     <div className="flex items-center gap-1 text-purple-200/60">
                       <MessageCircle className="h-4 w-4" />
-                      <span className="text-sm">0</span>
+                      <span className="text-sm">{story.commentsCount}</span>
                     </div>
                   </div>
                   {story.relevanceScore > 0 && (
@@ -140,7 +148,7 @@ export function DreamFeed({ stories }: DreamFeedProps) {
                     </Badge>
                   )}
                 </div>
-              </Link>
+              </div>
             </motion.div>
           );
         })}

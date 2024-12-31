@@ -30,6 +30,12 @@ export default async function FeedPage() {
       themes: true,
       likes: true,
       comments: true,
+      _count: {
+        select: {
+          likes: true,
+          comments: true,
+        },
+      },
     },
     orderBy: {
       publishedAt: 'desc',
@@ -68,6 +74,9 @@ export default async function FeedPage() {
       themes: story.themes.map(t => ({ name: t.name })),
       symbols: story.symbols.map(s => ({ name: s.name })),
       relevanceScore,
+      likesCount: story._count.likes,
+      commentsCount: story._count.comments,
+      hasLiked: story.likes.some(like => like.userId === session.user.id),
     };
   });
 
