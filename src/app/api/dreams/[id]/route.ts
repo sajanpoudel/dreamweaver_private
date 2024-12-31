@@ -25,7 +25,7 @@ export async function GET(
         symbols: true,
         themes: true,
         emotions: true,
-        dreamPatterns: true,
+        patterns: true,
       },
     });
 
@@ -83,7 +83,7 @@ export async function PUT(
         symbols: true,
         themes: true,
         emotions: true,
-        dreamPatterns: true,
+        patterns: true,
       },
     });
 
