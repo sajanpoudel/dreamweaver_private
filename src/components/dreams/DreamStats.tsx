@@ -48,9 +48,9 @@ const THEME_COLORS = [
   '#E879F9', // fuchsia-400
 ];
 
-export function DreamStats({ totalDreams, topSymbols, topThemes, topEmotions, onNewDream }: DreamStatsProps) {
+export function DreamStats({ totalDreams, topSymbols = [], topThemes = [], topEmotions = [], onNewDream }: DreamStatsProps) {
   // Ensure we have data to display
-  const pieData = topEmotions?.length > 0 
+  const pieData = topEmotions.length > 0 
     ? topEmotions.map(emotion => ({
         id: emotion.name,
         label: emotion.name,
@@ -59,7 +59,7 @@ export function DreamStats({ totalDreams, topSymbols, topThemes, topEmotions, on
     : [{ id: 'No Data', label: 'No Emotions Recorded', value: 1 }];
 
   // Prepare combined data for bar chart with fallback
-  const combinedData = topSymbols?.length > 0 || topThemes?.length > 0
+  const combinedData = (topSymbols.length > 0 || topThemes.length > 0)
     ? Array.from(new Set([...topSymbols, ...topThemes].map(item => item.name)))
         .map(name => {
           const symbol = topSymbols.find(s => s.name === name);

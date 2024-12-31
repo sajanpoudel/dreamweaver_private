@@ -9,21 +9,26 @@ import { Dream as PrismaDream } from '@prisma/client';
 import { useRouter } from 'next/navigation';
 import { Sparkles } from 'lucide-react';
 
-interface TopItem {
-  name: string;
-  count: number;
+interface Dream {
+  id: string;
+  title: string | null;
+  content: string;
+  analysis: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  userId: string;
+  isPublic: boolean;
+  symbols: Array<{ id: string; name: string; description: string | null }>;
+  themes: Array<{ id: string; name: string }>;
+  emotions: Array<{ id: string; name: string }>;
 }
 
 interface DashboardContentProps {
-  dreams: (PrismaDream & {
-    symbols: { id: string; name: string; description: string }[];
-    themes: { id: string; name: string; description: string }[];
-    emotions: { id: string; name: string; intensity: number; description: string }[];
-  })[];
+  dreams: Dream[];
   totalDreams: number;
-  topSymbols: TopItem[];
-  topThemes: TopItem[];
-  topEmotions: TopItem[];
+  topSymbols: Array<{ name: string; count: number }>;
+  topThemes: Array<{ name: string; count: number }>;
+  topEmotions: Array<{ name: string; count: number }>;
 }
 
 const FallingStars = () => {

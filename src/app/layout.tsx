@@ -7,7 +7,7 @@ import { Toaster } from 'sonner';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'DreamWeaver',
+  title: 'Dreamly',
   description: 'Your personal dream journal and analysis companion',
 };
 

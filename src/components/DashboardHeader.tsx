@@ -13,7 +13,7 @@ export function DashboardHeader() {
         <div className="flex items-center justify-between">
           <Link href="/dashboard">
             <h1 className="text-2xl font-bold text-purple-100">
-              DreamWeaver
+              Dreamly
             </h1>
           </Link>
 

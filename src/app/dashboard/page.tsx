@@ -40,17 +40,17 @@ export default async function DashboardPage() {
           select: {
             id: true,
             name: true,
-            description: true,
           }
         },
         emotions: {
           select: {
             id: true,
             name: true,
-            intensity: true,
-            description: true,
           }
-        },
+        }
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     });
 
@@ -69,62 +69,43 @@ export default async function DashboardPage() {
       }, null, 2));
     }
 
-    // Process symbols
-    const symbolCounts: Record<string, number> = {};
-    allDreams.forEach(dream => {
+    // Count occurrences of symbols, themes, and emotions
+    const symbolCounts = allDreams.reduce((acc, dream) => {
       dream.symbols.forEach(symbol => {
-        symbolCounts[symbol.name] = (symbolCounts[symbol.name] || 0) + 1;
+        acc[symbol.name] = (acc[symbol.name] || 0) + 1;
       });
-    });
+      return acc;
+    }, {} as Record<string, number>);
 
-    const topSymbols = Object.entries(symbolCounts)
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
-
-    // Process themes
-    const themeCounts: Record<string, number> = {};
-    allDreams.forEach(dream => {
+    const themeCounts = allDreams.reduce((acc, dream) => {
       dream.themes.forEach(theme => {
-        themeCounts[theme.name] = (themeCounts[theme.name] || 0) + 1;
+        acc[theme.name] = (acc[theme.name] || 0) + 1;
       });
-    });
+      return acc;
+    }, {} as Record<string, number>);
+
+    const emotionCounts = allDreams.reduce((acc, dream) => {
+      dream.emotions.forEach(emotion => {
+        acc[emotion.name] = (acc[emotion.name] || 0) + 1;
+      });
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Convert to arrays and sort by frequency, with default empty arrays
+    const topSymbols = Object.entries(symbolCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([name, count]) => ({ name, count })) || [];
 
     const topThemes = Object.entries(themeCounts)
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
-
-    // Process emotions
-    const emotionCounts: Record<string, number> = {};
-    allDreams.forEach(dream => {
-      dream.emotions.forEach(emotion => {
-        emotionCounts[emotion.name] = (emotionCounts[emotion.name] || 0) + 1;
-      });
-    });
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([name, count]) => ({ name, count })) || [];
 
     const topEmotions = Object.entries(emotionCounts)
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
-
-    // Get recent dreams for display
-    const recentDreams = allDreams
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
-      .map(dream => ({
-        id: dream.id,
-        title: dream.title,
-        content: dream.content,
-        createdAt: dream.createdAt,
-        symbols: dream.symbols.map(s => ({ id: s.id, name: s.name })),
-        themes: dream.themes.map(t => ({ id: t.id, name: t.name })),
-        emotions: dream.emotions.map(e => ({ 
-          id: e.id, 
-          name: e.name, 
-          intensity: e.intensity 
-        }))
-      }));
+      .map(([name, count]) => ({ name, count })) || [];
 
     // Debug: Log the final stats
     console.log('Final Stats:', {
@@ -141,7 +122,7 @@ export default async function DashboardPage() {
 
     return (
       <DashboardContent
-        dreams={recentDreams}
+        dreams={allDreams}
         totalDreams={totalDreams}
         topSymbols={topSymbols}
         topThemes={topThemes}

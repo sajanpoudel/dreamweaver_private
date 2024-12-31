@@ -49,7 +49,7 @@ export default async function HomePage() {
               Unlock the Secrets of Your Dreams
             </h1>
             <p className="text-xl text-purple-100/80 mb-8 leading-relaxed">
-              DreamWeaver helps you capture, analyze, and understand your dreams with 
+              Dreamly helps you capture, analyze, and understand your dreams with 
               AI-powered insights. Transform your dream journaling experience and discover 
               the hidden meanings in your subconscious mind.
             </p>

@@ -1,6 +1,6 @@
-# Dream Weaver
+# Dreamly
 
-Dream Weaver is a modern web application that helps users capture, analyze, and understand their dreams using AI-powered insights. Built with Next.js, TypeScript, and Prisma, it offers a seamless experience for dream journaling and interpretation.
+Dreamly is a modern web application that helps users capture, analyze, and understand their dreams using AI-powered insights. Built with Next.js, TypeScript, and Prisma, it offers a seamless experience for dream journaling and interpretation.
 
 ## Features
 
@@ -21,8 +21,8 @@ Before you begin, ensure you have installed:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/dreamweaver.git
-   cd dreamweaver
+   git clone https://github.com/yourusername/Dreamly.git
+   cd Dreamly
    ```
 
 2. Install dependencies:
@@ -32,7 +32,7 @@ Before you begin, ensure you have installed:
 
 3. Create a `.env` file in the root directory with the following variables:
    ```env
-   DATABASE_URL="postgresql://postgres:postgres@localhost:5432/dreamweaver?schema=public"
+   DATABASE_URL="postgresql://postgres:postgres@localhost:5432/Dreamly?schema=public"
    NEXTAUTH_URL="http://localhost:3000"
    NEXTAUTH_SECRET="your-secret-key-here"
    GOOGLE_CLIENT_ID="your-google-client-id"
@@ -61,7 +61,7 @@ Before you begin, ensure you have installed:
 ## Project Structure
 
 ```
-dreamweaver/
+Dreamly/
 ├── src/
 │   ├── app/              # Next.js app router pages
 │   ├── components/       # React components

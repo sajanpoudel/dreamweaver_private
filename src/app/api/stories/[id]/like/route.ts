@@ -40,12 +40,10 @@ export async function POST(
     }
 
     // Check if user has already liked the story
-    const existingLike = await db.like.findUnique({
+    const existingLike = await db.like.findFirst({
       where: {
-        userId_storyId: {
-          userId: session.user.id,
-          storyId: params.id,
-        },
+        storyId: params.id,
+        userId: session.user.id,
       },
     });
 
@@ -53,10 +51,7 @@ export async function POST(
       // Unlike the story
       await db.like.delete({
         where: {
-          userId_storyId: {
-            userId: session.user.id,
-            storyId: params.id,
-          },
+          id: existingLike.id,
         },
       });
     } else {
@@ -78,7 +73,7 @@ export async function POST(
 
     return NextResponse.json({
       liked: !existingLike,
-      likeCount,
+      count: likeCount,
     });
   } catch (error) {
     console.error('Error handling like:', error);

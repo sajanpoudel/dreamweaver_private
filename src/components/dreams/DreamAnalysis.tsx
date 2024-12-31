@@ -1,59 +1,31 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Sparkles, Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'sonner';
+import { motion } from 'framer-motion';
+import { Button } from '../ui/button';
+import { Loader2, Sparkles } from 'lucide-react';
+import { parseAnalysis, type DreamAnalysis } from '@/lib/dream-analysis';
+import { Card } from '../ui/card';
+
+interface DreamAnalysisProps {
+  dreamId: string;
+  initialAnalysis?: string | null;
+}
 
 interface Symbol {
   name: string;
   meaning: string;
 }
 
-interface Emotion {
-  name: string;
-  intensity: number;
-}
-
-interface Pattern {
-  name: string;
-  description: string;
-  confidence: number;
-}
-
-interface Insight {
-  title: string;
-  description: string;
-  confidence: number;
-  category: string;
-  actionable: boolean;
-  recommendation?: string;
-}
-
-interface Analysis {
-  symbols: Symbol[];
-  themes: string[];
-  emotions: Emotion[];
-  patterns: Pattern[];
-  insights: Insight[];
-}
-
-interface DreamAnalysisProps {
-  dreamId: string;
-  initialAnalysis: string | null;
-}
-
 export function DreamAnalysis({ dreamId, initialAnalysis }: DreamAnalysisProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [analysis, setAnalysis] = useState<Analysis | null>(
-    initialAnalysis ? JSON.parse(initialAnalysis) : null
-  );
+  const [analysis, setAnalysis] = useState<DreamAnalysis | null>(() => {
+    return initialAnalysis ? parseAnalysis(initialAnalysis) : null;
+  });
 
   const analyzeHandler = async () => {
-    setIsLoading(true);
     try {
+      setIsLoading(true);
       const response = await fetch('/api/dreams/analyze', {
         method: 'POST',
         headers: {
@@ -63,16 +35,14 @@ export function DreamAnalysis({ dreamId, initialAnalysis }: DreamAnalysisProps) 
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || 'Failed to analyze dream');
+        throw new Error('Failed to analyze dream');
       }
 
-      const analysisData = await response.json();
-      setAnalysis(analysisData);
-      toast.success('Dream analyzed successfully!');
+      const data = await response.json();
+      const parsedAnalysis = parseAnalysis(data.analysis);
+      setAnalysis(parsedAnalysis);
     } catch (error) {
       console.error('Error analyzing dream:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to analyze dream');
     } finally {
       setIsLoading(false);
     }
@@ -92,7 +62,7 @@ export function DreamAnalysis({ dreamId, initialAnalysis }: DreamAnalysisProps) 
                 Uncover the deeper meaning of your dream
               </p>
             </div>
-            {!analysis && (
+            {!analysis && !isLoading && (
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -104,36 +74,22 @@ export function DreamAnalysis({ dreamId, initialAnalysis }: DreamAnalysisProps) 
                   disabled={isLoading}
                   className="relative bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white border-0 flex items-center gap-2 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 transition-all duration-200"
                 >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Analyzing...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-4 w-4" />
-                      Analyze Dream
-                    </>
-                  )}
+                  <Sparkles className="h-4 w-4" />
+                  Analyze Dream
                 </Button>
               </motion.div>
             )}
           </div>
 
-          <AnimatePresence mode="wait">
-            {analysis ? (
-              <motion.div
-                key="analysis"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="relative space-y-8"
-              >
-                <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full filter blur-3xl"></div>
-                <div className="absolute bottom-0 left-0 w-64 h-64 bg-pink-500/10 rounded-full filter blur-3xl"></div>
-                
-                {/* Symbols Section */}
-                <div className="relative">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+              <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
+              <p className="text-purple-200">Analyzing your dream...</p>
+            </div>
+          ) : analysis ? (
+            <div className="space-y-8">
+              {analysis.symbols && analysis.symbols.length > 0 && (
+                <section>
                   <h3 className="text-lg font-semibold text-purple-200 mb-4">Symbols</h3>
                   <div className="grid gap-4 md:grid-cols-2">
                     {analysis.symbols.map((symbol: Symbol, index: number) => (
@@ -152,10 +108,11 @@ export function DreamAnalysis({ dreamId, initialAnalysis }: DreamAnalysisProps) 
                       </motion.div>
                     ))}
                   </div>
-                </div>
+                </section>
+              )}
 
-                {/* Themes Section */}
-                <div className="relative">
+              {analysis.themes && analysis.themes.length > 0 && (
+                <section>
                   <h3 className="text-lg font-semibold text-purple-200 mb-4">Themes</h3>
                   <div className="flex flex-wrap gap-2">
                     {analysis.themes.map((theme: string, index: number) => (
@@ -170,13 +127,14 @@ export function DreamAnalysis({ dreamId, initialAnalysis }: DreamAnalysisProps) 
                       </motion.span>
                     ))}
                   </div>
-                </div>
+                </section>
+              )}
 
-                {/* Emotions Section */}
-                <div className="relative">
+              {analysis.emotions && analysis.emotions.length > 0 && (
+                <section>
                   <h3 className="text-lg font-semibold text-purple-200 mb-4">Emotions</h3>
                   <div className="space-y-4">
-                    {analysis.emotions.map((emotion: Emotion, index: number) => (
+                    {analysis.emotions.map((emotion: { name: string; intensity: number }, index: number) => (
                       <motion.div
                         key={emotion.name}
                         initial={{ opacity: 0, x: -20 }}
@@ -201,13 +159,14 @@ export function DreamAnalysis({ dreamId, initialAnalysis }: DreamAnalysisProps) 
                       </motion.div>
                     ))}
                   </div>
-                </div>
+                </section>
+              )}
 
-                {/* Insights Section */}
-                <div className="relative">
+              {analysis.insights && analysis.insights.length > 0 && (
+                <section>
                   <h3 className="text-lg font-semibold text-purple-200 mb-4">Insights</h3>
                   <div className="space-y-4">
-                    {analysis.insights.map((insight: Insight, index: number) => (
+                    {analysis.insights.map((insight, index: number) => (
                       <motion.div
                         key={insight.title}
                         initial={{ opacity: 0, y: 20 }}
@@ -224,70 +183,62 @@ export function DreamAnalysis({ dreamId, initialAnalysis }: DreamAnalysisProps) 
                                 {insight.category}
                               </span>
                               <span className="text-xs text-purple-200/80">
-                                {(insight.confidence * 100).toFixed(0)}%
+                                {Math.round(insight.confidence * 100)}%
                               </span>
                             </div>
                           </div>
                           <p className="text-sm text-purple-200/80 mb-3">{insight.description}</p>
-                          {insight.actionable && insight.recommendation && (
+                          {insight.actionable && (
                             <div className="mt-2 p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
-                              <p className="text-sm text-purple-200/90">{insight.recommendation}</p>
+                              <p className="text-sm text-purple-200/90">
+                                <span className="font-medium">Recommendation:</span> {insight.recommendation}
+                              </p>
                             </div>
                           )}
                         </div>
                       </motion.div>
                     ))}
                   </div>
-                </div>
+                </section>
+              )}
 
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.5 }}
-                  className="mt-8 flex justify-end"
-                >
-                  <Button
-                    onClick={analyzeHandler}
-                    disabled={isLoading}
-                    variant="ghost"
-                    className="text-purple-200/80 hover:text-purple-200 hover:bg-purple-500/10 flex items-center gap-2"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Reanalyzing...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="h-4 w-4" />
-                        Reanalyze
-                      </>
-                    )}
-                  </Button>
-                </motion.div>
-              </motion.div>
-            ) : (
+              {/* Reanalyze Button */}
               <motion.div
-                key="placeholder"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-center py-12"
+                transition={{ delay: 0.5 }}
+                className="mt-8 flex justify-end"
               >
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-[1px]">
-                  <div className="w-full h-full rounded-full bg-white/5 backdrop-blur-sm flex items-center justify-center">
-                    <Sparkles className="h-8 w-8 text-purple-200" />
-                  </div>
-                </div>
-                <p className="text-lg text-purple-200 mb-2">
-                  Ready to explore your dream?
-                </p>
-                <p className="text-sm text-purple-200/70">
-                  Click the analyze button to uncover hidden meanings and patterns
-                </p>
+                <Button
+                  onClick={analyzeHandler}
+                  disabled={isLoading}
+                  variant="ghost"
+                  className="text-purple-200/80 hover:text-purple-200 hover:bg-purple-500/10 flex items-center gap-2"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Reanalyze
+                </Button>
               </motion.div>
-            )}
-          </AnimatePresence>
+            </div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-12"
+            >
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-[1px]">
+                <div className="w-full h-full rounded-full bg-white/5 backdrop-blur-sm flex items-center justify-center">
+                  <Sparkles className="h-8 w-8 text-purple-200" />
+                </div>
+              </div>
+              <p className="text-lg text-purple-200 mb-2">
+                Ready to explore your dream?
+              </p>
+              <p className="text-sm text-purple-200/70">
+                Click the analyze button to uncover hidden meanings and patterns
+              </p>
+            </motion.div>
+          )}
         </div>
       </Card>
     </div>
