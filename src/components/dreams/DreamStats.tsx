@@ -44,31 +44,35 @@ const COLORS = [
 ];
 
 const THEME_COLORS = [
-  '#818CF8', // indigo-400
-  '#6366F1', // indigo-500
+  '#F0ABFC', // fuchsia-300
+  '#E879F9', // fuchsia-400
 ];
 
 export function DreamStats({ totalDreams, topSymbols, topThemes, topEmotions, onNewDream }: DreamStatsProps) {
-  // Prepare data for pie chart
-  const pieData = topEmotions.map(emotion => ({
-    id: emotion.name,
-    label: emotion.name,
-    value: emotion.count,
-  }));
+  // Ensure we have data to display
+  const pieData = topEmotions?.length > 0 
+    ? topEmotions.map(emotion => ({
+        id: emotion.name,
+        label: emotion.name,
+        value: emotion.count,
+      }))
+    : [{ id: 'No Data', label: 'No Emotions Recorded', value: 1 }];
 
-  // Prepare combined data for bar chart
-  const combinedData = Array.from(new Set([...topSymbols, ...topThemes].map(item => item.name)))
-    .map(name => {
-      const symbol = topSymbols.find(s => s.name === name);
-      const theme = topThemes.find(t => t.name === name);
-      return {
-        name,
-        symbols: symbol?.count || 0,
-        themes: theme?.count || 0
-      };
-    })
-    .sort((a, b) => (b.symbols + b.themes) - (a.symbols + a.themes))
-    .slice(0, 7);
+  // Prepare combined data for bar chart with fallback
+  const combinedData = topSymbols?.length > 0 || topThemes?.length > 0
+    ? Array.from(new Set([...topSymbols, ...topThemes].map(item => item.name)))
+        .map(name => {
+          const symbol = topSymbols.find(s => s.name === name);
+          const theme = topThemes.find(t => t.name === name);
+          return {
+            name,
+            symbols: symbol?.count || 0,
+            themes: theme?.count || 0
+          };
+        })
+        .sort((a, b) => (b.symbols + b.themes) - (a.symbols + a.themes))
+        .slice(0, 7)
+    : [{ name: 'No Data', symbols: 0, themes: 0 }];
 
   return (
     <div className="space-y-8">

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
-import prisma from '@/lib/prisma';
+import { authOptions } from '@/lib/auth';
+import { db } from '@/lib/prisma';
 
 export async function POST(req: Request) {
   try {
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     }
 
     // Find the story and verify ownership
-    const story = await prisma.dreamStory.findFirst({
+    const story = await db.dreamStory.findFirst({
       where: {
         dreamId,
         userId: session.user.id,
@@ -35,59 +35,17 @@ export async function POST(req: Request) {
       return new NextResponse('Story not found', { status: 404 });
     }
 
-    // Update the story to be public in a transaction
-    const updatedStory = await prisma.$transaction(async (tx) => {
-      // Update the story to be public
-      const publishedStory = await tx.dreamStory.update({
-        where: { id: story.id },
-        data: {
-          isPublic: true,
-        },
-      });
-
-      // Create theme connections if they don't exist
-      if (story.dream.themes.length > 0) {
-        await Promise.all(
-          story.dream.themes.map(async (theme) => {
-            await tx.storyTheme.upsert({
-              where: {
-                name_storyId: {
-                  name: theme.name,
-                  storyId: story.id,
-                },
-              },
-              update: {},
-              create: {
-                name: theme.name,
-                storyId: story.id,
-              },
-            });
-          })
-        );
-      }
-
-      // Create symbol connections if they don't exist
-      if (story.dream.symbols.length > 0) {
-        await Promise.all(
-          story.dream.symbols.map(async (symbol) => {
-            await tx.storySymbol.upsert({
-              where: {
-                name_storyId: {
-                  name: symbol.name,
-                  storyId: story.id,
-                },
-              },
-              update: {},
-              create: {
-                name: symbol.name,
-                storyId: story.id,
-              },
-            });
-          })
-        );
-      }
-
-      return publishedStory;
+    // Update the story to be public
+    const updatedStory = await db.dreamStory.update({
+      where: { id: story.id },
+      data: {
+        isPublic: true,
+        publishedAt: new Date(),    
+      },
+      include: {
+        themes: true,
+        symbols: true,
+      },
     });
 
     return NextResponse.json({

@@ -6,6 +6,7 @@ import * as z from "zod";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import React from "react";
+
 const signUpSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
@@ -31,6 +32,7 @@ export default function SignUpForm() {
 
   const onSubmit = async (data: SignUpFormData) => {
     try {
+      setError(null);
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: {
@@ -43,9 +45,10 @@ export default function SignUpForm() {
         }),
       });
 
+      const responseData = await response.json();
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message);
+        throw new Error(responseData.error || 'Registration failed');
       }
 
       router.push("/auth/signin");
@@ -146,7 +149,7 @@ export default function SignUpForm() {
           disabled={isSubmitting}
           className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
         >
-          {isSubmitting ? "Creating account..." : "Create account"}
+          {isSubmitting ? "Signing up..." : "Sign up"}
         </button>
       </div>
     </form>

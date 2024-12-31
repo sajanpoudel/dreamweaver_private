@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../api/auth/[...nextauth]/auth';
+import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
-import { prisma } from '@/lib/prisma';
+import { db } from '@/lib/prisma';
 import { StoryFeed } from '@/components/stories/StoryFeed';
 
 export default async function StoriesPage() {
@@ -12,7 +12,7 @@ export default async function StoriesPage() {
 
   try {
     // Get user's dream themes and symbols for personalized recommendations
-    const userPreferences = await prisma.dream.findMany({
+    const userPreferences = await db.dream.findMany({
       where: { userId: session.user.id },
       include: {
         themes: true,
@@ -28,7 +28,7 @@ export default async function StoriesPage() {
     );
 
     // Fetch public stories with their themes and symbols
-    const stories = await prisma.dreamStory.findMany({
+    const stories = await db.dreamStory.findMany({
       where: {
         isPublic: true,
         publishedAt: { not: null },
@@ -61,12 +61,16 @@ export default async function StoriesPage() {
     });
 
     // Sort by relevance score and then by publish date
-    const sortedStories = storiesWithRelevance.sort((a, b) => {
-      if (b.relevanceScore !== a.relevanceScore) {
-        return b.relevanceScore - a.relevanceScore;
-      }
-      return b.publishedAt!.getTime() - a.publishedAt!.getTime();
-    });
+    const sortedStories = storiesWithRelevance
+      .filter((story): story is typeof story & { publishedAt: Date } => 
+        story.publishedAt !== null
+      )
+      .sort((a, b) => {
+        if (b.relevanceScore !== a.relevanceScore) {
+          return b.relevanceScore - a.relevanceScore;
+        }
+        return b.publishedAt.getTime() - a.publishedAt.getTime();
+      });
 
     return <StoryFeed stories={sortedStories} />;
   } catch (error) {

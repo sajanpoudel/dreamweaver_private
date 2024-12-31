@@ -1,5 +1,5 @@
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../api/auth/[...nextauth]/auth';
+import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { NewDreamForm } from '@/components/dreams/NewDreamForm';
 import React from 'react';

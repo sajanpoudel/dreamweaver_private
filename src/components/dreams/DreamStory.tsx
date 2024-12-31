@@ -1,294 +1,241 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '../ui/button';
-import { Card, CardContent } from '../ui/card';
-import { Wand2, Share2, Download, Eye, BookOpen, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { motion } from 'framer-motion';
 import Image from 'next/image';
 
-interface DreamStoryProps {
-  dream: {
-    id: string;
-    title: string | null;
-    content: string;
-    symbols: Array<{ name: string }>;
-    themes: Array<{ name: string }>;
-    emotions: Array<{ name: string }>;
-    isPublic: boolean;
-  };
+async function generateStory(dreamId: string) {
+  try {
+    const response = await fetch('/api/dreams/story/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ dreamId }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(error);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error generating story:', error);
+    throw error;
+  }
 }
 
-interface StoryScene {
-  text: string;
-  imageUrl: string;
-  caption: string;
+async function publishStory(dreamId: string) {
+  try {
+    const response = await fetch(`/api/dreams/story/publish`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ dreamId }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(error);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error publishing story:', error);
+    throw error;
+  }
 }
 
-export function DreamStory({ dream }: DreamStoryProps) {
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [story, setStory] = useState<{ scenes: StoryScene[]; title: string; summary: string } | null>(null);
+interface Section {
+  title: string;
+  content: string;
+  imagePrompt: string;
+  imageUrl: string | null;
+}
+
+interface Story {
+  id: string;
+  title: string;
+  subtitle: string;
+  introduction: string;
+  sections: Section[];
+  conclusion: string;
+  themes: string[];
+  interpretation: string;
+}
+
+export default function DreamStory({ dreamId }: { dreamId: string }) {
+  const [isLoading, setIsLoading] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [story, setStory] = useState<Story | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const generateStory = async () => {
-    setIsGenerating(true);
+  const handleGenerateStory = async () => {
+    setIsLoading(true);
+    setError(null);
     try {
-      const response = await fetch('/api/dreams/story/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          dreamId: dream.id,
-          content: dream.content,
-          symbols: dream.symbols,
-          themes: dream.themes,
-          emotions: dream.emotions,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || 'Failed to generate story');
-      }
-
-      const storyData = await response.json();
+      const result = await generateStory(dreamId);
+      // Parse the story content if it's a string
+      const storyData = typeof result.story.content === 'string' 
+        ? { ...result.story, ...JSON.parse(result.story.content) }
+        : result.story;
       setStory(storyData);
-      toast.success('Story generated successfully!');
-    } catch (error) {
-      console.error('Error generating story:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to generate story');
+    } catch (err) {
+      console.error('Story generation error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to generate story');
     } finally {
-      setIsGenerating(false);
+      setIsLoading(false);
     }
   };
 
-  const shareStory = async (platform: 'facebook' | 'twitter' | 'medium') => {
-    if (!story) return;
-
-    const url = `${window.location.origin}/stories/${dream.id}`;
-    try {
-      switch (platform) {
-        case 'facebook':
-          window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
-          break;
-        case 'twitter':
-          window.open(`https://twitter.com/intent/tweet?url=${url}&text=${encodeURIComponent(story.title)}`, '_blank');
-          break;
-        case 'medium':
-          // Implement Medium sharing
-          toast.info('Medium sharing coming soon!');
-          break;
-      }
-    } catch (error) {
-      console.error('Error sharing story:', error);
-      toast.error('Failed to share story');
-    }
-  };
-
-  const downloadStory = async () => {
-    if (!story) return;
-
-    try {
-      // Create a formatted text version of the story
-      const storyText = `${story.title}\n\n${story.summary}\n\n${story.scenes
-        .map((scene, index) => `Scene ${index + 1}:\n${scene.text}\n${scene.caption}\n`)
-        .join('\n')}`;
-
-      // Create a blob and download it
-      const blob = new Blob([storyText], { type: 'text/plain' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${story.title.toLowerCase().replace(/\s+/g, '-')}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      toast.success('Story downloaded successfully!');
-    } catch (error) {
-      console.error('Error downloading story:', error);
-      toast.error('Failed to download story');
-    }
-  };
-
-  const publishStory = async () => {
-    if (!story) return;
-
+  const handlePublishStory = async () => {
     setIsPublishing(true);
+    setError(null);
     try {
-      const response = await fetch('/api/dreams/story/publish', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          dreamId: dream.id,
-          story,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || 'Failed to publish story');
-      }
-
-      toast.success('Story published successfully!');
-    } catch (error) {
-      console.error('Error publishing story:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to publish story');
+      await publishStory(dreamId);
+      // You could update the UI to show the story is published
+    } catch (err) {
+      console.error('Story publishing error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to publish story');
     } finally {
       setIsPublishing(false);
     }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="relative"
-    >
-      <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 rounded-2xl blur-3xl"></div>
-      <Card className="relative backdrop-blur-lg bg-white/5 rounded-2xl shadow-[0_0_15px_rgba(168,85,247,0.15)] border border-purple-500/20">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 text-transparent bg-clip-text">
-                Dream Story
-              </h2>
-              <p className="text-purple-200/80 text-sm">
-                Transform your dream into a captivating visual story
-              </p>
+    <div className="w-full max-w-4xl mx-auto py-8">
+      {!story && (
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={handleGenerateStory}
+          disabled={isLoading}
+          className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+        >
+          {isLoading ? 'Crafting your story...' : 'Craft Story from Dream'}
+        </motion.button>
+      )}
+
+      {error && (
+        <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-200">
+          {error}
+        </div>
+      )}
+
+      {story && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 rounded-2xl blur-3xl"></div>
+          <div className="relative backdrop-blur-lg bg-white/5 rounded-2xl shadow-[0_0_15px_rgba(168,85,247,0.15)] border border-purple-500/20 p-8">
+            {/* Header */}
+            <header className="text-center mb-12">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 text-transparent bg-clip-text mb-4">
+                {story.title}
+              </h1>
+              <p className="text-xl text-purple-200/80 italic">{story.subtitle}</p>
+            </header>
+
+            {/* Introduction */}
+            <div className="mb-12">
+              <p className="text-xl leading-relaxed text-purple-100">{story.introduction}</p>
             </div>
-            {!story && (
-              <Button
-                onClick={generateStory}
-                disabled={isGenerating}
-                className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white border-0 flex items-center gap-2"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Crafting Story...
-                  </>
-                ) : (
-                  <>
-                    <Wand2 className="h-4 w-4" />
-                    Craft Story
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
 
-          <AnimatePresence mode="wait">
-            {story ? (
-              <motion.div
-                key="story"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="space-y-8"
-              >
-                <div className="space-y-4">
-                  <h3 className="text-xl font-semibold text-purple-100">
-                    {story.title}
-                  </h3>
-                  <p className="text-purple-200/90 italic">
-                    {story.summary}
-                  </p>
-                </div>
+            {/* Themes */}
+            <div className="flex flex-wrap gap-2 mb-8">
+              {story.themes.map((theme, index) => (
+                <span
+                  key={index}
+                  className="px-3 py-1 bg-purple-500/20 text-purple-200 rounded-full text-sm border border-purple-500/20"
+                >
+                  {theme}
+                </span>
+              ))}
+            </div>
 
-                <div className="space-y-12">
-                  {story.scenes.map((scene, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="relative group"
-                    >
-                      <div className="aspect-video relative rounded-xl overflow-hidden mb-4">
-                        <Image
-                          src={scene.imageUrl}
-                          alt={scene.caption}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                      <p className="text-purple-100 mb-2">{scene.text}</p>
-                      <p className="text-sm text-purple-200/70 italic">
-                        {scene.caption}
+            {/* Main Content */}
+            <div className="space-y-16">
+              {story.sections.map((section, index) => (
+                <motion.section
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.2 }}
+                  className="relative"
+                >
+                  <h2 className="text-2xl font-bold text-purple-100 mb-6">{section.title}</h2>
+                  
+                  {section.imageUrl && (
+                    <div className="relative h-[400px] mb-8 rounded-xl overflow-hidden shadow-lg">
+                      <Image
+                        src={section.imageUrl}
+                        alt={`Illustration for ${section.title}`}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        priority={index === 0}
+                      />
+                    </div>
+                  )}
+
+                  <div className="prose prose-invert max-w-none">
+                    {section.content.split('\n\n').map((paragraph, pIndex) => (
+                      <p key={pIndex} className="text-purple-200/90 leading-relaxed">
+                        {paragraph}
                       </p>
-                    </motion.div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                </motion.section>
+              ))}
+            </div>
 
-                <div className="flex items-center justify-between pt-6 border-t border-purple-500/20">
-                  <div className="flex items-center gap-2">
-                    <Button
-                      onClick={() => shareStory('facebook')}
-                      variant="ghost"
-                      className="text-purple-200/80 hover:text-purple-200 hover:bg-purple-500/10"
-                    >
-                      <Share2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      onClick={downloadStory}
-                      variant="ghost"
-                      className="text-purple-200/80 hover:text-purple-200 hover:bg-purple-500/10"
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      onClick={() => window.open('/stories/' + dream.id, '_blank')}
-                      variant="ghost"
-                      className="text-purple-200/80 hover:text-purple-200 hover:bg-purple-500/10"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <Button
-                    onClick={publishStory}
-                    disabled={isPublishing}
-                    className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white border-0 flex items-center gap-2"
-                  >
-                    {isPublishing ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Publishing...
-                      </>
-                    ) : (
-                      <>
-                        <BookOpen className="h-4 w-4" />
-                        Publish Story
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="placeholder"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-center py-12"
+            {/* Conclusion */}
+            <div className="mt-12 mb-8">
+              <h2 className="text-2xl font-bold text-purple-100 mb-6">Conclusion</h2>
+              <p className="text-purple-200/90 leading-relaxed">{story.conclusion}</p>
+            </div>
+
+            {/* Interpretation */}
+            <div className="bg-purple-500/10 p-6 rounded-xl border border-purple-500/20">
+              <h3 className="text-xl font-semibold text-purple-100 mb-4">Dream Interpretation</h3>
+              <p className="text-purple-200/90">{story.interpretation}</p>
+            </div>
+
+            {/* Actions */}
+            <div className="mt-12 flex justify-center space-x-4">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-6 py-3 bg-indigo-500/20 text-indigo-200 rounded-lg shadow hover:bg-indigo-500/30 transition-colors border border-indigo-500/20"
+                onClick={() => window.print()}
               >
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-[1px]">
-                  <div className="w-full h-full rounded-full bg-white/5 backdrop-blur-sm flex items-center justify-center">
-                    <BookOpen className="h-8 w-8 text-purple-200" />
-                  </div>
-                </div>
-                <p className="text-lg text-purple-200 mb-2">
-                  Ready to transform your dream?
-                </p>
-                <p className="text-sm text-purple-200/70">
-                  Click the craft button to create a beautiful visual story
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </CardContent>
-      </Card>
-    </motion.div>
+                Save Story
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-6 py-3 bg-purple-500/20 text-purple-200 rounded-lg shadow hover:bg-purple-500/30 transition-colors border border-purple-500/20"
+                onClick={handleGenerateStory}
+              >
+                Generate New Version
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-6 py-3 bg-pink-500/20 text-pink-200 rounded-lg shadow hover:bg-pink-500/30 transition-colors border border-pink-500/20"
+                onClick={handlePublishStory}
+                disabled={isPublishing}
+              >
+                {isPublishing ? 'Publishing...' : 'Publish Story'}
+              </motion.button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </div>
   );
 } 

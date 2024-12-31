@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../auth/[...nextauth]/route';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { authOptions } from '@/lib/auth';
+import { db } from '@/lib/prisma';
 
 // Get a specific dream
 export async function GET(
@@ -16,7 +14,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const dream = await prisma.dream.findFirst({
+    const dream = await db.dream.findFirst({
       where: {
         AND: [
           { id: params.id },
@@ -59,7 +57,7 @@ export async function PUT(
     const { title, content, isPublic } = await req.json();
 
     // Verify dream ownership
-    const existingDream = await prisma.dream.findFirst({
+    const existingDream = await db.dream.findFirst({
       where: {
         AND: [
           { id: params.id },
@@ -73,7 +71,7 @@ export async function PUT(
     }
 
     // Update the dream
-    const updatedDream = await prisma.dream.update({
+    const updatedDream = await db.dream.update({
       where: { id: params.id },
       data: {
         title,
@@ -111,7 +109,7 @@ export async function DELETE(
     }
 
     // Verify dream ownership
-    const existingDream = await prisma.dream.findFirst({
+    const existingDream = await db.dream.findFirst({
       where: {
         AND: [
           { id: params.id },
@@ -125,7 +123,7 @@ export async function DELETE(
     }
 
     // Delete the dream and all related records
-    await prisma.dream.delete({
+    await db.dream.delete({
       where: { id: params.id },
     });
 

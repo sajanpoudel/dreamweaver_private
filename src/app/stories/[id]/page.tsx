@@ -1,28 +1,30 @@
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../api/auth/[...nextauth]/auth';
+import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
-import { prisma } from '@/lib/prisma';
+import { db } from '@/lib/prisma';
 import { StoryView } from '@/components/stories/StoryView';
 
-interface StoryPageProps {
+interface PageProps {
   params: {
     id: string;
   };
 }
 
-export default async function StoryPage({ params }: StoryPageProps) {
+export default async function StoryPage({ params }: PageProps) {
   const session = await getServerSession(authOptions);
+
   if (!session?.user?.id) {
     redirect('/auth/signin');
   }
 
   try {
-    const story = await prisma.dreamStory.findFirst({
+    // Fetch the story with all related data
+    const story = await db.dreamStory.findFirst({
       where: {
         id: params.id,
         OR: [
-          { isPublic: true },
-          { userId: session.user.id }
+          { userId: session.user.id },
+          { isPublic: true }
         ]
       },
       include: {
@@ -35,25 +37,36 @@ export default async function StoryPage({ params }: StoryPageProps) {
         },
         themes: true,
         symbols: true,
+        likes: {
+          where: {
+            userId: session.user.id,
+          },
+          take: 1,
+        },
+        _count: {
+          select: {
+            likes: true,
+            comments: true,
+          },
+        },
       },
     });
 
     if (!story) {
-      redirect('/stories');
+      redirect('/feed');
     }
 
-    // Get related stories based on themes and symbols
-    const relatedStories = await prisma.dreamStory.findMany({
+    // Fetch related stories based on themes and symbols
+    const relatedStories = await db.dreamStory.findMany({
       where: {
-        isPublic: true,
-        publishedAt: { not: null },
         id: { not: story.id },
+        isPublic: true,
         OR: [
           {
             themes: {
               some: {
-                name: {
-                  in: story.themes.map(t => t.name),
+                id: {
+                  in: story.themes.map(theme => theme.id),
                 },
               },
             },
@@ -61,8 +74,8 @@ export default async function StoryPage({ params }: StoryPageProps) {
           {
             symbols: {
               some: {
-                name: {
-                  in: story.symbols.map(s => s.name),
+                id: {
+                  in: story.symbols.map(symbol => symbol.id),
                 },
               },
             },
@@ -72,19 +85,42 @@ export default async function StoryPage({ params }: StoryPageProps) {
       include: {
         user: {
           select: {
+            id: true,
             name: true,
             image: true,
           },
         },
         themes: true,
         symbols: true,
+        likes: {
+          where: {
+            userId: session.user.id,
+          },
+          take: 1,
+        },
+        _count: {
+          select: {
+            likes: true,
+            comments: true,
+          },
+        },
       },
       take: 3,
+      orderBy: {
+        publishedAt: 'desc',
+      },
     });
 
-    return <StoryView story={story} relatedStories={relatedStories} />;
+    return (
+      <StoryView 
+        story={story} 
+        isOwner={story.userId === session.user.id}
+        currentUserId={session.user.id}
+        relatedStories={relatedStories}
+      />
+    );
   } catch (error) {
-    console.error('Story page error:', error);
-    throw error;
+    console.error('Error loading story:', error);
+    redirect('/feed');
   }
 } 

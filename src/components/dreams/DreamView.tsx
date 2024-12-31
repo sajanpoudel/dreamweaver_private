@@ -4,7 +4,7 @@ import { formatDate } from '../../lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { DreamActions } from '../dreams/DreamActions';
 import { DreamAnalysis } from '../dreams/DreamAnalysis';
-import { DreamStory } from '../dreams/DreamStory';
+import DreamStory from '../dreams/DreamStory';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { Button } from '../ui/button';
@@ -135,7 +135,7 @@ export function DreamView({ dream }: DreamViewProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <DreamStory dream={dream} />
+          <DreamStory dreamId={dream.id} />
         </motion.div>
       </div>
     </div>

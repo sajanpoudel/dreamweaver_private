@@ -1,39 +1,39 @@
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
-import { DreamView } from '@/components/dreams/DreamView';
+import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
-import prisma from '@/lib/prisma';
+import { db } from '@/lib/prisma';
+import { DreamView } from '@/components/dreams/DreamView';
+import React from 'react';
 
-interface PageProps {
-  params: {
-    id: string;
-  };
-}
-
-export default async function DreamPage({ params }: PageProps) {
+export default async function DreamPage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
-    redirect('/login');
+    redirect('/auth/signin');
   }
 
-  const dream = await prisma.dream.findFirst({
-    where: {
-      AND: [
-        { id: params.id },
-        { userId: session.user.id }
-      ]
-    },
-    include: {
-      symbols: true,
-      themes: true,
-      emotions: true,
-    },
-  });
+  try {
+    const dream = await db.dream.findFirst({
+      where: {
+        AND: [
+          { id: params.id },
+          { userId: session.user.id }
+        ]
+      },
+      include: {
+        symbols: true,
+        themes: true,
+        emotions: true,
+      },
+    });
 
-  if (!dream) {
-    redirect('/dashboard');
+    if (!dream) {
+      redirect('/dashboard');
+    }
+
+    return <DreamView dream={dream} />;
+  } catch (error) {
+    console.error('Error fetching dream:', error);
+    throw error;
   }
-
-  return <DreamView dream={dream} />;
 } 

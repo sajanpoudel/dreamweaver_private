@@ -1,8 +1,8 @@
 import { OpenAI } from 'openai';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../auth/[...nextauth]/route';
-import prisma from '@/lib/prisma';
+import { authOptions } from '@/lib/auth';
+import { db } from '@/lib/prisma';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -16,42 +16,45 @@ export async function POST(req: Request) {
     }
 
     const { dreamId } = await req.json();
-    const dream = await prisma.dream.findUnique({
-      where: { id: dreamId },
-      select: { content: true },
+    if (!dreamId) {
+      return NextResponse.json({ error: 'Dream ID is required' }, { status: 400 });
+    }
+
+    // Get the dream content
+    const dream = await db.dream.findFirst({
+      where: {
+        AND: [
+          { id: dreamId },
+          { userId: session.user.id }
+        ]
+      }
     });
 
     if (!dream) {
       return NextResponse.json({ error: 'Dream not found' }, { status: 404 });
     }
 
-    const prompt = `Analyze the following dream and extract:
-1. Symbols: Key objects, people, or elements that might have symbolic meaning
-2. Themes: Main themes or concepts present in the dream
-3. Emotions: Emotions experienced or conveyed in the dream (with intensity from 1-10)
-
-Return the analysis in the following JSON format exactly:
-{
-  "symbols": [{"name": "symbol name", "meaning": "potential meaning"}],
-  "themes": ["theme1", "theme2"],
-  "emotions": [{"name": "emotion name", "intensity": number}]
-}
-
-Dream content: "${dream.content}"`;
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.7,
-      max_tokens: 1000,
+    // Extract metadata using OpenAI
+    const completion = await openai.chat.completions.create({
+      messages: [
+        {
+          role: "system",
+          content: "You are a dream analysis expert. Extract symbols, themes, and emotions from the dream content."
+        },
+        {
+          role: "user",
+          content: dream.content
+        }
+      ],
+      model: "gpt-3.5-turbo",
     });
 
-    const analysis = JSON.parse(response.choices[0].message.content || "{}");
+    const analysis = JSON.parse(completion.choices[0].message.content || '{}');
 
     // Create or update symbols
     const symbols = await Promise.all(
       analysis.symbols.map((symbol: { name: string; meaning: string }) =>
-        prisma.symbol.upsert({
+        db.symbol.upsert({
           where: { name: symbol.name },
           update: { description: symbol.meaning },
           create: {
@@ -65,7 +68,7 @@ Dream content: "${dream.content}"`;
     // Create or update themes
     const themes = await Promise.all(
       analysis.themes.map((theme: string) =>
-        prisma.theme.upsert({
+        db.theme.upsert({
           where: { name: theme },
           update: {},
           create: { name: theme },
@@ -76,7 +79,7 @@ Dream content: "${dream.content}"`;
     // Create or update emotions
     const emotions = await Promise.all(
       analysis.emotions.map((emotion: { name: string; intensity: number }) =>
-        prisma.emotion.upsert({
+        db.emotion.upsert({
           where: { name: emotion.name },
           update: { intensity: emotion.intensity },
           create: {
@@ -88,7 +91,7 @@ Dream content: "${dream.content}"`;
     );
 
     // Update dream with relationships
-    await prisma.dream.update({
+    await db.dream.update({
       where: { id: dreamId },
       data: {
         symbols: {

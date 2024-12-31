@@ -1,27 +1,36 @@
-import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
+import { authOptions } from '@/lib/auth';
+import { db } from '@/lib/prisma';
+import { NextResponse } from 'next/server';
+import type { Session } from 'next-auth';
 import OpenAI from 'openai';
-import prisma from '@/lib/prisma';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions) as Session & {
+      user: {
+        id: string;
+        email: string;
+        name: string;
+      };
+    };
+
     if (!session?.user?.id) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const { dreamId } = await req.json();
+    const { dreamId } = await request.json();
+    
     if (!dreamId) {
       return new NextResponse('Dream ID is required', { status: 400 });
     }
 
-    // Get the dream content first
-    const dream = await prisma.dream.findUnique({
+    // Get the dream content
+    const dream = await db.dream.findUnique({
       where: { id: dreamId },
       include: {
         symbols: true,
@@ -34,168 +43,129 @@ export async function POST(req: Request) {
       return new NextResponse('Dream not found', { status: 404 });
     }
 
-    // Check if a story already exists for this dream
-    const existingStory = await prisma.dreamStory.findFirst({
-      where: {
-        dreamId: dreamId,
-        userId: session.user.id,
-      },
-    });
-
-    if (existingStory) {
-      try {
-        const parsedContent = JSON.parse(existingStory.content);
-        return NextResponse.json(parsedContent);
-      } catch (error) {
-        console.error('Error parsing existing story:', error);
-        // If we can't parse the existing story, we'll generate a new one
-      }
+    if (dream.userId !== session.user.id) {
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    // Generate story structure with GPT-4
-    const storyPrompt = `Create an engaging story based on this dream:
-Content: ${dream.content}
-Symbols: ${dream.symbols.map(s => s.name).join(', ')}
-Themes: ${dream.themes.map(t => t.name).join(', ')}
-Emotions: ${dream.emotions.map(e => e.name).join(', ')}
-
-Create a story with the following structure:
-1. A captivating title
-2. A brief summary
-3. 3-5 scenes, each with:
-   - Descriptive text
-   - A detailed image prompt for DALL-E
-   - A caption for the image
-
-You must respond with a valid JSON object using this exact structure:
-{
-  "title": "string",
-  "summary": "string",
-  "scenes": [
-    {
-      "text": "string",
-      "imagePrompt": "string",
-      "caption": "string"
-    }
-  ]
-}
-
-Do not include any text before or after the JSON object. The response must be a valid JSON object that can be parsed.`;
-
+    // Generate story using OpenAI
     const completion = await openai.chat.completions.create({
       model: "gpt-4",
-      messages: [{ role: "user", content: storyPrompt }],
-      temperature: 0.9
+      messages: [
+        {
+          role: "system",
+          content: "You are a creative storyteller who transforms dreams into engaging narratives in a Medium article style. Create well-structured stories with clear sections, vivid descriptions, and meaningful insights."
+        },
+        {
+          role: "user",
+          content: `Transform this dream into a captivating story article. Structure it like a professional Medium post with sections and visual elements. Your response must be a valid JSON object with this structure:
+{
+  "title": "An engaging title that captures the essence of the dream",
+  "subtitle": "A compelling subtitle that hints at the story's meaning",
+  "introduction": "An engaging opening paragraph that sets the scene",
+  "sections": [
+    {
+      "title": "Section title",
+      "content": "Section content with rich narrative and insights",
+      "imagePrompt": "Detailed prompt for an image that captures this section's essence"
+    }
+  ],
+  "conclusion": "A thoughtful conclusion that ties everything together",
+  "themes": ["Key theme 1", "Key theme 2"],
+  "interpretation": "Brief interpretation of the dream's significance"
+}
+
+Dream content: ${dream.content}
+Symbols to include: ${dream.symbols.map(s => s.name).join(', ')}
+Themes to incorporate: ${dream.themes.map(t => t.name).join(', ')}
+Emotions to convey: ${dream.emotions.map(e => e.name).join(', ')}`
+        }
+      ],
+      temperature: 0.7
     });
 
-    if (!completion.choices[0].message.content) {
-      throw new Error('Failed to generate story structure');
-    }
-
-    let storyStructure;
+    let storyData;
     try {
-      storyStructure = JSON.parse(completion.choices[0].message.content);
+      const content = completion.choices[0].message.content;
+      if (!content) {
+        throw new Error('No content received from OpenAI');
+      }
+      
+      // Remove any potential markdown code block markers
+      const jsonString = content.replace(/```json\n?|\n?```/g, '').trim();
+      storyData = JSON.parse(jsonString);
+      
+      // Validate the response structure
+      if (!storyData.title || !storyData.sections || !Array.isArray(storyData.sections)) {
+        throw new Error('Invalid story data structure');
+      }
     } catch (error) {
-      console.error('Failed to parse story structure:', error);
-      throw new Error('Invalid story structure received from OpenAI');
+      console.error('Error parsing OpenAI response:', error);
+      console.log('Raw response:', completion.choices[0].message.content);
+      return new NextResponse('Failed to parse story data', { status: 500 });
     }
 
-    // Validate the story structure
-    if (!storyStructure.title || !storyStructure.summary || !storyStructure.scenes || !Array.isArray(storyStructure.scenes)) {
-      throw new Error('Invalid story structure generated');
-    }
-
-    // Generate images for each scene using DALL-E
+    // Generate images for each scene
     const scenes = await Promise.all(
-      storyStructure.scenes.map(async (scene: any) => {
+      storyData.sections.map(async (section: { title: string, content: string, imagePrompt: string }) => {
         try {
           const image = await openai.images.generate({
             model: "dall-e-3",
-            prompt: scene.imagePrompt + " Style: Dreamlike, cinematic, highly detailed, professional quality.",
-            size: "1792x1024",
-            quality: "hd",
+            prompt: section.imagePrompt,
             n: 1,
+            size: "1024x1024",
           });
 
-          if (!image.data[0]?.url) {
-            throw new Error('Failed to generate image');
-          }
-
           return {
-            text: scene.text,
+            ...section,
             imageUrl: image.data[0].url,
-            caption: scene.caption,
           };
         } catch (error) {
           console.error('Error generating image:', error);
-          throw new Error('Failed to generate scene image');
+          return {
+            ...section,
+            imageUrl: null,
+          };
         }
       })
     );
 
-    const story = {
-      title: storyStructure.title,
-      summary: storyStructure.summary,
-      scenes,
+    // Prepare the complete story content
+    const completeStory = {
+      ...storyData,
+      sections: scenes
     };
 
-    // Save the generated story
-    try {
-      const savedStory = await prisma.$transaction(async (tx) => {
-        // Create the story
-        const newStory = await tx.dreamStory.create({
-          data: {
-            dreamId,
-            userId: session.user.id,
-            title: story.title,
-            content: JSON.stringify(story),
-            isPublic: false,
-          },
-        });
-
-        // Create themes
-        if (dream.themes.length > 0) {
-          await Promise.all(
-            dream.themes.map(async (theme) => {
-              await tx.storyTheme.create({
-                data: {
-                  name: theme.name,
-                  storyId: newStory.id,
-                },
-              });
-            })
-          );
+    // Create the story in the database
+    const story = await db.dreamStory.create({
+      data: {
+        title: storyData.title,
+        content: JSON.stringify(completeStory), // Serialize the complete story data
+        userId: session.user.id,
+        dreamId: dreamId,
+        symbols: {
+          connect: dream.symbols.map(symbol => ({ id: symbol.id }))
+        },
+        themes: {
+          connect: dream.themes.map(theme => ({ id: theme.id }))
         }
+      },
+      include: {
+        symbols: true,
+        themes: true,
+      },
+    });
 
-        // Create symbols
-        if (dream.symbols.length > 0) {
-          await Promise.all(
-            dream.symbols.map(async (symbol) => {
-              await tx.storySymbol.create({
-                data: {
-                  name: symbol.name,
-                  storyId: newStory.id,
-                },
-              });
-            })
-          );
-        }
-
-        return newStory;
-      });
-
-      console.log('Story saved successfully:', savedStory.id);
-    } catch (error) {
-      console.error('Error saving story:', error);
-      // Continue even if saving fails - user can still see the generated story
-    }
-
-    return NextResponse.json(story);
+    return NextResponse.json({
+      story: {
+        ...story,
+        ...completeStory // Include the complete story data in the response
+      }
+    });
   } catch (error) {
-    console.error('Story generation error:', error);
-    return new NextResponse(
-      error instanceof Error ? error.message : 'Failed to generate story',
-      { status: 500 }
-    );
+    console.error('Error saving story:', error);
+    if (error instanceof Error) {
+      return new NextResponse(error.message, { status: 500 });
+    }
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 } 

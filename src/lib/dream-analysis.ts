@@ -1,5 +1,6 @@
 import { OpenAI } from 'openai';
-import { prisma } from './prisma';
+import { db } from '@/lib/prisma';
+import type { Symbol, Theme, Emotion } from '@prisma/client';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -74,7 +75,7 @@ Return the analysis in the following JSON format exactly:
     const symbols = await Promise.all(
       analysis.symbols.map(async symbol => {
         try {
-          return await prisma.symbol.upsert({
+          return await db.symbol.upsert({
             where: { name: symbol.name },
             update: { description: symbol.meaning },
             create: {
@@ -93,7 +94,7 @@ Return the analysis in the following JSON format exactly:
     const themes = await Promise.all(
       analysis.themes.map(async theme => {
         try {
-          return await prisma.theme.upsert({
+          return await db.theme.upsert({
             where: { name: theme },
             update: {},
             create: {
@@ -112,7 +113,7 @@ Return the analysis in the following JSON format exactly:
     const emotions = await Promise.all(
       analysis.emotions.map(async emotion => {
         try {
-          return await prisma.emotion.upsert({
+          return await db.emotion.upsert({
             where: { name: emotion.name },
             update: { intensity: emotion.intensity },
             create: {
@@ -128,17 +129,20 @@ Return the analysis in the following JSON format exactly:
     ).then(results => results.filter(Boolean));
 
     // Update the dream with the analysis results
-    await prisma.dream.update({
+    await db.dream.update({
       where: { id: dream.id },
       data: {
         symbols: {
-          connect: symbols.map(symbol => ({ id: symbol.id }))
+          connect: symbols.filter((symbol: Symbol | null): symbol is Symbol => symbol !== null)
+            .map(symbol => ({ id: symbol.id }))
         },
         themes: {
-          connect: themes.map(theme => ({ id: theme.id }))
+          connect: themes.filter((theme: Theme | null): theme is Theme => theme !== null)
+            .map(theme => ({ id: theme.id }))
         },
         emotions: {
-          connect: emotions.map(emotion => ({ id: emotion.id }))
+          connect: emotions.filter((emotion: Emotion | null): emotion is Emotion => emotion !== null)
+            .map(emotion => ({ id: emotion.id }))
         }
       },
     });

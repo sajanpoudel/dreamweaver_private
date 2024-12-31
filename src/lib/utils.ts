@@ -14,4 +14,8 @@ export function formatDate(date: Date) {
     hour: 'numeric',
     minute: 'numeric',
   }).format(new Date(date));
+}
+
+export function getBaseUrl() {
+  return process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 } 

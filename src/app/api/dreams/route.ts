@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/auth';
-import prisma from '@/lib/prisma';
+import { authOptions } from '@/lib/auth';
+import { db } from '@/lib/prisma';
 
 export async function POST(req: Request) {
   try {
@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     }
 
     // Create the dream and its relationships in a transaction
-    const dream = await prisma.$transaction(async (tx) => {
+    const dream = await db.$transaction(async (tx) => {
       // Create the dream
       const newDream = await tx.dream.create({
         data: {
@@ -118,7 +118,7 @@ export async function GET(req: Request) {
     const limit = parseInt(searchParams.get('limit') || '10');
     const skip = (page - 1) * limit;
 
-    const dreams = await prisma.dream.findMany({
+    const dreams = await db.dream.findMany({
       where: {
         userId: session.user.id,
       },
@@ -134,7 +134,7 @@ export async function GET(req: Request) {
       take: limit,
     });
 
-    const total = await prisma.dream.count({
+    const total = await db.dream.count({
       where: {
         userId: session.user.id,
       },
