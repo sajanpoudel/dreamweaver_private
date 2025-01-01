@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    domains: ['oaidalleapiprodscus.blob.core.windows.net'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -8,36 +9,18 @@ const nextConfig = {
         port: '',
         pathname: '/private/**',
       },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '3000',
-        pathname: '/**',
-      },
     ],
-  },
-  // Add security headers
-  headers: async () => {
-    return [
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
-          }
-        ],
-      },
-    ];
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   // Configure compiler options
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
-    styledComponents: true,
   },
   // Handle unwanted attributes
   reactStrictMode: true,
   swcMinify: true,
-};
+}
 
-module.exports = nextConfig; 
+module.exports = nextConfig 

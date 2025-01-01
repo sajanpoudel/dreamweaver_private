@@ -47,6 +47,7 @@ model User {
   password      String?
   emailVerified DateTime?
   image         String?
+  bio           String?      @db.Text
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   accounts      Account[]
