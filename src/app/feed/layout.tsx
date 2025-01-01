@@ -1,4 +1,4 @@
-import { DashboardHeader } from '@/components/DashboardHeader';
+import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { FallingStars } from '@/components/FallingStars';
 
 export default function FeedLayout({

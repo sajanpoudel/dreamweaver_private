@@ -245,7 +245,7 @@ export function StoryView({ story, isOwner, currentUserId, relatedStories }: Sto
             <div>
               <p className="text-purple-100 font-medium">{story.user.name}</p>
               <p className="text-sm text-purple-200/70">
-                {formatDate(story.publishedAt)}
+                {formatDate(story.publishedAt || new Date())}
               </p>
             </div>
           </div>

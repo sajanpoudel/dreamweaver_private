@@ -4,8 +4,8 @@ import { Button } from './ui/button';
 import { ThumbsUp, MessageCircle, Share2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { parseAnalysis, type DreamAnalysis } from '@/lib/dream-analysis';
-import { Badge } from './ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface StoryViewProps {
   story: any;

@@ -106,54 +106,45 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    if (!session?.user) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
-
-    const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
-    const skip = (page - 1) * limit;
 
     const dreams = await db.dream.findMany({
       where: {
         userId: session.user.id,
       },
-      include: {
-        symbols: true,
-        themes: true,
-        emotions: true,
-      },
       orderBy: {
         createdAt: 'desc',
       },
-      skip,
-      take: limit,
-    });
-
-    const total = await db.dream.count({
-      where: {
-        userId: session.user.id,
+      include: {
+        symbols: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        themes: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        emotions: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 
-    return NextResponse.json({
-      dreams,
-      pagination: {
-        total,
-        pages: Math.ceil(total / limit),
-        current: page,
-        limit,
-      },
-    });
+    return NextResponse.json(dreams);
   } catch (error) {
     console.error('Error fetching dreams:', error);
-    return new NextResponse(
-      error instanceof Error ? error.message : 'Failed to fetch dreams',
-      { status: 500 }
-    );
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 } 
