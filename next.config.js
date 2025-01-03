@@ -14,7 +14,7 @@ const nextConfig = {
         hostname: '**.gravatar.com',
         port: '',
         pathname: '/**',
-      }
+      },
     ],
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
@@ -27,6 +27,6 @@ const nextConfig = {
   // Handle unwanted attributes
   reactStrictMode: true,
   swcMinify: true,
-}
+};
 
-module.exports = nextConfig 
+module.exports = nextConfig;
