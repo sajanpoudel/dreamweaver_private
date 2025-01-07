@@ -4,4 +4,4 @@ interface Window {
 }
 
 declare var webkitSpeechRecognition: any;
-declare var SpeechRecognition: any; 
+declare var SpeechRecognition: any;
