@@ -4,10 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/prisma';
 
 // Get chat messages
-export async function GET(
-  req: Request,
-  { params }: { params: { chatId: string } }
-) {
+export async function GET(req: Request, { params }: { params: { chatId: string } }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -87,10 +84,7 @@ export async function GET(
 }
 
 // Send message
-export async function POST(
-  req: Request,
-  { params }: { params: { chatId: string } }
-) {
+export async function POST(req: Request, { params }: { params: { chatId: string } }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -160,10 +154,7 @@ export async function POST(
 }
 
 // Update message
-export async function PATCH(
-  req: Request,
-  { params }: { params: { chatId: string } }
-) {
+export async function PATCH(req: Request, { params }: { params: { chatId: string } }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -215,10 +206,7 @@ export async function PATCH(
 }
 
 // Delete message
-export async function DELETE(
-  req: Request,
-  { params }: { params: { chatId: string } }
-) {
+export async function DELETE(req: Request, { params }: { params: { chatId: string } }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -251,4 +239,4 @@ export async function DELETE(
     console.error('Error deleting message:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
-} 
+}
