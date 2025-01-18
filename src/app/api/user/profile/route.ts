@@ -9,7 +9,7 @@ const profileUpdateSchema = z.object({
   name: z.string().optional(),
   email: z.string().email('Invalid email address').optional(),
   bio: z.string().optional(),
-  image: z.string().url().nullish(),
+  image: z.string().nullish(),
 });
 
 export async function PUT(req: Request) {

@@ -8,7 +8,7 @@ import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Badge } from '../ui/badge';
-import { formatDate } from '@/lib/utils';
+import { formatDate, getImageUrl } from '@/lib/utils';
 import { Home, Share2, Heart, MessageCircle, Download, Send } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
@@ -237,7 +237,7 @@ export function StoryView({ story, isOwner, currentUserId, relatedStories }: Sto
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center gap-3 mb-6">
             <Avatar className="h-12 w-12 border-2 border-purple-500/20">
-              <AvatarImage src={story.user.image || undefined} />
+              <AvatarImage src={getImageUrl(story.user.image)} />
               <AvatarFallback>
                 {story.user.name?.charAt(0) || '?'}
               </AvatarFallback>

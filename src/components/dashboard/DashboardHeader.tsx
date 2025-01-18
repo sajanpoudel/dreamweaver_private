@@ -10,9 +10,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getImageUrl } from "@/lib/utils";
 
 export function DashboardHeader() {
-  const { data: session } = useSession();
+  const { data: session } = useSession({
+    required: true,
+  });
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-black/10 backdrop-blur-xl">
@@ -38,8 +41,10 @@ export function DashboardHeader() {
           
           <DropdownMenu>
             <DropdownMenuTrigger className="focus:outline-none">
-              <Avatar className="h-8 w-8 hover:ring-2 hover:ring-purple-500 transition-all">
-                <AvatarImage src={session?.user?.image || ''} />
+              <Avatar 
+                className="h-8 w-8 hover:ring-2 hover:ring-purple-500 transition-all"
+              >
+                <AvatarImage src={getImageUrl(session?.user?.image)} />
                 <AvatarFallback className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500">
                   {session?.user?.name?.[0] || session?.user?.email?.[0]}
                 </AvatarFallback>

@@ -2,9 +2,9 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { motion } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
+import { Camera, User, Mail, FileText, Upload } from 'lucide-react';
 
 interface ProfileFormData {
   name: string;
@@ -29,14 +30,15 @@ export default function ProfilePage() {
     },
   });
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState<ProfileFormData>({
     name: '',
     email: '',
     bio: '',
     image: '',
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -67,6 +69,44 @@ export default function ProfilePage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size should be less than 5MB');
+      return;
+    }
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload image');
+      }
+
+      const data = await response.json();
+      setFormData(prev => ({ ...prev, image: data.url }));
+      toast.success('Image uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error('Failed to upload image');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -104,12 +144,17 @@ export default function ProfilePage() {
         ...session,
         user: {
           ...session?.user,
-          ...data,
+          name: data.name,
+          email: data.email,
+          image: data.image,
+          bio: data.bio,
         },
       });
+
+      // Force a hard refresh to update all components
+      window.location.reload();
       
       toast.success('Profile updated successfully');
-      setIsEditing(false);
     } catch (error) {
       console.error('Error updating profile:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to update profile');
@@ -125,7 +170,7 @@ export default function ProfilePage() {
         <main className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center h-64">
             <div className="text-white text-center">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-purple-400 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-purple-400 border-r-transparent align-[-0.125em]" />
               <p className="mt-4">Loading your profile...</p>
             </div>
           </div>
@@ -135,116 +180,120 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1a1c2e] via-[#2d2b55] to-[#3c1f52] overflow-hidden">
+    <div className="min-h-screen bg-[#0f0f1a] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]">
       <DashboardHeader />
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-2xl mx-auto group"
+          className="max-w-4xl mx-auto"
         >
-          <Card className="relative backdrop-blur-lg bg-black/40 border-white/10 hover:border-white/20 transition duration-300">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-500 to-purple-500 rounded-lg blur opacity-25 group-hover:opacity-50 transition duration-300"></div>
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="absolute inset-0 bg-gradient-to-tl from-transparent via-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <CardHeader>
-              <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 text-transparent bg-clip-text">
-                Profile Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="relative">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="flex flex-col items-center gap-4 mb-6">
-                  <Avatar className="w-24 h-24">
-                    <AvatarImage src={formData.image} />
-                    <AvatarFallback className="bg-purple-500/20 text-purple-200 text-xl">
-                      {formData.name?.charAt(0)?.toUpperCase() || '?'}
-                    </AvatarFallback>
-                  </Avatar>
-                  {isEditing && (
-                    <div className="w-full">
-                      <Label htmlFor="image" className="text-sm text-gray-400">Profile Image URL</Label>
-                      <Input
-                        id="image"
-                        name="image"
-                        value={formData.image}
-                        onChange={handleInputChange}
-                        className="bg-gray-900/50 border-purple-500/20 text-white"
-                        placeholder="Enter image URL"
-                      />
-                    </div>
-                  )}
-                </div>
+          <div className="mb-8 text-center">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 text-transparent bg-clip-text mb-2">
+              Your Profile
+            </h1>
+            <p className="text-gray-300">Manage your personal information and preferences</p>
+          </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="name" className="text-sm text-gray-400">Name</Label>
+          <Card className="backdrop-blur-xl bg-gradient-to-br from-gray-900/90 to-gray-800/90 border border-purple-500/20 hover:border-purple-500/40 transition-all duration-500">
+            <CardContent className="p-0">
+              <div className="relative h-48 bg-gradient-to-r from-purple-600/30 via-pink-600/30 to-purple-600/30">
+                <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2">
+                  <div className="relative group">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                    />
+                    <Avatar 
+                      className="w-32 h-32 border-4 border-white/10 shadow-xl cursor-pointer group-hover:border-purple-500/50 transition-all duration-300"
+                      onClick={handleImageClick}
+                    >
+                      <AvatarImage src={formData.image} />
+                      <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-2xl">
+                        {formData.name?.charAt(0)?.toUpperCase() || '?'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div 
+                      className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer"
+                      onClick={handleImageClick}
+                    >
+                      <div className="bg-black/50 w-full h-full rounded-full flex items-center justify-center">
+                        {isUploading ? (
+                          <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-r-transparent" />
+                        ) : (
+                          <Upload className="w-6 h-6 text-white" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-center mt-4 text-sm text-gray-400">Click to upload profile picture</p>
+                </div>
+              </div>
+
+              <form onSubmit={handleSubmit} className="p-8 mt-16 space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-sm text-gray-300 flex items-center gap-2">
+                      <User className="w-4 h-4" /> Name
+                    </Label>
                     <Input
                       id="name"
                       name="name"
                       value={formData.name}
                       onChange={handleInputChange}
-                      disabled={!isEditing}
-                      className="bg-gray-900/50 border-purple-500/20 text-white"
+                      className="bg-white/5 border-white/10 text-white focus:border-purple-500/50 transition-colors"
+                      placeholder="Your name"
                     />
                   </div>
 
-                  <div>
-                    <Label htmlFor="email" className="text-sm text-gray-400">Email</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm text-gray-300 flex items-center gap-2">
+                      <Mail className="w-4 h-4" /> Email
+                    </Label>
                     <Input
                       id="email"
                       name="email"
                       type="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      disabled={!isEditing}
-                      className="bg-gray-900/50 border-purple-500/20 text-white"
+                      className="bg-white/5 border-white/10 text-white focus:border-purple-500/50 transition-colors"
+                      placeholder="Your email"
                     />
                   </div>
 
-                  <div>
-                    <Label htmlFor="bio" className="text-sm text-gray-400">Bio</Label>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="bio" className="text-sm text-gray-300 flex items-center gap-2">
+                      <FileText className="w-4 h-4" /> Bio
+                    </Label>
                     <Textarea
                       id="bio"
                       name="bio"
                       value={formData.bio}
                       onChange={handleInputChange}
-                      disabled={!isEditing}
-                      className="bg-gray-900/50 border-purple-500/20 text-white min-h-[100px]"
+                      className="bg-white/5 border-white/10 text-white focus:border-purple-500/50 transition-colors min-h-[120px]"
                       placeholder="Tell us about yourself..."
                     />
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-4">
-                  {isEditing ? (
-                    <>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setIsEditing(false)}
-                        className="border-purple-500/20 text-gray-300 hover:text-white"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={isLoading}
-                        className="bg-purple-500 text-white hover:bg-purple-600"
-                      >
-                        {isLoading ? 'Saving...' : 'Save Changes'}
-                      </Button>
-                    </>
-                  ) : (
-                    <Button
-                      type="button"
-                      onClick={() => setIsEditing(true)}
-                      className="bg-purple-500 text-white hover:bg-purple-600"
-                    >
-                      Edit Profile
-                    </Button>
-                  )}
+                <div className="flex justify-end pt-4">
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 px-8 hover:scale-105 transition-all duration-300"
+                  >
+                    {isLoading ? (
+                      <>
+                        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent" />
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Changes'
+                    )}
+                  </Button>
                 </div>
               </form>
             </CardContent>
