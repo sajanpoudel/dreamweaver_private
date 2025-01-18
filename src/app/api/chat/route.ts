@@ -54,9 +54,7 @@ export async function GET() {
     // Transform data to include unread count and last message
     const transformedChats = await Promise.all(
       chats.map(async (chat) => {
-        const userParticipant = chat.participants.find(
-          (p) => p.userId === session.user.id
-        );
+        const userParticipant = chat.participants.find((p) => p.userId === session.user.id);
 
         const unreadCount = await db.chatMessage.count({
           where: {
@@ -275,4 +273,4 @@ export async function DELETE(req: Request) {
     console.error('Error leaving chat:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
-} 
+}
