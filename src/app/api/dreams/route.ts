@@ -6,6 +6,9 @@ import { db } from '@/lib/prisma';
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
+    console.log('Session:', session);
+    console.log('User ID:', session?.user?.id);
+    
     if (!session?.user?.id) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
@@ -16,6 +19,15 @@ export async function POST(req: Request) {
       return new NextResponse('Dream content is required', { status: 400 });
     }
 
+    // Verify user exists before creating dream
+    const user = await db.user.findUnique({
+      where: { id: session.user.id },
+    });
+
+    if (!user) {
+      return new NextResponse('User not found', { status: 404 });
+    }
+
     // Create the dream and its relationships in a transaction
     const dream = await db.$transaction(async (tx) => {
       // Create the dream
@@ -23,7 +35,7 @@ export async function POST(req: Request) {
         data: {
           title,
           content,
-          userId: session.user.id,
+          userId: user.id, // Use verified user ID
         },
       });
 
@@ -68,14 +80,14 @@ export async function POST(req: Request) {
       // Create or connect emotions
       if (emotions.length > 0) {
         await Promise.all(
-          emotions.map(async (emotion: { name: string; intensity: number; description?: string }) => {
+          emotions.map(async (emotion: { name: string; intensity: number }) => {
             await tx.emotion.upsert({
               where: { name: emotion.name },
               update: {},
               create: {
                 name: emotion.name,
-                intensity: emotion.intensity || 0,
-                description: emotion.description || null,
+                valence: emotion.intensity > 0 ? 1 : -1,
+                arousal: Math.abs(emotion.intensity),
                 dreams: {
                   connect: { id: newDream.id },
                 },

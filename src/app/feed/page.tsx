@@ -12,9 +12,7 @@ export default async function FeedPage() {
 
   const stories = await db.dreamStory.findMany({
     where: {
-      publishedAt: {
-        not: null
-      },
+      isPublic: true,
     },
     include: {
       user: {
@@ -33,17 +31,20 @@ export default async function FeedPage() {
       },
     },
     orderBy: {
-      publishedAt: 'desc',
+      createdAt: 'desc',
     },
   });
 
-  return (
-    <div className="container max-w-4xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-purple-100">Dream Stories</h1>
-        <p className="text-purple-200/80">Explore dream narratives from the community</p>
+  if (stories.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+        <div className="bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-purple-500/20 p-8 rounded-2xl backdrop-blur-sm border border-purple-500/20">
+          <h2 className="text-2xl font-semibold text-purple-200 mb-3">No Dream Stories Yet</h2>
+          <p className="text-purple-200/80">Be the first to share your dream story with the community!</p>
+        </div>
       </div>
-      <DreamFeed stories={stories} />
-    </div>
-  );
+    );
+  }
+
+  return <DreamFeed stories={stories} currentUserId={session.user.id} />;
 } 

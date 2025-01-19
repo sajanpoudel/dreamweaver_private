@@ -3,6 +3,14 @@ import { db } from '@/lib/prisma';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { compare } from 'bcryptjs';
 
+interface ExtendedUser {
+  id: string;
+  email: string;
+  name?: string | null;
+  image?: string | null;
+  bio?: string | null;
+}
+
 export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/auth/signin',
@@ -51,28 +59,30 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           image: user.image,
           bio: user.bio,
-        };
+        } as ExtendedUser;
       }
     })
   ],
   callbacks: {
     session: ({ session, token }) => {
+      console.log('Session Callback - Token:', token);
       return {
         ...session,
         user: {
           ...session.user,
-          id: token.id,
-          bio: token.bio,
+          id: token.sub as string,
+          bio: token.bio as string | null,
         },
       };
     },
     jwt: async ({ token, user }) => {
+      console.log('JWT Callback - User:', user);
       if (user) {
-        const u = user as unknown as any;
+        const extendedUser = user as ExtendedUser;
         return {
           ...token,
-          id: u.id,
-          bio: u.bio,
+          sub: extendedUser.id,
+          bio: extendedUser.bio,
         };
       }
       return token;

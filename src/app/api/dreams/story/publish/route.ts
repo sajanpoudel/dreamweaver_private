@@ -40,7 +40,7 @@ export async function POST(req: Request) {
       where: { id: story.id },
       data: {
         isPublic: true,
-        publishedAt: new Date(),    
+        publishedAt: new Date(),
       },
       include: {
         themes: true,
