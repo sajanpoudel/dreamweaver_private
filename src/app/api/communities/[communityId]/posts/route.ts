@@ -4,10 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/prisma';
 
 // Get community posts
-export async function GET(
-  req: Request,
-  { params }: { params: { communityId: string } }
-) {
+export async function GET(req: Request, { params }: { params: { communityId: string } }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -80,10 +77,7 @@ export async function GET(
 }
 
 // Create community post
-export async function POST(
-  req: Request,
-  { params }: { params: { communityId: string } }
-) {
+export async function POST(req: Request, { params }: { params: { communityId: string } }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -137,10 +131,7 @@ export async function POST(
 }
 
 // Update community post
-export async function PATCH(
-  req: Request,
-  { params }: { params: { communityId: string } }
-) {
+export async function PATCH(req: Request, { params }: { params: { communityId: string } }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -196,10 +187,7 @@ export async function PATCH(
 }
 
 // Delete community post
-export async function DELETE(
-  req: Request,
-  { params }: { params: { communityId: string } }
-) {
+export async function DELETE(req: Request, { params }: { params: { communityId: string } }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -236,4 +224,4 @@ export async function DELETE(
     console.error('Error deleting community post:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
-} 
+}
