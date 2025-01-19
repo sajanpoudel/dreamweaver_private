@@ -4,10 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/prisma';
 
 // Get community members
-export async function GET(
-  req: Request,
-  { params }: { params: { communityId: string } }
-) {
+export async function GET(req: Request, { params }: { params: { communityId: string } }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -42,10 +39,7 @@ export async function GET(
 }
 
 // Join community
-export async function POST(
-  req: Request,
-  { params }: { params: { communityId: string } }
-) {
+export async function POST(req: Request, { params }: { params: { communityId: string } }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -91,10 +85,7 @@ export async function POST(
 }
 
 // Update member role
-export async function PATCH(
-  req: Request,
-  { params }: { params: { communityId: string } }
-) {
+export async function PATCH(req: Request, { params }: { params: { communityId: string } }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -145,10 +136,7 @@ export async function PATCH(
 }
 
 // Leave or remove member from community
-export async function DELETE(
-  req: Request,
-  { params }: { params: { communityId: string } }
-) {
+export async function DELETE(req: Request, { params }: { params: { communityId: string } }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -188,4 +176,4 @@ export async function DELETE(
     console.error('Error removing community member:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
-} 
+}
