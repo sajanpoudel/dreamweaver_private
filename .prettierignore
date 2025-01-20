@@ -6,3 +6,4 @@ coverage
 artifacts
 cache
 package-lock.json
+src/lib/*.json
