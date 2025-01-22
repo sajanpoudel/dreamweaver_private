@@ -1,4 +1,4 @@
-import { db } from './prisma';
+import { db } from './prisma';  
 import type { Dream, User, Prisma } from '@prisma/client';
 
 interface MetricsAnalysis {
@@ -49,7 +49,7 @@ export async function analyzeDreamMetrics(userId: string, timeRange: string = 'l
 
 async function getDreamData(userId: string, timeRange: string) {
   const startDate = getTimeRangeDate(timeRange);
-  return db.dream.findMany({
+  return prisma.dream.findMany({
     where: {
       userId,
       createdAt: { gte: startDate }
@@ -63,7 +63,7 @@ async function getDreamData(userId: string, timeRange: string) {
 
 async function getStatusHistory(userId: string, timeRange: string) {
   const startDate = getTimeRangeDate(timeRange);
-  return db.userStatus.findMany({
+  return prisma.userStatus.findMany({
     where: {
       userId,
       timestamp: { gte: startDate }
@@ -74,7 +74,7 @@ async function getStatusHistory(userId: string, timeRange: string) {
 
 async function getSleepData(userId: string, timeRange: string) {
   const startDate = getTimeRangeDate(timeRange);
-  return db.sleepData.findMany({
+  return prisma.sleepData.findMany({
     where: {
       userId,
       date: { gte: startDate }
@@ -218,7 +218,7 @@ async function storeCorrelations(userId: string, correlations: Partial<MetricsAn
   
   await Promise.all(
     correlationEntries.map(([factor, correlation]) =>
-      db.dreamCorrelation.upsert({
+      prisma.dreamCorrelation.upsert({
         where: {
           userId_factor: {
             userId,
