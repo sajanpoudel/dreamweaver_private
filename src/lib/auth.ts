@@ -1,6 +1,7 @@
 import { NextAuthOptions } from 'next-auth';
 import { db } from '@/lib/prisma';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import GoogleProvider from 'next-auth/providers/google';
 import { compare } from 'bcryptjs';
 
 interface ExtendedUser {
@@ -19,6 +20,10 @@ export const authOptions: NextAuthOptions = {
     strategy: 'jwt'
   },
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     CredentialsProvider({
       name: "Sign in",
       credentials: {
@@ -64,6 +69,32 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === 'google') {
+        try {
+          // Check if user exists
+          const existingUser = await db.user.findUnique({
+            where: { email: user.email! }
+          });
+
+          if (!existingUser) {
+            // Create new user if they don't exist
+            await db.user.create({
+              data: {
+                email: user.email!,
+                name: user.name,
+                image: user.image,
+              }
+            });
+          }
+          return true;
+        } catch (error) {
+          console.error('Error during Google sign in:', error);
+          return false;
+        }
+      }
+      return true;
+    },
     session: ({ session, token }) => {
       console.log('Session Callback - Token:', token);
       return {
