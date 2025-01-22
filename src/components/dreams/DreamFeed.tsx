@@ -5,102 +5,126 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { formatDate } from '@/lib/utils';
-import { Heart, MessageCircle, Sparkles } from 'lucide-react';
+import { formatDate, getImageUrl } from '@/lib/utils';
+import { Heart, MessageCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface DreamFeedProps {
   stories: any[];
+  currentUserId: string;
 }
 
-export function DreamFeed({ stories }: DreamFeedProps) {
+export function DreamFeed({ stories, currentUserId }: DreamFeedProps) {
   return (
-    <div className="space-y-8">
-      {stories.map((story) => {
-        // Parse the content if it's a string
-        const content = typeof story.content === 'string' 
-          ? JSON.parse(story.content) 
-          : story.content;
+    <div className="max-w-3xl mx-auto">
+      <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 text-transparent bg-clip-text mb-8">
+        Dream Stories Feed
+      </h1>
+      <div className="space-y-6">
+        {stories.map((story) => {
+          // Parse the content if it's a string
+          const content = typeof story.content === 'string' 
+            ? JSON.parse(story.content) 
+            : story.content;
 
-        // Get the first section's image if available
-        const firstImage = content.sections?.[0]?.imageUrl;
+          // Get the first section's image if available
+          const firstImage = content.sections?.[0]?.imageUrl;
 
-        return (
-          <div
-            key={story.id}
-            className="relative backdrop-blur-lg bg-white/5 rounded-2xl shadow-[0_0_15px_rgba(168,85,247,0.15)] border border-purple-500/20 overflow-hidden"
-          >
-            {firstImage && (
-              <div className="relative aspect-[16/9] w-full">
-                <Image
-                  src={firstImage}
-                  alt={content.title || 'Dream story image'}
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  className="object-cover"
-                  priority
-                />
-              </div>
-            )}
-            
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                {story.user?.image && (
-                  <Image
-                    src={story.user.image}
-                    alt={story.user.name || 'User'}
-                    width={40}
-                    height={40}
-                    className="rounded-full"
-                  />
-                )}
-                <div>
-                  <p className="text-purple-100 font-medium">{story.user?.name}</p>
-                  <p className="text-purple-200/60 text-sm">
-                    {new Date(story.publishedAt).toLocaleDateString()}
-                  </p>
+          return (
+            <motion.article
+              key={story.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative group"
+            >
+              <Link href={`/stories/${story.id}`}>
+                <div className="relative backdrop-blur-lg bg-white/5 rounded-2xl shadow-[0_0_15px_rgba(168,85,247,0.15)] border border-purple-500/20 overflow-hidden hover:border-purple-500/40 transition-all duration-300">
+                  <div className="p-6">
+                    {/* Author and Date */}
+                    <div className="flex items-center gap-3 mb-4">
+                      <Avatar className="h-10 w-10 border border-purple-500/20">
+                        <AvatarImage src={getImageUrl(story.user?.image)} />
+                        <AvatarFallback>
+                          {story.user?.name?.[0] || '?'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm font-medium text-purple-100">{story.user?.name}</p>
+                        <div className="flex items-center gap-2 text-xs text-purple-200/60">
+                          <Clock className="w-3 h-3" />
+                          {formatDate(new Date(story.publishedAt || story.createdAt))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Content Layout */}
+                    <div className="flex flex-col md:flex-row gap-6">
+                      <div className="flex-1 min-w-0">
+                        {/* Title and Introduction */}
+                        <h2 className="text-xl font-bold text-purple-100 mb-3 hover:text-purple-300 transition-colors">
+                          {content.title}
+                        </h2>
+                        
+                        <p className="text-base text-purple-200/80 mb-4 line-clamp-3">
+                          {content.introduction}
+                        </p>
+
+                        {/* Themes */}
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {content.themes?.slice(0, 3).map((theme: string, index: number) => (
+                            <span
+                              key={index}
+                              className="px-2.5 py-1 text-xs bg-purple-500/20 text-purple-200 rounded-full"
+                            >
+                              {theme}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Image */}
+                      {firstImage && (
+                        <div className="md:w-[240px] h-[160px] relative rounded-xl overflow-hidden flex-shrink-0">
+                          <Image
+                            src={firstImage}
+                            alt={content.title || 'Dream story image'}
+                            fill
+                            sizes="(max-width: 768px) 100vw, 240px"
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                            priority
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Engagement Stats */}
+                    <div className="flex items-center justify-between pt-4 mt-4 border-t border-purple-500/20">
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1.5">
+                          <Heart className="w-4 h-4 text-purple-200/60" />
+                          <span className="text-sm text-purple-200/60">
+                            {story._count?.likes || 0}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <MessageCircle className="w-4 h-4 text-purple-200/60" />
+                          <span className="text-sm text-purple-200/60">
+                            {story._count?.comments || 0}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-sm text-purple-200/60 hover:text-purple-200 transition-colors flex items-center gap-1">
+                        Read story
+                        <span className="text-lg leading-none relative top-[1px]">→</span>
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-
-              <h2 className="text-2xl font-bold text-purple-100 mb-3">
-                {content.title}
-              </h2>
-              
-              <p className="text-purple-200/80 mb-4 line-clamp-2">
-                {content.introduction}
-              </p>
-
-              <div className="flex flex-wrap gap-2 mb-4">
-                {content.themes?.slice(0, 3).map((theme: string, index: number) => (
-                  <span
-                    key={index}
-                    className="px-3 py-1 bg-purple-500/20 text-purple-200 rounded-full text-sm"
-                  >
-                    {theme}
-                  </span>
-                ))}
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <span className="text-purple-200/60 text-sm">
-                    {story._count?.likes || 0} likes
-                  </span>
-                  <span className="text-purple-200/60 text-sm">
-                    {story._count?.comments || 0} comments
-                  </span>
-                </div>
-                <Link
-                  href={`/stories/${story.id}`}
-                  className="text-purple-400 hover:text-purple-300 text-sm font-medium"
-                >
-                  Read full story →
-                </Link>
-              </div>
-            </div>
-          </div>
-        );
-      })}
+              </Link>
+            </motion.article>
+          );
+        })}
+      </div>
     </div>
   );
 } 
