@@ -60,6 +60,7 @@ model User {
   status        UserStatus[]
   sleepData     SleepData[]
   correlations  DreamCorrelation[]
+  dreamAnalytics DreamAnalytics?
 
   @@map("users")
 }
@@ -276,4 +277,23 @@ model DreamCorrelation {
 
   @@unique([userId, factor])
   @@index([userId, factor])
+}
+
+model DreamAnalytics {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id])
+  lastUpdated   DateTime @default(now())
+  dreamCount    Int
+  
+  // Analytics Data as JSON
+  patterns      Json
+  emotions      Json
+  timeAnalysis  Json
+  personalInsights String @db.Text
+  mentalStateAnalysis String @db.Text
+  recommendedActions Json
+  overallWellbeingScore Int
+
+  @@index([userId])
 }

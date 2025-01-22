@@ -46,7 +46,7 @@ export async function POST(req: Request) {
           content: dream.content
         }
       ],
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o-mini",
     });
 
     const analysis = JSON.parse(completion.choices[0].message.content || '{}');
@@ -81,10 +81,14 @@ export async function POST(req: Request) {
       analysis.emotions.map((emotion: { name: string; intensity: number }) =>
         db.emotion.upsert({
           where: { name: emotion.name },
-          update: { intensity: emotion.intensity },
+          update: {
+            valence: emotion.intensity > 0 ? 1 : -1,
+            arousal: Math.abs(emotion.intensity)
+          },
           create: {
             name: emotion.name,
-            intensity: emotion.intensity,
+            valence: emotion.intensity > 0 ? 1 : -1,
+            arousal: Math.abs(emotion.intensity)
           },
         })
       )

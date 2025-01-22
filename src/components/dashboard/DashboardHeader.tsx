@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getImageUrl } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Plus, BarChart, Compass } from "lucide-react";
 
 export function DashboardHeader() {
   const { data: session } = useSession({
@@ -21,22 +23,24 @@ export function DashboardHeader() {
     <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-black/10 backdrop-blur-xl">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href="/feed" className="flex items-center gap-2">
             <span className="text-xl font-bold text-white">DreamWeaver</span>
           </Link>
         </div>
         <nav className="flex items-center gap-4">
-          <Link
-            href="/dashboard"
-            className="text-sm font-medium text-white hover:text-purple-200 transition-colors"
-          >
-            Dashboard
+          <Link href="/dashboard" className="flex items-center gap-2 text-sm font-medium text-white hover:text-purple-200 transition-colors">
+            <BarChart className="w-4 h-4" />
+            Dream Analysis
           </Link>
-          <Link
-            href="/feed"
-            className="text-sm font-medium text-white hover:text-purple-200 transition-colors"
-          >
-            Dream Feed
+          <Link href="/feed" className="flex items-center gap-2 text-sm font-medium text-white hover:text-purple-200 transition-colors">
+            <Compass className="w-4 h-4" />
+            Feed
+          </Link>
+          <Link href="/dreams/new">
+            <Button className="bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600">
+              <Plus className="w-4 h-4 mr-2" />
+              New Dream
+            </Button>
           </Link>
           
           <DropdownMenu>
@@ -59,11 +63,6 @@ export function DashboardHeader() {
               </div>
               <DropdownMenuSeparator className="bg-white/10" />
               <DropdownMenuItem className="focus:bg-white/10 cursor-pointer">
-                <Link href="/profile" className="flex w-full">
-                  Profile Settings
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="focus:bg-white/10 cursor-pointer">
                 <Link href="/profile/dreams" className="flex w-full">
                   My Dreams
                 </Link>
@@ -71,6 +70,11 @@ export function DashboardHeader() {
               <DropdownMenuItem className="focus:bg-white/10 cursor-pointer">
                 <Link href="/profile/stories" className="flex w-full">
                   My Stories
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="focus:bg-white/10 cursor-pointer">
+                <Link href="/profile" className="flex w-full">
+                  Profile Settings
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-white/10" />

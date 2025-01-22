@@ -216,7 +216,7 @@ Return a JSON object with EXACTLY this structure:
 }`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4-turbo-preview",
+    model: "gpt-4o-mini",
     messages: [
       {
         role: "system",

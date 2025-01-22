@@ -39,7 +39,7 @@ export default function SignInForm() {
         return;
       }
 
-      router.push("/dashboard");
+      router.push("/feed");
     } catch (error) {
       setError("An error occurred. Please try again.");
     }
@@ -113,7 +113,7 @@ export default function SignInForm() {
 
         <div className="mt-6">
           <button
-            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+            onClick={() => signIn("google", { callbackUrl: "/feed" })}
             className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             <svg

@@ -72,13 +72,11 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account, profile }) {
       if (account?.provider === 'google') {
         try {
-          // Check if user exists
           const existingUser = await db.user.findUnique({
             where: { email: user.email! }
           });
 
           if (!existingUser) {
-            // Create new user if they don't exist
             await db.user.create({
               data: {
                 email: user.email!,
@@ -94,6 +92,10 @@ export const authOptions: NextAuthOptions = {
         }
       }
       return true;
+    },
+    async redirect({ url, baseUrl }) {
+      // Redirect to feed page after sign in
+      return `${baseUrl}/feed`;
     },
     session: ({ session, token }) => {
       console.log('Session Callback - Token:', token);
