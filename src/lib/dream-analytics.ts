@@ -142,41 +142,58 @@ export async function analyzeDreams(userId: string): Promise<DreamAnalytics> {
 }
 
 function calculateTimeAnalysis(dreams: DreamWithRelations[]): TimeAnalysis {
+  if (dreams.length === 0) {
+    return {
+      mostActiveTime: 'N/A',
+      dreamFrequency: 0,
+      longestStreak: 0,
+      totalDreamingDays: 0,
+      monthlyAverage: 0
+    };
+  }
+
   const dates = dreams.map(dream => new Date(dream.createdAt));
   const timeMap = new Map<string, number>();
   let longestStreak = 0;
-  let currentStreak = 0;
-  let lastStreakDate: Date | null = null;
+  let currentStreak = 1;
+  let lastDate: Date | null = null;
+
+  // Sort dates in ascending order for streak calculation
+  const sortedDates = dates.sort((a, b) => a.getTime() - b.getTime());
 
   // Calculate streaks and most active time
-  dates.forEach(date => {
+  sortedDates.forEach(date => {
     const hour = date.getHours();
     const timeSlot = getTimeSlot(hour);
     timeMap.set(timeSlot, (timeMap.get(timeSlot) || 0) + 1);
 
-    if (lastStreakDate) {
-      const dayDiff = Math.floor((lastStreakDate.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    if (lastDate) {
+      const dayDiff = Math.floor((date.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
       if (dayDiff === 1) {
         currentStreak++;
         longestStreak = Math.max(longestStreak, currentStreak);
-      } else {
-        currentStreak = 0;
+      } else if (dayDiff > 1) {
+        currentStreak = 1;
       }
     }
-    lastStreakDate = date;
+    lastDate = date;
   });
 
-  const mostActiveTime = Array.from(timeMap.entries())
-    .sort((a, b) => b[1] - a[1])[0][0];
+  // Ensure we count single dreams as a streak of 1
+  longestStreak = Math.max(longestStreak, 1);
 
-  const earliestDate = new Date(Math.min(...dates.map(d => d.getTime())));
-  const latestDate = new Date(Math.max(...dates.map(d => d.getTime())));
-  const totalDays = Math.floor((latestDate.getTime() - earliestDate.getTime()) / (1000 * 60 * 60 * 24));
-  const monthlyAverage = (dreams.length / totalDays) * 30;
+  const mostActiveTime = Array.from(timeMap.entries())
+    .sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
+
+  // Calculate monthly average based on the time span between first and last dream
+  const earliestDate = sortedDates[0];
+  const latestDate = sortedDates[sortedDates.length - 1];
+  const monthsDiff = (latestDate.getTime() - earliestDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44); // Average month length
+  const monthlyAverage = monthsDiff > 0 ? dreams.length / monthsDiff : dreams.length;
 
   return {
     mostActiveTime,
-    dreamFrequency: dreams.length / totalDays,
+    dreamFrequency: dreams.length / Math.max(monthsDiff, 1),
     longestStreak,
     totalDreamingDays: new Set(dates.map(d => d.toDateString())).size,
     monthlyAverage

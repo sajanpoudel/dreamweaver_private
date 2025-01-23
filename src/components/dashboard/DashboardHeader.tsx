@@ -13,6 +13,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getImageUrl } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Plus, BarChart, Compass } from "lucide-react";
+import { SearchBar } from '@/components/search/SearchBar';
+import Image from "next/image";
 
 export function DashboardHeader() {
   const { data: session } = useSession({
@@ -20,29 +22,43 @@ export function DashboardHeader() {
   });
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-black/10 backdrop-blur-xl">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <div className="flex items-center gap-4">
-          <Link href="/feed" className="flex items-center gap-2">
-            <span className="text-xl font-bold text-white">DreamWeaver</span>
+    <header className="sticky top-0 z-50 w-full border-b border-purple-500/20 bg-black/50 backdrop-blur-xl">
+      <div className="container flex h-16 items-center justify-between">
+        <div className="flex items-center gap-8">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <Image
+              src="/dreamweaver.svg"
+              alt="Dreamweaver"
+              width={32}
+              height={32}
+              className="w-8 h-8"
+            />
+            <span className="text-lg font-bold bg-gradient-to-r from-purple-400 to-pink-400 text-transparent bg-clip-text">
+              Dreamweaver
+            </span>
           </Link>
+
+          <SearchBar />
+
+          <nav className="hidden md:flex items-center gap-6">
+            <Link href="/dashboard" className="flex items-center gap-2 text-sm font-medium text-white hover:text-purple-200 transition-colors">
+              <BarChart className="w-4 h-4" />
+              Dream Analysis
+            </Link>
+            <Link href="/feed" className="flex items-center gap-2 text-sm font-medium text-white hover:text-purple-200 transition-colors">
+              <Compass className="w-4 h-4" />
+              Feed
+            </Link>
+            <Link href="/dreams/new">
+              <Button className="bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600">
+                <Plus className="w-4 h-4 mr-2" />
+                New Dream
+              </Button>
+            </Link>
+          </nav>
         </div>
-        <nav className="flex items-center gap-4">
-          <Link href="/dashboard" className="flex items-center gap-2 text-sm font-medium text-white hover:text-purple-200 transition-colors">
-            <BarChart className="w-4 h-4" />
-            Dream Analysis
-          </Link>
-          <Link href="/feed" className="flex items-center gap-2 text-sm font-medium text-white hover:text-purple-200 transition-colors">
-            <Compass className="w-4 h-4" />
-            Feed
-          </Link>
-          <Link href="/dreams/new">
-            <Button className="bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600">
-              <Plus className="w-4 h-4 mr-2" />
-              New Dream
-            </Button>
-          </Link>
-          
+
+        <div className="flex items-center gap-4">
           <DropdownMenu>
             <DropdownMenuTrigger className="focus:outline-none">
               <Avatar 
@@ -86,7 +102,7 @@ export function DashboardHeader() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </nav>
+        </div>
       </div>
     </header>
   );

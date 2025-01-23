@@ -15,12 +15,30 @@ interface DreamFeedProps {
 }
 
 export function DreamFeed({ stories, currentUserId }: DreamFeedProps) {
+  // Preload all story images
+  const storyImages = stories.map(story => {
+    const content = typeof story.content === 'string' 
+      ? JSON.parse(story.content) 
+      : story.content;
+    return content.sections?.[0]?.imageUrl;
+  }).filter(Boolean);
+
   return (
     <div className="max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 text-transparent bg-clip-text mb-8">
         Dream Stories Feed
       </h1>
       <div className="space-y-6">
+        {/* Preload images */}
+        {storyImages.map((imageUrl, index) => (
+          <link
+            key={`preload-${index}`}
+            rel="preload"
+            as="image"
+            href={imageUrl}
+          />
+        ))}
+
         {stories.map((story) => {
           // Parse the content if it's a string
           const content = typeof story.content === 'string' 
@@ -35,9 +53,10 @@ export function DreamFeed({ stories, currentUserId }: DreamFeedProps) {
               key={story.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="relative group"
+              transition={{ duration: 0.3 }}
+              className="relative group w-full"
             >
-              <Link href={`/stories/${story.id}`}>
+              <Link href={`/stories/${story.id}`} className="block w-full">
                 <div className="relative backdrop-blur-lg bg-white/5 rounded-2xl shadow-[0_0_15px_rgba(168,85,247,0.15)] border border-purple-500/20 overflow-hidden hover:border-purple-500/40 transition-all duration-300">
                   <div className="p-6">
                     {/* Author and Date */}
@@ -58,8 +77,8 @@ export function DreamFeed({ stories, currentUserId }: DreamFeedProps) {
                     </div>
 
                     {/* Content Layout */}
-                    <div className="flex flex-col md:flex-row gap-6">
-                      <div className="flex-1 min-w-0">
+                    <div className="flex flex-col md:flex-row gap-6 items-start w-full">
+                      <div className="flex-1 min-w-0 order-2 md:order-1">
                         {/* Title and Introduction */}
                         <h2 className="text-xl font-bold text-purple-100 mb-3 hover:text-purple-300 transition-colors">
                           {content.title}
@@ -84,15 +103,18 @@ export function DreamFeed({ stories, currentUserId }: DreamFeedProps) {
 
                       {/* Image */}
                       {firstImage && (
-                        <div className="md:w-[240px] h-[160px] relative rounded-xl overflow-hidden flex-shrink-0">
-                          <Image
-                            src={firstImage}
-                            alt={content.title || 'Dream story image'}
-                            fill
-                            sizes="(max-width: 768px) 100vw, 240px"
-                            className="object-cover transition-transform duration-300 group-hover:scale-105"
-                            priority
-                          />
+                        <div className="relative w-full md:w-[240px] overflow-hidden rounded-xl order-1 md:order-2">
+                          <div className="relative w-full aspect-[16/9]">
+                            <Image
+                              src={firstImage}
+                              alt={content.title || 'Dream story image'}
+                              fill
+                              sizes="100vw, 240px"
+                              className="object-cover transition-transform duration-300 group-hover:scale-105"
+                              priority={true}
+                              loading="eager"
+                            />
+                          </div>
                         </div>
                       )}
                     </div>

@@ -176,8 +176,8 @@ export function DashboardContent({
   };
 
   return (
-    <div className="min-h-screen overflow-hidden">
-      <div className="relative container mx-auto px-4 py-8">
+    <div className="relative">
+      <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col gap-8">
           {/* Header Section */}
           <motion.div
