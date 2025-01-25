@@ -620,8 +620,8 @@ async function updateDreamPatterns(
           frequency: { increment: 1 },
           lastSeen: new Date(),
           dreams: { connect: { id: dream.id } },
-        },
-      });
+    },
+  });
       patterns.push(updatedPattern);
     }
   }

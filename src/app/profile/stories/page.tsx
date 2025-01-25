@@ -35,9 +35,9 @@ interface Story {
   subtitle?: string;
   content: string | StoryContent;
   publishedAt: Date | null;
-  dream: {
+  dream?: {
     title: string;
-  };
+  } | null;
   _count: {
     likes: number;
     comments: number;
@@ -68,20 +68,36 @@ export default function StoriesPage() {
         if (response.ok) {
           const data = await response.json();
           const parsedStories = data.map((story: Story) => {
-            let parsedContent: string | StoryContent;
-            if (typeof story.content === 'string') {
+            // If content is already an object, return as is
+            if (typeof story.content !== 'string') {
+              return story;
+            }
+
+            // If content is a string but already JSON, parse it
+            if (story.content.startsWith('{')) {
               try {
-                parsedContent = JSON.parse(story.content) as StoryContent;
+                const parsedContent = JSON.parse(story.content);
+                return {
+                  ...story,
+                  content: parsedContent
+                };
               } catch (e) {
                 console.error('Error parsing story content:', e);
-                parsedContent = story.content;
               }
-            } else {
-              parsedContent = story.content;
             }
+
+            // If content is a plain string or parsing failed, create a default structure
             return {
               ...story,
-              content: parsedContent
+              content: {
+                title: story.title,
+                subtitle: story.subtitle || '',
+                introduction: story.content,
+                sections: [],
+                conclusion: '',
+                themes: [],
+                interpretation: ''
+              }
             };
           });
           setStories(parsedStories);
@@ -215,7 +231,7 @@ export default function StoriesPage() {
                               </span>
                             </div>
                             <p className="text-sm text-gray-400 line-clamp-1">
-                              Based on dream: {story.dream.title}
+                              Based on dream: {story.dream?.title || 'Deleted dream'}
                             </p>
                             <p className="text-sm text-gray-300 line-clamp-2 group-hover:text-gray-200 transition-colors duration-300">
                               {(() => {

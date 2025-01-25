@@ -66,7 +66,32 @@ export function StoryView({ story, isOwner, currentUserId, relatedStories }: Sto
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const storyContent = JSON.parse(story.content);
+  const storyContent = (() => {
+    // If content is already an object, return as is
+    if (typeof story.content !== 'string') {
+      return story.content;
+    }
+
+    try {
+      // If content is a string but already JSON, parse it
+      if (story.content.startsWith('{')) {
+        return JSON.parse(story.content);
+      }
+    } catch (e) {
+      console.error('Error parsing story content:', e);
+    }
+
+    // If content is a plain string or parsing failed, create a default structure
+    return {
+      title: story.title,
+      subtitle: '',
+      introduction: story.content,
+      sections: [],
+      conclusion: '',
+      themes: [],
+      interpretation: ''
+    };
+  })();
 
   useEffect(() => {
     fetchLikeStatus();

@@ -48,7 +48,9 @@ interface DreamPattern {
 
 interface EmotionalInsight {
   emotion: string;
+  name?: string;
   frequency: number;
+  intensity?: number;
   trend: 'increasing' | 'decreasing' | 'stable';
   impact: string;
   suggestions: string[];
@@ -317,9 +319,9 @@ export function DashboardContent({
                                   <div className="p-4 rounded-lg bg-white/5 border border-purple-500/10">
                                     <h4 className="text-sm font-medium text-purple-200 mb-2">Dominant Emotions</h4>
                                     <div className="flex flex-wrap gap-2">
-                                      {analysis.dominantEmotions.map((emotion: string, index: number) => (
+                                      {analysis.dominantEmotions.map((emotion: any, index: number) => (
                                         <span key={index} className="px-2 py-1 rounded-full bg-purple-500/20 text-purple-200/70 text-xs">
-                                          {emotion}
+                                          {typeof emotion === 'string' ? emotion : emotion.emotion || emotion.name || 'Unknown'}
                                         </span>
                                       ))}
                                     </div>
@@ -390,21 +392,25 @@ export function DashboardContent({
                     <div key={index} className="p-4 rounded-lg bg-white/5 border border-purple-500/10">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
-                          <h3 className="text-lg font-semibold text-purple-200">{emotion.emotion}</h3>
+                          <h3 className="text-lg font-semibold text-purple-200">
+                            {emotion.name || emotion.emotion}
+                          </h3>
                           <div className={`px-2 py-0.5 rounded-full text-xs ${
                             emotion.trend === 'increasing' ? 'bg-green-500/20 text-green-300' :
                             emotion.trend === 'decreasing' ? 'bg-red-500/20 text-red-300' :
                             'bg-blue-500/20 text-blue-300'
                           }`}>
-                            {emotion.trend}
+                            {emotion.trend || 'stable'}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Progress value={emotion.frequency ?? 0} className="w-24" />
-                          <span className="text-sm text-purple-200/70">{emotion.frequency ?? 0}%</span>
+                          <Progress value={emotion.frequency ?? emotion.intensity ?? 0} className="w-24" />
+                          <span className="text-sm text-purple-200/70">
+                            {emotion.frequency ?? emotion.intensity ?? 0}%
+                          </span>
                         </div>
                       </div>
-                      <p className="text-purple-200/70 text-sm mb-2">{emotion.impact}</p>
+                      <p className="text-purple-200/70 text-sm mb-2">{emotion.impact || ''}</p>
                       {Array.isArray(emotion.suggestions) && emotion.suggestions.length > 0 && (
                         <div className="mt-2 space-y-1">
                           {emotion.suggestions.map((suggestion, idx) => (
@@ -442,7 +448,11 @@ export function DashboardContent({
                               <div className="w-2 h-2 rounded-full bg-purple-400" />
                             </div>
                             <div>
-                              <p className="text-purple-200/70">{action}</p>
+                              <p className="text-purple-200/70">
+                                {typeof action === 'string' 
+                                  ? action 
+                                  : action.action || action.description || JSON.stringify(action)}
+                              </p>
                             </div>
                           </div>
                         ));

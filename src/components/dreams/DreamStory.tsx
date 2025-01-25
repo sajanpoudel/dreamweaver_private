@@ -136,10 +136,34 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
       try {
         const existingStory = await fetchExistingStory(dreamId);
         if (existingStory) {
-          const storyData = typeof existingStory.content === 'string'
-            ? { ...existingStory, ...JSON.parse(existingStory.content) }
-            : existingStory;
-          setStory(storyData);
+          // If content is already an object, use it as is
+          if (typeof existingStory.content !== 'string') {
+            setStory(existingStory);
+            return;
+          }
+
+          try {
+            // If content is a string but already JSON, parse it
+            if (existingStory.content.startsWith('{')) {
+              const parsedContent = JSON.parse(existingStory.content);
+              setStory({ ...existingStory, ...parsedContent });
+              return;
+            }
+          } catch (parseErr) {
+            console.error('Error parsing story content:', parseErr);
+          }
+
+          // If content is a plain string or parsing failed, create a default structure
+          setStory({
+            ...existingStory,
+            title: existingStory.title,
+            subtitle: '',
+            introduction: existingStory.content,
+            sections: [],
+            conclusion: '',
+            themes: [],
+            interpretation: ''
+          });
         }
       } catch (err) {
         console.error('Error loading story:', err);

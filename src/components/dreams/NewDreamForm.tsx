@@ -62,92 +62,57 @@ export function NewDreamForm() {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="relative"
-    >
-      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-2xl blur-3xl"></div>
-      <div className="relative backdrop-blur-lg bg-white/5 rounded-2xl p-8 shadow-[0_0_15px_rgba(168,85,247,0.15)] border border-purple-500/20">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 text-transparent bg-clip-text mb-2">
-            Record Your Dream
-          </h1>
-          <p className="text-purple-200/80">
-            Capture the essence of your dreams and unlock their hidden meanings
-          </p>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-4">
+        <input
+          type="text"
+          placeholder="Dream Title"
+          value={formData.title}
+          onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+          className="w-full bg-transparent border-none text-3xl font-bold text-white placeholder:text-white/20 focus:outline-none focus:ring-0"
+        />
+        <div className="relative">
+          <textarea
+            placeholder="Describe your dream..."
+            value={formData.content}
+            onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+            className="w-full min-h-[400px] bg-transparent border-none text-lg text-purple-100 placeholder:text-white/20 focus:outline-none focus:ring-0 resize-none pr-12"
+          />
+          <div className="absolute bottom-4 right-4">
+            <SpeechInput onTranscript={handleSpeechInput} />
+          </div>
         </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="title" className="text-purple-200">
-              Dream Title
-            </Label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, title: e.target.value }))
-              }
-              placeholder="Give your dream a title"
-              className="bg-white/5 border-purple-500/20 text-purple-100 placeholder:text-purple-200/50"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="content" className="text-purple-200">
-              Dream Description
-            </Label>
-            <div className="relative">
-              <Textarea
-                id="content"
-                value={formData.content}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, content: e.target.value }))
-                }
-                placeholder="Describe your dream in detail..."
-                className="min-h-[200px] bg-white/5 border-purple-500/20 text-purple-100 placeholder:text-purple-200/50"
-                required
-              />
-              <div className="absolute bottom-4 right-4">
-                <SpeechInput onTranscript={handleSpeechInput} />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Switch
-              id="isPublic"
-              checked={formData.isPublic}
-              onCheckedChange={(checked) =>
-                setFormData((prev) => ({ ...prev, isPublic: checked }))
-              }
-              className="data-[state=checked]:bg-purple-500"
-            />
-            <Label htmlFor="isPublic" className="text-purple-200">
-              Share this dream publicly
-            </Label>
-          </div>
-
-          <div className="pt-4">
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="relative group"
-            >
-              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-200"></div>
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="relative w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 h-12 text-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all duration-200"
-              >
-                {isLoading ? 'Recording Dream...' : 'Record Dream'}
-              </Button>
-            </motion.div>
-          </div>
-        </form>
       </div>
-    </motion.div>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <Switch
+            id="isPublic"
+            checked={formData.isPublic}
+            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isPublic: checked }))}
+            className="data-[state=checked]:bg-purple-500"
+          />
+          <Label htmlFor="isPublic" className="text-purple-200">
+            Share publicly
+          </Label>
+        </div>
+        <div className="flex items-center gap-4">
+          <Button 
+            type="button"
+            variant="ghost" 
+            className="text-purple-200 hover:text-purple-100 hover:bg-purple-500/10"
+            disabled={isLoading}
+          >
+            Save as Draft
+          </Button>
+          <Button 
+            type="submit"
+            className="bg-gradient-to-r from-purple-500/80 to-pink-500/80 hover:from-purple-500 hover:to-pink-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.2)] transition-all duration-300 disabled:opacity-50"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Publishing...' : 'Publish Dream'}
+          </Button>
+        </div>
+      </div>
+    </form>
   );
 } 

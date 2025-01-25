@@ -1,6 +1,7 @@
-import { db } from '@/lib/prisma';
+import { db } from './prisma';
 import OpenAI from 'openai';
-import { Dream, Symbol, Theme, Emotion } from '@prisma/client';
+import type { Dream, User, Prisma, Symbol, Theme, Emotion } from '@prisma/client';
+import { analyzeDream, parseAnalysis, type DreamAnalysis } from './dream-analysis';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -16,7 +17,9 @@ interface DreamPattern {
 
 interface EmotionalInsight {
   emotion: string;
+  name?: string;
   frequency: number;
+  intensity?: number;
   trend: 'increasing' | 'decreasing' | 'stable';
   impact: string;
   suggestions: string[];
@@ -40,105 +43,92 @@ interface DreamAnalytics {
   overallWellbeingScore: number;
 }
 
-interface CachedAnalytics extends DreamAnalytics {
-  userId: string;
-  lastUpdated: Date;
-  dreamCount: number;
-}
-
-interface DreamWithRelations extends Dream {
+type DreamWithRelations = Dream & {
   symbols: Symbol[];
   themes: Theme[];
   emotions: Emotion[];
-}
+  metrics: {
+    id: string;
+    dreamId: string;
+    clarity: number;
+    vividness: number;
+    lucidity: number;
+    recall: number;
+    impact: number;
+  } | null;
+};
 
 export async function analyzeDreams(userId: string): Promise<DreamAnalytics> {
-  // Check for cached analytics
-  const cachedAnalytics = await db.dreamAnalytics.findUnique({
-    where: { userId }
-  });
-
-  const totalDreams = await db.dream.count({
-    where: { userId }
-  });
-
-  // If we have cached analytics and no new dreams since last update, return cached
-  if (cachedAnalytics && cachedAnalytics.dreamCount === totalDreams) {
-    const {
-      userId: _,
-      lastUpdated: __,
-      dreamCount: ___,
-      ...analytics
-    } = cachedAnalytics;
-    
-    return {
-      ...analytics,
-      patterns: JSON.parse(analytics.patterns as string),
-      emotions: JSON.parse(analytics.emotions as string),
-      timeAnalysis: JSON.parse(analytics.timeAnalysis as string),
-      recommendedActions: JSON.parse(analytics.recommendedActions as string)
-    };
-  }
-
-  // Fetch all dreams with their relationships
+  // Get all dreams with their relationships
   const dreams = await db.dream.findMany({
     where: { userId },
     include: {
       symbols: true,
       themes: true,
       emotions: true,
+      metrics: true
     },
     orderBy: { createdAt: 'desc' }
-  });
+  }) as DreamWithRelations[];
 
-  // Calculate time-based analytics
+  // Get the latest dream analysis
+  const latestDream = dreams[0];
+  const analysis = latestDream ? parseAnalysis(latestDream.analysis as string) : null;
+
+  // Convert patterns from analysis to DreamPattern format
+  const patterns: DreamPattern[] = analysis?.patterns.map(pattern => ({
+    pattern: pattern.type,
+    frequency: pattern.confidence * 100,
+    description: pattern.description,
+    significance: `This pattern involves ${pattern.elements.join(', ')}`,
+    recommendations: pattern.elements.map(element => `Pay attention to ${element} in future dreams`)
+  })) || [];
+
+  // Convert emotions from analysis to EmotionalInsight format
+  const emotions: EmotionalInsight[] = analysis?.emotions.map(emotion => ({
+    emotion: emotion.name,
+    frequency: emotion.intensity * 100,
+    intensity: emotion.intensity * 100,
+    trend: emotion.valence > 0 ? 'increasing' : emotion.valence < 0 ? 'decreasing' : 'stable',
+    impact: `Triggered by: ${emotion.triggers.join(', ')}`,
+    suggestions: emotion.triggers.map(trigger => `Be mindful of situations involving ${trigger}`)
+  })) || [];
+
+  // Calculate time analysis
   const timeAnalysis = calculateTimeAnalysis(dreams);
 
-  // Extract patterns and emotions
-  const { patterns, emotions } = await extractPatternsAndEmotions(dreams);
+  // Generate personal insights based on analysis
+  const personalInsights = analysis?.psychologicalInsights
+    .map(insight => `${insight.title}: ${insight.description}`)
+    .join(' ') || '';
 
-  // Generate personal insights using OpenAI
-  const insights = await generatePersonalInsights(dreams);
+  // Analyze mental state
+  const mentalStateAnalysis = analysis?.mentalState ? JSON.stringify({
+    overallMood: analysis.mentalState.moodScore > 7 ? 'Positive' : 
+                 analysis.mentalState.moodScore > 4 ? 'Neutral' : 'Challenging',
+    stressAndAnxietyLevels: `Stress: ${analysis.mentalState.stressLevel}/10, Anxiety: ${analysis.mentalState.anxietyLevel}/10`,
+    dominantEmotions: analysis.mentalState.dominantEmotions,
+    emotionalInsights: analysis.mentalState.notes
+  }) : '';
 
-  const analytics: DreamAnalytics = {
+  // Generate recommended actions
+  const recommendedActions = analysis?.psychologicalInsights
+    .filter(insight => insight.actionable)
+    .map(insight => insight.recommendation || '')
+    .filter(Boolean) || [];
+
+  // Calculate overall wellbeing score
+  const overallWellbeingScore = analysis ? calculateWellbeingScore(analysis) : 50;
+
+  return {
     patterns,
     emotions,
     timeAnalysis,
-    personalInsights: JSON.stringify(insights.personalInsights),
-    mentalStateAnalysis: JSON.stringify(insights.mentalStateAnalysis),
-    recommendedActions: insights.recommendedActions,
-    overallWellbeingScore: calculateWellbeingScore(patterns, emotions, timeAnalysis)
+    personalInsights,
+    mentalStateAnalysis,
+    recommendedActions,
+    overallWellbeingScore
   };
-
-  // Cache the analytics
-  await db.dreamAnalytics.upsert({
-    where: { userId },
-    create: {
-      userId,
-      patterns: JSON.stringify(patterns),
-      emotions: JSON.stringify(emotions),
-      timeAnalysis: JSON.stringify(timeAnalysis),
-      personalInsights: JSON.stringify(insights.personalInsights),
-      mentalStateAnalysis: JSON.stringify(insights.mentalStateAnalysis),
-      recommendedActions: JSON.stringify(insights.recommendedActions),
-      lastUpdated: new Date(),
-      dreamCount: totalDreams,
-      overallWellbeingScore: calculateWellbeingScore(patterns, emotions, timeAnalysis)
-    },
-    update: {
-      patterns: JSON.stringify(patterns),
-      emotions: JSON.stringify(emotions),
-      timeAnalysis: JSON.stringify(timeAnalysis),
-      personalInsights: JSON.stringify(insights.personalInsights),
-      mentalStateAnalysis: JSON.stringify(insights.mentalStateAnalysis),
-      recommendedActions: JSON.stringify(insights.recommendedActions),
-      lastUpdated: new Date(),
-      dreamCount: totalDreams,
-      overallWellbeingScore: calculateWellbeingScore(patterns, emotions, timeAnalysis)
-    }
-  });
-
-  return analytics;
 }
 
 function calculateTimeAnalysis(dreams: DreamWithRelations[]): TimeAnalysis {
@@ -152,75 +142,97 @@ function calculateTimeAnalysis(dreams: DreamWithRelations[]): TimeAnalysis {
     };
   }
 
-  const dates = dreams.map(dream => new Date(dream.createdAt));
-  const timeMap = new Map<string, number>();
+  // Create a map to track dreams per hour
+  const hourCounts = new Map<number, number>();
+  // Create a map to track dreams per day for streak calculation
+  const dreamsByDate = new Map<string, number>();
+  
+  dreams.forEach(dream => {
+    const date = new Date(dream.createdAt);
+    const hour = date.getHours();
+    const dateStr = date.toISOString().split('T')[0];
+    
+    // Count dreams per hour
+    hourCounts.set(hour, (hourCounts.get(hour) || 0) + 1);
+    // Count dreams per day
+    dreamsByDate.set(dateStr, (dreamsByDate.get(dateStr) || 0) + 1);
+  });
+
+  // Find most active hour
+  let maxHour = 0;
+  let maxCount = 0;
+  hourCounts.forEach((count, hour) => {
+    if (count > maxCount) {
+      maxCount = count;
+      maxHour = hour;
+    }
+  });
+
+  // Calculate longest streak
+  const dates = Array.from(dreamsByDate.keys()).sort();
   let longestStreak = 0;
-  let currentStreak = 1;
+  let currentStreak = 0;
   let lastDate: Date | null = null;
 
-  // Sort dates in ascending order for streak calculation
-  const sortedDates = dates.sort((a, b) => a.getTime() - b.getTime());
-
-  // Calculate streaks and most active time
-  sortedDates.forEach(date => {
-    const hour = date.getHours();
-    const timeSlot = getTimeSlot(hour);
-    timeMap.set(timeSlot, (timeMap.get(timeSlot) || 0) + 1);
-
-    if (lastDate) {
-      const dayDiff = Math.floor((date.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+  dates.forEach(dateStr => {
+    const currentDate = new Date(dateStr);
+    if (!lastDate) {
+      currentStreak = 1;
+    } else {
+      const dayDiff = Math.floor((currentDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
       if (dayDiff === 1) {
         currentStreak++;
+      } else {
         longestStreak = Math.max(longestStreak, currentStreak);
-      } else if (dayDiff > 1) {
         currentStreak = 1;
       }
     }
-    lastDate = date;
+    lastDate = currentDate;
   });
+  longestStreak = Math.max(longestStreak, currentStreak);
 
-  // Ensure we count single dreams as a streak of 1
-  longestStreak = Math.max(longestStreak, 1);
-
-  const mostActiveTime = Array.from(timeMap.entries())
-    .sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
-
-  // Calculate monthly average based on the time span between first and last dream
-  const earliestDate = sortedDates[0];
-  const latestDate = sortedDates[sortedDates.length - 1];
-  const monthsDiff = (latestDate.getTime() - earliestDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44); // Average month length
+  // Calculate monthly average
+  const firstDream = new Date(dates[0]);
+  const lastDream = new Date(dates[dates.length - 1]);
+  const monthsDiff = (lastDream.getTime() - firstDream.getTime()) / (1000 * 60 * 60 * 24 * 30.44); // Average month length
   const monthlyAverage = monthsDiff > 0 ? dreams.length / monthsDiff : dreams.length;
+
+  // Format most active time
+  const hour = maxHour;
+  const mostActiveTime = hour === 0 ? '12 AM' : 
+                        hour < 12 ? `${hour} AM` : 
+                        hour === 12 ? '12 PM' : 
+                        `${hour - 12} PM`;
 
   return {
     mostActiveTime,
     dreamFrequency: dreams.length / Math.max(monthsDiff, 1),
     longestStreak,
-    totalDreamingDays: new Set(dates.map(d => d.toDateString())).size,
-    monthlyAverage
+    totalDreamingDays: dreamsByDate.size,
+    monthlyAverage: Number(monthlyAverage.toFixed(1))
   };
 }
 
-async function extractPatternsAndEmotions(dreams: DreamWithRelations[]): Promise<{
-  patterns: DreamPattern[];
-  emotions: EmotionalInsight[];
-}> {
-  const symbolCounts = new Map<string, number>();
-  const emotionCounts = new Map<string, number>();
+function calculateWellbeingScore(analysis: DreamAnalysis): number {
+  let score = 50; // Base score
 
-  dreams.forEach(dream => {
-    dream.symbols.forEach(symbol => {
-      symbolCounts.set(symbol.name, (symbolCounts.get(symbol.name) || 0) + 1);
-    });
-    dream.emotions.forEach(emotion => {
-      emotionCounts.set(emotion.name, (emotionCounts.get(emotion.name) || 0) + 1);
-    });
-  });
+  // Adjust based on mental state
+  score += (10 - analysis.mentalState.stressLevel) * 2; // Lower stress is better
+  score += (10 - analysis.mentalState.anxietyLevel) * 2; // Lower anxiety is better
+  score += analysis.mentalState.moodScore * 2; // Higher mood is better
 
-  // Use OpenAI to analyze patterns
-  const patterns = await analyzePatterns(dreams, symbolCounts);
-  const emotions = await analyzeEmotions(dreams, emotionCounts);
+  // Adjust based on emotional balance
+  const positiveEmotions = analysis.emotions.filter(e => e.valence > 0).length;
+  const totalEmotions = analysis.emotions.length;
+  if (totalEmotions > 0) {
+    score += (positiveEmotions / totalEmotions) * 20;
+  }
 
-  return { patterns, emotions };
+  // Adjust based on insights
+  const actionableInsights = analysis.psychologicalInsights.filter(i => i.actionable).length;
+  score += actionableInsights * 2;
+
+  return Math.min(100, Math.max(0, Math.round(score)));
 }
 
 async function analyzePatterns(
@@ -258,11 +270,10 @@ ${Array.from(emotionCounts.entries())
   .map(([emotion, count]) => `${emotion}: ${count} times`)
   .join('\n')}
 
-Based on this data, identify the top 5 most significant emotional patterns. For each emotion:
-1. Analyze its frequency and impact
-2. Determine if it's increasing, decreasing, or stable
-3. Explain its psychological significance
-4. Provide suggestions for emotional well-being
+Based on this data, identify the most significant emotional patterns. For each emotion:
+1. Determine its trend (increasing/decreasing/stable)
+2. Assess its impact on wellbeing
+3. Suggest ways to work with this emotion
 
 Format as JSON array of objects with properties: emotion, frequency, trend, impact, suggestions`;
 
@@ -273,68 +284,4 @@ Format as JSON array of objects with properties: emotion, frequency, trend, impa
   });
 
   return JSON.parse(completion.choices[0].message.content!).emotions;
-}
-
-async function generatePersonalInsights(dreams: DreamWithRelations[]) {
-  const recentDreams = dreams.slice(0, 5).map(dream => ({
-    content: dream.content,
-    analysis: dream.analysis,
-    symbols: dream.symbols.map(s => s.name),
-    emotions: dream.emotions.map(e => e.name)
-  }));
-
-  const prompt = `Based on these recent dreams and their analyses:
-${JSON.stringify(recentDreams, null, 2)}
-
-Provide:
-1. A comprehensive analysis of the current mental state
-2. Personal growth insights
-3. Specific recommended actions for well-being
-
-Format as JSON object with properties: mentalStateAnalysis, personalInsights, recommendedActions`;
-
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [{ role: "user", content: prompt }],
-    response_format: { type: "json_object" },
-  });
-
-  return JSON.parse(completion.choices[0].message.content!);
-}
-
-function calculateWellbeingScore(
-  patterns: DreamPattern[] | undefined,
-  emotions: EmotionalInsight[] | undefined,
-  timeAnalysis: TimeAnalysis | undefined
-): number {
-  if (!patterns?.length || !emotions?.length || !timeAnalysis) {
-    return 50; // Default score when data is insufficient
-  }
-
-  // Calculate pattern score (30% of total)
-  const patternScore = patterns.reduce((score, pattern) => {
-    return score + (pattern.frequency / patterns.length);
-  }, 0) * 30;
-
-  // Calculate emotion score (40% of total)
-  const emotionScore = emotions.reduce((score, emotion) => {
-    const trendMultiplier = emotion.trend === 'increasing' ? 1.2 : 
-                           emotion.trend === 'decreasing' ? 0.8 : 1;
-    return score + ((emotion.frequency / emotions.length) * trendMultiplier);
-  }, 0) * 40;
-
-  // Calculate consistency score (30% of total)
-  const consistencyScore = Math.min(
-    (timeAnalysis.monthlyAverage / 30) * 100,
-    (timeAnalysis.longestStreak / 30) * 100
-  ) * 0.3;
-
-  return Math.round(patternScore + emotionScore + consistencyScore);
-}
-
-function getTimeSlot(hour: number): string {
-  if (hour >= 5 && hour < 12) return 'Morning (5 AM - 12 PM)';
-  if (hour >= 12 && hour < 17) return 'Afternoon (12 PM - 5 PM)';
-  if (hour >= 17 && hour < 22) return 'Evening (5 PM - 10 PM)';
-  return 'Night (10 PM - 5 AM)';
 } 
