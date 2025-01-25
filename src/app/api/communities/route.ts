@@ -16,7 +16,7 @@ export async function GET(req: Request) {
     const search = searchParams.get('search') || '';
 
     let where: any = {};
-    
+
     // Add search condition if search term exists
     if (search) {
       where.name = {
@@ -226,4 +226,4 @@ export async function DELETE(req: Request) {
     console.error('Error deleting community:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
-} 
+}
