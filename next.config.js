@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['oaidalleapiprodscus.blob.core.windows.net'],
+    domains: ['localhost'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -9,6 +9,12 @@ const nextConfig = {
         port: '',
         pathname: '/private/**',
       },
+      {
+        protocol: 'https',
+        hostname: '**.gravatar.com',
+        port: '',
+        pathname: '/**',
+      }
     ],
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',

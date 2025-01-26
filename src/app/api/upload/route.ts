@@ -3,7 +3,9 @@ import { getToken } from 'next-auth/jwt';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { nanoid } from 'nanoid';
-import { put } from '@vercel/blob';
+
+// Only import Vercel Blob in production
+const vercelBlob = process.env.VERCEL === '1' ? require('@vercel/blob') : null;
 
 export async function POST(request: Request) {
   try {
@@ -42,44 +44,29 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generate a unique filename
+    // Generate a unique filename with user ID prefix for better organization
     const fileExtension = path.extname(file.name);
-    const fileName = nanoid() + fileExtension;
+    const fileName = `${token.sub}-${nanoid()}${fileExtension}`;
 
-    // Check if we're in production (Vercel) or development
-    if (process.env.VERCEL === '1') {
-      // Upload to Vercel Blob in production
-      const blob = await put(fileName, file, {
-        access: 'public',
-        token: process.env.BLOB_READ_WRITE_TOKEN
-      });
-      return NextResponse.json({ url: blob.url });
-    } else {
-      // Local development: save to filesystem
-      const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-      
-      // Ensure uploads directory exists
-      try {
-        await mkdir(uploadDir, { recursive: true });
-      } catch (error) {
-        // Ignore if directory already exists
-      }
+    // Create upload directories if they don't exist
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+    await mkdir(uploadDir, { recursive: true });
 
-      // Convert File to Buffer
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
+    // Convert File to Buffer
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
 
-      // Save to public/uploads directory
-      await writeFile(path.join(uploadDir, fileName), buffer);
+    // Save to public/uploads directory
+    const filePath = path.join(uploadDir, fileName);
+    await writeFile(filePath, buffer);
 
-      // Return the public URL
-      const url = `/uploads/${fileName}`;
-      return NextResponse.json({ url });
-    }
-  } catch (error) {
-    console.error('Error uploading file:', error);
+    // Return the public URL
+    return NextResponse.json({ url: `/uploads/${fileName}` });
+
+  } catch (error: any) {
+    console.error('Error processing upload:', error);
     return NextResponse.json(
-      { error: 'Error uploading file' },
+      { error: error.message || 'Error processing upload' },
       { status: 500 }
     );
   }
