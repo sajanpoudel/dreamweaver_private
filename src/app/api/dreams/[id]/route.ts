@@ -4,10 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/prisma';
 
 // Get a specific dream
-export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -16,10 +13,7 @@ export async function GET(
 
     const dream = await db.dream.findFirst({
       where: {
-        AND: [
-          { id: params.id },
-          { userId: session.user.id }
-        ]
+        AND: [{ id: params.id }, { userId: session.user.id }],
       },
       include: {
         symbols: true,
@@ -36,18 +30,12 @@ export async function GET(
     return NextResponse.json(dream);
   } catch (error) {
     console.error('Error fetching dream:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch dream' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch dream' }, { status: 500 });
   }
 }
 
 // Update a dream
-export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(req: Request, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -59,10 +47,7 @@ export async function PUT(
     // Verify dream ownership
     const existingDream = await db.dream.findFirst({
       where: {
-        AND: [
-          { id: params.id },
-          { userId: session.user.id }
-        ]
+        AND: [{ id: params.id }, { userId: session.user.id }],
       },
     });
 
@@ -90,18 +75,12 @@ export async function PUT(
     return NextResponse.json(updatedDream);
   } catch (error) {
     console.error('Error updating dream:', error);
-    return NextResponse.json(
-      { error: 'Failed to update dream' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to update dream' }, { status: 500 });
   }
 }
 
 // Delete a dream
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: Request, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -111,10 +90,7 @@ export async function DELETE(
     // Verify dream ownership
     const existingDream = await db.dream.findFirst({
       where: {
-        AND: [
-          { id: params.id },
-          { userId: session.user.id }
-        ]
+        AND: [{ id: params.id }, { userId: session.user.id }],
       },
     });
 
@@ -130,9 +106,6 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting dream:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete dream' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to delete dream' }, { status: 500 });
   }
-} 
+}
