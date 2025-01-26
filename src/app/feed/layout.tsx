@@ -6,6 +6,7 @@ import { TrendingDreams } from '@/components/social/TrendingDreams';
 import { DreamSpaces } from '@/components/social/DreamSpaces';
 import { SuggestedFriends } from '@/components/social/SuggestedFriends';
 import '@/styles/feed-layout.css';
+import { Chat } from '@/components/chat/Chat';
 
 export default function FeedLayout({
   children,
@@ -40,6 +41,7 @@ export default function FeedLayout({
           </div>
         </div>
       </div>
+      <Chat />
     </div>
   );
 } 

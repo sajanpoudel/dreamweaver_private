@@ -39,55 +39,17 @@ export async function GET() {
           include: {
             sender: {
               select: {
-                id: true,
                 name: true,
               },
             },
           },
         },
       },
-      orderBy: {
-        updatedAt: 'desc',
-      },
     });
 
-    // Transform data to include unread count and last message
-    const transformedChats = await Promise.all(
-      chats.map(async (chat) => {
-        const userParticipant = chat.participants.find(
-          (p) => p.userId === session.user.id
-        );
-
-        const unreadCount = await db.chatMessage.count({
-          where: {
-            chatId: chat.id,
-            createdAt: {
-              gt: userParticipant?.lastRead,
-            },
-            NOT: {
-              senderId: session.user.id,
-            },
-          },
-        });
-
-        const otherParticipants = chat.participants
-          .filter((p) => p.userId !== session.user.id)
-          .map((p) => p.user);
-
-        return {
-          id: chat.id,
-          name: chat.name || otherParticipants.map((p) => p.name).join(', '),
-          participants: otherParticipants,
-          lastMessage: chat.messages[0],
-          unreadCount,
-          updatedAt: chat.updatedAt,
-        };
-      })
-    );
-
-    return NextResponse.json(transformedChats);
+    return NextResponse.json(chats);
   } catch (error) {
-    console.error('Error fetching chats:', error);
+    console.error('Error in GET /api/chat:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
@@ -100,46 +62,73 @@ export async function POST(req: Request) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const { participantIds, isGroup, name } = await req.json();
+    const { participantIds } = await req.json();
+    
+    // Check if a chat already exists with these participants
+    const existingChat = await db.chat.findFirst({
+      where: {
+        AND: [
+          {
+            participants: {
+              some: {
+                userId: session.user.id
+              }
+            }
+          },
+          {
+            participants: {
+              some: {
+                userId: participantIds[0]
+              }
+            }
+          }
+        ]
+      },
+      include: {
+        participants: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+              },
+            },
+          },
+        },
+        messages: {
+          take: 1,
+          orderBy: {
+            createdAt: 'desc',
+          },
+          include: {
+            sender: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+              },
+            },
+          },
+        },
+      },
+    });
 
-    // For direct messages, check if chat already exists
-    if (!isGroup && participantIds.length === 1) {
-      const existingChat = await db.chat.findFirst({
-        where: {
-          isGroup: false,
-          participants: {
-            every: {
-              userId: {
-                in: [session.user.id, participantIds[0]],
-              },
-            },
-          },
-        },
-        include: {
-          participants: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  image: true,
-                },
-              },
-            },
-          },
-        },
+    if (existingChat) {
+      // Get the other participant's user data
+      const otherParticipant = existingChat.participants.find(
+        p => p.user.id !== session.user.id
+      );
+      
+      return NextResponse.json({
+        ...existingChat,
+        user: otherParticipant?.user
       });
-
-      if (existingChat) {
-        return NextResponse.json(existingChat);
-      }
     }
 
-    // Create new chat
+    // Create a new chat
     const chat = await db.chat.create({
       data: {
-        isGroup,
-        name,
         participants: {
           create: [
             { userId: session.user.id },
@@ -159,17 +148,43 @@ export async function POST(req: Request) {
             },
           },
         },
+        messages: {
+          take: 1,
+          orderBy: {
+            createdAt: 'desc',
+          },
+          include: {
+            sender: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+              },
+            },
+          },
+        },
       },
     });
 
-    return NextResponse.json(chat);
+    // Get the other participant's user data
+    const otherParticipant = chat.participants.find(
+      p => p.user.id !== session.user.id
+    );
+
+    return NextResponse.json({
+      ...chat,
+      user: otherParticipant?.user
+    });
   } catch (error) {
-    console.error('Error creating chat:', error);
+    console.error('Error in POST /api/chat:', error);
+    if (error instanceof Error) {
+      return new NextResponse(error.message, { status: 500 });
+    }
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
 
-// Update chat (group name, add/remove participants)
+// Update chat (add/remove participants)
 export async function PATCH(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -177,13 +192,12 @@ export async function PATCH(req: Request) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const { chatId, name, addParticipantIds, removeParticipantIds } = await req.json();
+    const { chatId, addParticipantIds, removeParticipantIds } = await req.json();
 
-    // Verify user is in chat and it's a group chat
+    // Verify user is in chat
     const chat = await db.chat.findFirst({
       where: {
         id: chatId,
-        isGroup: true,
         participants: {
           some: {
             userId: session.user.id,
@@ -200,7 +214,6 @@ export async function PATCH(req: Request) {
     const updatedChat = await db.chat.update({
       where: { id: chatId },
       data: {
-        name,
         participants: {
           createMany: addParticipantIds
             ? {

@@ -14,33 +14,22 @@ export async function GET(
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const { chatId } = params;
-    const { searchParams } = new URL(req.url);
-    const cursor = searchParams.get('cursor');
-    const limit = 50;
-
-    // Verify user is in chat
-    const participant = await db.chatParticipant.findUnique({
+    // Verify user is a participant in the chat
+    const participant = await db.chatParticipant.findFirst({
       where: {
-        userId_chatId: {
-          userId: session.user.id,
-          chatId,
-        },
+        chatId: params.chatId,
+        userId: session.user.id,
       },
     });
 
     if (!participant) {
-      return new NextResponse('Not a chat participant', { status: 403 });
+      return new NextResponse('Forbidden', { status: 403 });
     }
 
-    // Get messages with pagination
     const messages = await db.chatMessage.findMany({
       where: {
-        chatId,
+        chatId: params.chatId,
       },
-      take: limit,
-      skip: cursor ? 1 : 0,
-      cursor: cursor ? { id: cursor } : undefined,
       include: {
         sender: {
           select: {
@@ -49,39 +38,15 @@ export async function GET(
             image: true,
           },
         },
-        readBy: {
-          select: {
-            userId: true,
-            lastRead: true,
-          },
-        },
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: 'asc',
       },
     });
 
-    // Update last read
-    await db.chatParticipant.update({
-      where: {
-        userId_chatId: {
-          userId: session.user.id,
-          chatId,
-        },
-      },
-      data: {
-        lastRead: new Date(),
-      },
-    });
-
-    const nextCursor = messages.length === limit ? messages[messages.length - 1].id : null;
-
-    return NextResponse.json({
-      messages: messages.reverse(), // Return in chronological order
-      nextCursor,
-    });
+    return NextResponse.json({ messages });
   } catch (error) {
-    console.error('Error fetching messages:', error);
+    console.error('Error in GET /api/chat/[chatId]/messages:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
@@ -97,37 +62,25 @@ export async function POST(
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const { chatId } = params;
-    const { content } = await req.json();
-
-    // Verify user is in chat
-    const participant = await db.chatParticipant.findUnique({
+    // Verify user is a participant in the chat
+    const participant = await db.chatParticipant.findFirst({
       where: {
-        userId_chatId: {
-          userId: session.user.id,
-          chatId,
-        },
+        chatId: params.chatId,
+        userId: session.user.id,
       },
     });
 
     if (!participant) {
-      return new NextResponse('Not a chat participant', { status: 403 });
+      return new NextResponse('Forbidden', { status: 403 });
     }
 
-    // Create message
+    const { content } = await req.json();
+
     const message = await db.chatMessage.create({
       data: {
         content,
+        chatId: params.chatId,
         senderId: session.user.id,
-        chatId,
-        readBy: {
-          connect: {
-            userId_chatId: {
-              userId: session.user.id,
-              chatId,
-            },
-          },
-        },
       },
       include: {
         sender: {
@@ -137,24 +90,22 @@ export async function POST(
             image: true,
           },
         },
-        readBy: {
-          select: {
-            userId: true,
-            lastRead: true,
-          },
-        },
       },
     });
 
-    // Update chat's updatedAt
+    // Update chat's updatedAt timestamp
     await db.chat.update({
-      where: { id: chatId },
-      data: { updatedAt: new Date() },
+      where: {
+        id: params.chatId,
+      },
+      data: {
+        updatedAt: new Date(),
+      },
     });
 
     return NextResponse.json(message);
   } catch (error) {
-    console.error('Error sending message:', error);
+    console.error('Error in POST /api/chat/[chatId]/messages:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }

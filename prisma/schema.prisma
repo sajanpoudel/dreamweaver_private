@@ -69,7 +69,7 @@ model User {
   communityMemberships  CommunityMember[]
   communityPosts        CommunityPost[]
   chatParticipations   ChatParticipant[]
-  messages             ChatMessage[]
+  chatMessages         ChatMessage[]
 
   @@map("users")
 }
@@ -377,37 +377,39 @@ model CommunityPost {
 }
 
 model Chat {
-  id        String    @id @default(cuid())
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  isGroup   Boolean   @default(false)
-  name      String?   // For group chats
-  
-  // Relations
+  id           String           @id @default(cuid())
+  isGroup      Boolean         @default(false)
   participants ChatParticipant[]
   messages     ChatMessage[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([updatedAt])
 }
 
 model ChatParticipant {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   userId    String
   chatId    String
-  role      String    @default("member")
-  joinedAt  DateTime  @default(now())
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  chat      Chat      @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  readMessages ChatMessage[] @relation("MessageReadBy")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 
   @@unique([userId, chatId])
+  @@index([userId])
+  @@index([chatId])
 }
 
 model ChatMessage {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   content   String
-  userId    String
+  senderId  String
   chatId    String
-  createdAt DateTime  @default(now())
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  chat      Chat      @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  readBy    ChatParticipant[] @relation("MessageReadBy")
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([chatId])
+  @@index([senderId])
+  @@index([createdAt])
 }
