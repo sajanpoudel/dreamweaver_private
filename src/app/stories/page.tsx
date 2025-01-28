@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { db } from '@/lib/prisma';
 import { StoryFeed } from '@/components/stories/StoryFeed';
+import type { Story } from '@/types/view';
 
 export default async function StoriesPage() {
   const session = await getServerSession(authOptions);
@@ -27,50 +28,58 @@ export default async function StoriesPage() {
       userPreferences.flatMap(dream => dream.symbols.map(s => s.name))
     );
 
-    // Fetch public stories with their themes and symbols
+    // Fetch public stories
     const stories = await db.dreamStory.findMany({
       where: {
         isPublic: true,
         publishedAt: { not: null },
       },
       include: {
-        themes: true,
-        symbols: true,
         user: {
           select: {
+            id: true,
             name: true,
             image: true,
           },
         },
+        themes: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        symbols: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
-      orderBy: [
-        { publishedAt: 'desc' },
-      ],
+      orderBy: {
+        publishedAt: 'desc',
+      },
     });
 
-    // Calculate relevance scores based on theme and symbol matches
-    const storiesWithRelevance = stories.map(story => {
-      const themeMatches = story.themes.filter(t => userThemes.has(t.name)).length;
-      const symbolMatches = story.symbols.filter(s => userSymbols.has(s.name)).length;
-      const relevanceScore = (themeMatches * 2) + symbolMatches; // Themes weighted more heavily
+    // Calculate relevance scores and convert stories
+    const sortedStories = stories
+      .filter((story): story is typeof story & { publishedAt: Date } => story.publishedAt !== null)
+      .map(story => {
+        const themeMatches = story.themes.filter(t => userThemes.has(t.name)).length;
+        const symbolMatches = story.symbols.filter(s => userSymbols.has(s.name)).length;
+        const relevanceScore = (themeMatches * 2 + symbolMatches) / ((story.themes.length * 2 + story.symbols.length) || 1);
 
-      return {
-        ...story,
-        relevanceScore,
-      };
-    });
-
-    // Sort by relevance score and then by publish date
-    const sortedStories = storiesWithRelevance
-      .filter((story): story is typeof story & { publishedAt: Date } => 
-        story.publishedAt !== null
-      )
-      .sort((a, b) => {
-        if (b.relevanceScore !== a.relevanceScore) {
-          return b.relevanceScore - a.relevanceScore;
-        }
-        return b.publishedAt.getTime() - a.publishedAt.getTime();
-      });
+        return {
+          id: story.id,
+          title: story.title,
+          content: story.content ? (typeof story.content === 'string' ? story.content : JSON.stringify(story.content)) : '',
+          publishedAt: story.publishedAt,
+          user: story.user,
+          themes: story.themes,
+          symbols: story.symbols,
+          relevanceScore,
+        };
+      })
+      .sort((a, b) => b.relevanceScore - a.relevanceScore);
 
     return <StoryFeed stories={sortedStories} />;
   } catch (error) {

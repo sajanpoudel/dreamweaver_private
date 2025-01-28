@@ -3,13 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
-
-interface StoryContent {
-  title?: string;
-  subtitle?: string;
-  introduction?: string;
-  sections?: Array<{ content: string }>;
-}
+import { StoryContent, parseStoryContent } from '@/types/story';
 
 const extractStoryPreview = (content: any): string => {
   try {
@@ -26,11 +20,11 @@ const extractStoryPreview = (content: any): string => {
     }
 
     // Build preview from available fields
-    const parts: string[] = [];
-    
     if (storyContent.introduction) {
       return storyContent.introduction;
     }
+    
+    const parts: string[] = [];
     
     if (storyContent.subtitle) {
       parts.push(storyContent.subtitle);

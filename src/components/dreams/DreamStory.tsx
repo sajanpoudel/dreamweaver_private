@@ -9,6 +9,7 @@ import { Textarea } from '../ui/textarea';
 import { toast } from 'sonner';
 import { Edit2, Save, RefreshCw, ImagePlus } from 'lucide-react';
 import { RichTextEditor } from '../editor/RichTextEditor';
+import { Story, StoryContent, Section, parseStoryContent } from '@/types/story';
 
 async function generateStory(dreamId: string) {
   try {
@@ -105,30 +106,12 @@ async function fetchExistingStory(dreamId: string) {
   }
 }
 
-interface Section {
-  title: string;
-  content: string;
-  imagePrompt: string;
-  imageUrl: string | null;
-}
-
-interface Story {
-  id: string;
-  title: string;
-  subtitle: string;
-  introduction: string;
-  sections: Section[];
-  conclusion: string;
-  themes: string[];
-  interpretation: string;
-}
-
 export default function DreamStory({ dreamId }: { dreamId: string }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [story, setStory] = useState<Story | null>(null);
-  const [editedStory, setEditedStory] = useState<Story | null>(null);
+  const [editedStory, setEditedStory] = useState<StoryContent | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -136,34 +119,7 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
       try {
         const existingStory = await fetchExistingStory(dreamId);
         if (existingStory) {
-          // If content is already an object, use it as is
-          if (typeof existingStory.content !== 'string') {
-            setStory(existingStory);
-            return;
-          }
-
-          try {
-            // If content is a string but already JSON, parse it
-            if (existingStory.content.startsWith('{')) {
-              const parsedContent = JSON.parse(existingStory.content);
-              setStory({ ...existingStory, ...parsedContent });
-              return;
-            }
-          } catch (parseErr) {
-            console.error('Error parsing story content:', parseErr);
-          }
-
-          // If content is a plain string or parsing failed, create a default structure
-          setStory({
-            ...existingStory,
-            title: existingStory.title,
-            subtitle: '',
-            introduction: existingStory.content,
-            sections: [],
-            conclusion: '',
-            themes: [],
-            interpretation: ''
-          });
+          setStory(existingStory);
         }
       } catch (err) {
         console.error('Error loading story:', err);
@@ -179,10 +135,7 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
     setError(null);
     try {
       const result = await generateStory(dreamId);
-      const storyData = typeof result.story.content === 'string' 
-        ? { ...result.story, ...JSON.parse(result.story.content) }
-        : result.story;
-      setStory(storyData);
+      setStory(result.story);
     } catch (err) {
       console.error('Story generation error:', err);
       setError(err instanceof Error ? err.message : 'Failed to generate story');
@@ -208,6 +161,8 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
   const handleEdit = () => {
     if (!story) return;
     
+    const storyContent = parseStoryContent(story);
+    
     // Parse HTML content for rich text editor
     const parseHtmlContent = (html: string) => {
       // If the content is already wrapped in <p> tags, extract the inner content
@@ -218,45 +173,28 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
     };
 
     setEditedStory({
-      ...story,
-      introduction: parseHtmlContent(story.introduction),
-      sections: story.sections.map(section => ({
+      ...storyContent,
+      introduction: parseHtmlContent(storyContent.introduction),
+      sections: storyContent.sections.map(section => ({
         ...section,
         content: parseHtmlContent(section.content)
       })),
-      conclusion: parseHtmlContent(story.conclusion),
-      interpretation: parseHtmlContent(story.interpretation)
+      conclusion: parseHtmlContent(storyContent.conclusion),
+      interpretation: parseHtmlContent(storyContent.interpretation)
     });
     setIsEditing(true);
   };
 
   const handleSave = async () => {
-    if (!editedStory) return;
+    if (!editedStory || !story) return;
     
     try {
-      // Format the content to match the expected structure
-      const formattedContent = {
-        title: editedStory.title,
-        subtitle: editedStory.subtitle,
-        introduction: editedStory.introduction,
-        sections: editedStory.sections.map(section => ({
-          title: section.title,
-          content: section.content,
-          imageUrl: section.imageUrl,
-          imagePrompt: section.imagePrompt
-        })),
-        conclusion: editedStory.conclusion,
-        themes: editedStory.themes,
-        interpretation: editedStory.interpretation
-      };
-
-      // Use the story ID instead of dreamId for the PUT request
-      const response = await fetch(`/api/dreams/story/${editedStory.id}`, {
+      const response = await fetch(`/api/dreams/story/${story.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ content: formattedContent }),
+        body: JSON.stringify({ content: editedStory }),
       });
 
       if (!response.ok) {
@@ -265,12 +203,7 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
       }
 
       const updatedStory = await response.json();
-      // Parse the content if it's a string
-      const storyData = typeof updatedStory.content === 'string'
-        ? { ...updatedStory, ...JSON.parse(updatedStory.content) }
-        : updatedStory;
-
-      setStory(storyData);
+      setStory(updatedStory);
       setIsEditing(false);
       toast.success('Story saved successfully');
     } catch (error) {
@@ -280,7 +213,7 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
   };
 
   const handleCancel = () => {
-    setEditedStory(story);
+    setEditedStory(null);
     setIsEditing(false);
   };
 
@@ -333,6 +266,8 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
     );
   }
 
+  const storyContent = parseStoryContent(story);
+
   if (isEditing && editedStory) {
     return (
       <div className="w-full max-w-4xl mx-auto py-8">
@@ -362,24 +297,26 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
               <RichTextEditor
                 content={editedStory.introduction}
                 onChange={(content) => setEditedStory({ ...editedStory, introduction: content })}
-                placeholder="Write your story introduction..."
+                placeholder="Write your introduction..."
               />
             </div>
 
             {editedStory.sections.map((section, index) => (
               <div key={index} className="mb-8">
-                <Input
-                  value={section.title}
-                  onChange={(e) => {
-                    const newSections = [...editedStory.sections];
-                    newSections[index] = { ...section, title: e.target.value };
-                    setEditedStory({ ...editedStory, sections: newSections });
-                  }}
-                  className="text-xl font-bold mb-4 bg-purple-500/10 border-purple-500/20 text-purple-100"
-                  placeholder="Section Title"
-                />
+                <div className="flex items-center justify-between mb-4">
+                  <Input
+                    value={section.title}
+                    onChange={(e) => {
+                      const newSections = [...editedStory.sections];
+                      newSections[index] = { ...section, title: e.target.value };
+                      setEditedStory({ ...editedStory, sections: newSections });
+                    }}
+                    className="text-lg font-semibold bg-purple-500/10 border-purple-500/20 text-purple-100"
+                    placeholder={`Section ${index + 1} Title`}
+                  />
+                </div>
 
-                <div className="mb-6">
+                <div className="space-y-4">
                   <RichTextEditor
                     content={section.content}
                     onChange={(content) => {
@@ -387,95 +324,32 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
                       newSections[index] = { ...section, content };
                       setEditedStory({ ...editedStory, sections: newSections });
                     }}
-                    placeholder="Write your section content..."
+                    placeholder={`Write section ${index + 1} content...`}
                   />
-                </div>
 
-                <div className="relative">
-                  {section.imageUrl ? (
-                    <div className="relative aspect-[16/9] rounded-lg overflow-hidden mb-4">
+                  {section.imageUrl && (
+                    <div className="relative aspect-video rounded-lg overflow-hidden">
                       <Image
                         src={section.imageUrl}
                         alt={section.title}
                         fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="object-cover"
                       />
-                      <div className="absolute bottom-4 right-4 flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={async () => {
-                            try {
-                              const url = await regenerateImage(section.imagePrompt);
-                              const newSections = [...editedStory.sections];
-                              newSections[index] = { ...section, imageUrl: url };
-                              setEditedStory({ ...editedStory, sections: newSections });
-                            } catch (error) {
-                              toast.error('Failed to regenerate image');
-                            }
-                          }}
-                          className="bg-black/50 text-white hover:bg-black/70"
-                        >
-                          <RefreshCw className="h-4 w-4 mr-2" />
-                          Regenerate
-                        </Button>
-                        <div className="relative">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={async (e) => {
-                              if (!e.target.files?.[0]) return;
-                              try {
-                                const url = await uploadImage(e.target.files[0]);
-                                const newSections = [...editedStory.sections];
-                                newSections[index] = { ...section, imageUrl: url };
-                                setEditedStory({ ...editedStory, sections: newSections });
-                              } catch (error) {
-                                toast.error('Failed to upload image');
-                              }
-                            }}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                          />
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="bg-black/50 text-white hover:bg-black/70"
-                          >
-                            <ImagePlus className="h-4 w-4 mr-2" />
-                            Replace
-                          </Button>
-                        </div>
-                      </div>
                     </div>
-                  ) : (
-                    <div className="flex gap-2 mb-4">
-                      <div className="relative">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={async (e) => {
-                            if (!e.target.files?.[0]) return;
-                            try {
-                              const url = await uploadImage(e.target.files[0]);
-                              const newSections = [...editedStory.sections];
-                              newSections[index] = { ...section, imageUrl: url };
-                              setEditedStory({ ...editedStory, sections: newSections });
-                            } catch (error) {
-                              toast.error('Failed to upload image');
-                            }
-                          }}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        />
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-purple-200/80 hover:text-purple-200 hover:bg-purple-500/10"
-                        >
-                          <ImagePlus className="h-4 w-4 mr-2" />
-                          Upload Image
-                        </Button>
-                      </div>
+                  )}
+
+                  {section.imagePrompt && (
+                    <div className="flex items-center gap-4">
+                      <Input
+                        value={section.imagePrompt}
+                        onChange={(e) => {
+                          const newSections = [...editedStory.sections];
+                          newSections[index] = { ...section, imagePrompt: e.target.value };
+                          setEditedStory({ ...editedStory, sections: newSections });
+                        }}
+                        className="flex-1 bg-purple-500/10 border-purple-500/20 text-purple-100"
+                        placeholder="Image prompt..."
+                      />
                       <Button
                         variant="ghost"
                         size="sm"
@@ -510,11 +384,11 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
             </div>
 
             <div className="mb-8">
-              <label className="text-sm text-purple-200/80 mb-2 block">Dream Interpretation</label>
+              <label className="text-sm text-purple-200/80 mb-2 block">Interpretation</label>
               <RichTextEditor
                 content={editedStory.interpretation}
                 onChange={(content) => setEditedStory({ ...editedStory, interpretation: content })}
-                placeholder="Write your dream interpretation..."
+                placeholder="Write your interpretation..."
               />
             </div>
 
@@ -528,9 +402,9 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
               </Button>
               <Button
                 onClick={handleSave}
-                className="bg-purple-500/20 text-purple-200 hover:bg-purple-500/30 border border-purple-500/20"
+                className="bg-purple-500/20 text-purple-100 hover:bg-purple-500/30"
               >
-                <Save className="w-4 h-4 mr-2" />
+                <Save className="h-4 w-4 mr-2" />
                 Save Changes
               </Button>
             </div>
@@ -549,25 +423,33 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
       >
         <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 rounded-2xl blur-3xl"></div>
         <div className="relative backdrop-blur-lg bg-white/5 rounded-2xl shadow-[0_0_15px_rgba(168,85,247,0.15)] border border-purple-500/20 p-8">
-          {/* Header */}
+          <div className="flex justify-end mb-6">
+            <Button
+              variant="ghost"
+              onClick={handleEdit}
+              className="text-purple-200/80 hover:text-purple-200 hover:bg-purple-500/10"
+            >
+              <Edit2 className="h-4 w-4 mr-2" />
+              Edit Story
+            </Button>
+          </div>
+
           <header className="text-center mb-12">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 text-transparent bg-clip-text mb-4">
-              {story.title}
+              {storyContent.title}
             </h1>
-            <p className="text-xl text-purple-200/80 italic">{story.subtitle}</p>
+            <p className="text-xl text-purple-200/80 italic">{storyContent.subtitle}</p>
           </header>
 
-          {/* Introduction */}
           <div className="mb-12">
             <div 
               className="text-xl leading-relaxed text-purple-100 prose prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: story.introduction }}
+              dangerouslySetInnerHTML={{ __html: storyContent.introduction }}
             />
           </div>
 
-          {/* Themes */}
           <div className="flex flex-wrap gap-2 mb-8">
-            {story.themes.map((theme, index) => (
+            {storyContent.themes.map((theme, index) => (
               <span
                 key={index}
                 className="px-3 py-1 bg-purple-500/20 text-purple-200 rounded-full text-sm border border-purple-500/20"
@@ -577,94 +459,78 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
             ))}
           </div>
 
-          {/* Main Content */}
           <div className="space-y-16">
-            {story.sections.map((section, index) => (
-              <motion.section
+            {storyContent.sections.map((section, index) => (
+              <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.2 }}
+                transition={{ delay: index * 0.1 }}
                 className="relative"
               >
-                <h2 className="text-2xl font-bold text-purple-100 mb-6">{section.title}</h2>
-                
-                {section.imageUrl && (
-                  <div className="relative h-[400px] mb-8 rounded-xl overflow-hidden shadow-lg">
-                    <Image
-                      src={section.imageUrl}
-                      alt={`Illustration for ${section.title}`}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      priority={index === 0}
+                <div className="absolute inset-0 bg-purple-500/5 rounded-xl blur-sm"></div>
+                <div className="relative space-y-6">
+                  <h2 className="text-2xl font-semibold text-purple-100">
+                    {section.title}
+                  </h2>
+
+                  {section.imageUrl && (
+                    <div className="aspect-[16/9] relative overflow-hidden rounded-xl">
+                      <Image
+                        src={section.imageUrl}
+                        alt={section.title}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
+
+                  <div className="prose prose-invert max-w-none">
+                    <div
+                      className="text-purple-200/90"
+                      dangerouslySetInnerHTML={{ __html: section.content }}
                     />
                   </div>
-                )}
-
-                <div 
-                  className="prose prose-invert max-w-none text-purple-200/90"
-                  dangerouslySetInnerHTML={{ __html: section.content }}
-                />
-              </motion.section>
+                </div>
+              </motion.div>
             ))}
           </div>
 
-          {/* Conclusion */}
-          <div className="mt-12 mb-8">
-            <h2 className="text-2xl font-bold text-purple-100 mb-6">Conclusion</h2>
-            <div 
-              className="text-purple-200/90 leading-relaxed prose prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: story.conclusion }}
-            />
-          </div>
+          {storyContent.conclusion && (
+            <div className="mt-16 space-y-4">
+              <h2 className="text-2xl font-semibold text-purple-100">
+                Conclusion
+              </h2>
+              <div
+                className="text-purple-200/90 leading-relaxed prose prose-invert max-w-none"
+                dangerouslySetInnerHTML={{ __html: storyContent.conclusion }}
+              />
+            </div>
+          )}
 
-          {/* Interpretation */}
-          <div className="bg-purple-500/10 p-6 rounded-xl border border-purple-500/20">
-            <h3 className="text-xl font-semibold text-purple-100 mb-4">Dream Interpretation</h3>
-            <div 
-              className="text-purple-200/90 prose prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: story.interpretation }}
-            />
-          </div>
+          {storyContent.interpretation && (
+            <div className="mt-8 p-6 bg-purple-500/10 rounded-xl border border-purple-500/20">
+              <h2 className="text-xl font-semibold text-purple-100 mb-4">
+                Dream Interpretation
+              </h2>
+              <div
+                className="text-purple-200/90 prose prose-invert max-w-none"
+                dangerouslySetInnerHTML={{ __html: storyContent.interpretation }}
+              />
+            </div>
+          )}
 
-          {/* Actions */}
-          <div className="mt-12 flex justify-center space-x-4">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-6 py-3 bg-indigo-500/20 text-indigo-200 rounded-lg shadow hover:bg-indigo-500/30 transition-colors border border-indigo-500/20 flex items-center gap-2"
-              onClick={handleEdit}
-            >
-              <Edit2 className="w-4 h-4" />
-              Edit Story
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-6 py-3 bg-indigo-500/20 text-indigo-200 rounded-lg shadow hover:bg-indigo-500/30 transition-colors border border-indigo-500/20"
-              onClick={() => window.print()}
-            >
-              Save Story
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-6 py-3 bg-purple-500/20 text-purple-200 rounded-lg shadow hover:bg-purple-500/30 transition-colors border border-purple-500/20"
-              onClick={handleGenerateStory}
-            >
-              Generate New Version
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-6 py-3 bg-pink-500/20 text-pink-200 rounded-lg shadow hover:bg-pink-500/30 transition-colors border border-pink-500/20"
-              onClick={handlePublishStory}
-              disabled={isPublishing}
-            >
-              {isPublishing ? 'Publishing...' : 'Publish Story'}
-            </motion.button>
-          </div>
+          {!story.publishedAt && (
+            <div className="mt-12 flex justify-center">
+              <Button
+                onClick={handlePublishStory}
+                disabled={isPublishing}
+                className="bg-purple-500/20 text-purple-100 hover:bg-purple-500/30"
+              >
+                {isPublishing ? 'Publishing...' : 'Publish Story'}
+              </Button>
+            </div>
+          )}
         </div>
       </motion.div>
     </div>

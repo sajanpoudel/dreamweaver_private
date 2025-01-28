@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import { Story, StoryContent, Section, parseStoryContent } from '@/types/story';
 
 async function generateStory(dreamId: string) {
   try {
@@ -24,23 +25,6 @@ async function generateStory(dreamId: string) {
   }
 }
 
-interface Section {
-  title: string;
-  content: string;
-  imagePrompt: string;
-  imageUrl: string | null;
-}
-
-interface Story {
-  title: string;
-  subtitle: string;
-  introduction: string;
-  sections: Section[];
-  conclusion: string;
-  themes: string[];
-  interpretation: string;
-}
-
 export default function DreamStory({ dreamId }: { dreamId: string }) {
   const [isLoading, setIsLoading] = useState(false);
   const [story, setStory] = useState<Story | null>(null);
@@ -51,10 +35,7 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
     setError(null);
     try {
       const result = await generateStory(dreamId);
-      const storyData = typeof result.story.content === 'string' 
-        ? { ...result.story, ...JSON.parse(result.story.content) }
-        : result.story;
-      setStory(storyData);
+      setStory(result.story);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate story');
     } finally {
@@ -77,7 +58,7 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
       )}
 
       {error && (
-        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600">
+        <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-200">
           {error}
         </div>
       )}

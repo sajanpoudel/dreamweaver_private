@@ -401,15 +401,17 @@ model ChatParticipant {
 }
 
 model ChatMessage {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   content   String
   senderId  String
   chatId    String
-  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  readAt    DateTime?
+  sender    User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  chat      Chat      @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
 
   @@index([chatId])
   @@index([senderId])
   @@index([createdAt])
+  @@index([readAt])
 }

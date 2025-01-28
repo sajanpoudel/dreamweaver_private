@@ -3,6 +3,8 @@ import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { db } from '@/lib/prisma';
 import { StoryView } from '@/components/stories/StoryView';
+import type { Story } from '@/types/view';
+import { Prisma } from '@prisma/client';
 
 interface PageProps {
   params: {
@@ -19,7 +21,7 @@ export default async function StoryPage({ params }: PageProps) {
 
   try {
     // Fetch the story with all related data
-    const story = await db.dreamStory.findFirst({
+    const dbStory = await db.dreamStory.findFirst({
       where: {
         id: params.id,
         OR: [
@@ -52,12 +54,25 @@ export default async function StoryPage({ params }: PageProps) {
       },
     });
 
-    if (!story) {
+    if (!dbStory) {
       redirect('/feed');
     }
 
+    // Convert database story to our Story type
+    const story: Story = {
+      id: dbStory.id,
+      title: dbStory.title,
+      content: typeof dbStory.content === 'string' ? dbStory.content : JSON.stringify(dbStory.content),
+      publishedAt: dbStory.publishedAt,
+      user: dbStory.user,
+      themes: dbStory.themes.map(t => ({ id: t.id, name: t.name })),
+      symbols: dbStory.symbols.map(s => ({ id: s.id, name: s.name })),
+      likes: dbStory.likes,
+      _count: dbStory._count,
+    };
+
     // Fetch related stories based on themes and symbols
-    const relatedStories = await db.dreamStory.findMany({
+    const dbRelatedStories = await db.dreamStory.findMany({
       where: {
         id: { not: story.id },
         isPublic: true,
@@ -111,10 +126,23 @@ export default async function StoryPage({ params }: PageProps) {
       },
     });
 
+    // Convert related stories to Story type
+    const relatedStories: Story[] = dbRelatedStories.map(dbStory => ({
+      id: dbStory.id,
+      title: dbStory.title,
+      content: dbStory.content ? (typeof dbStory.content === 'string' ? dbStory.content : JSON.stringify(dbStory.content)) : '',
+      publishedAt: dbStory.publishedAt,
+      user: dbStory.user,
+      themes: dbStory.themes.map(t => ({ id: t.id, name: t.name })),
+      symbols: dbStory.symbols.map(s => ({ id: s.id, name: s.name })),
+      likes: dbStory.likes,
+      _count: dbStory._count,
+    }));
+
     return (
       <StoryView 
         story={story} 
-        isOwner={story.userId === session.user.id}
+        isOwner={story.user.id === session.user.id}
         currentUserId={session.user.id}
         relatedStories={relatedStories}
       />

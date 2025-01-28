@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -23,7 +22,7 @@ export function ChatList({ onChatSelect }: ChatListProps) {
       <Button
         variant="ghost"
         size="icon"
-        className="h-12 w-12 bg-purple-500/10 hover:bg-purple-500/20 text-purple-100"
+        className="h-12 w-12 bg-purple-500/10 hover:bg-purple-500/20 text-purple-100 relative"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <MessageCircle className="h-6 w-6" />
