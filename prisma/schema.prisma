@@ -415,3 +415,11 @@ model ChatMessage {
   @@index([createdAt])
   @@index([readAt])
 }
+
+model DashboardStats {
+  id          String   @id
+  topSymbols  Json
+  topThemes   Json
+  topEmotions Json
+  updatedAt   DateTime @updatedAt
+}

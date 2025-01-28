@@ -19,14 +19,14 @@ export function ChatList({ onChatSelect }: ChatListProps) {
       transition={{ duration: 0.3 }}
       className="relative"
     >
-      <Button
+      {/* <Button
         variant="ghost"
         size="icon"
         className="h-12 w-12 bg-purple-500/10 hover:bg-purple-500/20 text-purple-100 relative"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <MessageCircle className="h-6 w-6" />
-      </Button>
+      </Button> */}
     </motion.div>
   );
 }

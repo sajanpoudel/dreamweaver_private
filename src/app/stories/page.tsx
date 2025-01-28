@@ -5,6 +5,9 @@ import { db } from '@/lib/prisma';
 import { StoryFeed } from '@/components/stories/StoryFeed';
 import type { Story } from '@/types/view';
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 export default async function StoriesPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -73,9 +76,12 @@ export default async function StoriesPage() {
           title: story.title,
           content: story.content ? (typeof story.content === 'string' ? story.content : JSON.stringify(story.content)) : '',
           publishedAt: story.publishedAt,
-          user: story.user,
-          themes: story.themes,
-          symbols: story.symbols,
+          user: {
+            name: story.user.name,
+            image: story.user.image,
+          },
+          themes: story.themes.map(t => ({ name: t.name })),
+          symbols: story.symbols.map(s => ({ name: s.name })),
           relevanceScore,
         };
       })
