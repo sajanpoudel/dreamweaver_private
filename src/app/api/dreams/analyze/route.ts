@@ -41,4 +41,4 @@ export async function POST(req: NextRequest) {
     console.error('Error analyzing dream:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
-} 
+}
