@@ -23,11 +23,8 @@ export async function POST(req: Request) {
     // Get the dream content
     const dream = await db.dream.findFirst({
       where: {
-        AND: [
-          { id: dreamId },
-          { userId: session.user.id }
-        ]
-      }
+        AND: [{ id: dreamId }, { userId: session.user.id }],
+      },
     });
 
     if (!dream) {
@@ -38,15 +35,16 @@ export async function POST(req: Request) {
     const completion = await openai.chat.completions.create({
       messages: [
         {
-          role: "system",
-          content: "You are a dream analysis expert. Extract symbols, themes, and emotions from the dream content."
+          role: 'system',
+          content:
+            'You are a dream analysis expert. Extract symbols, themes, and emotions from the dream content.',
         },
         {
-          role: "user",
-          content: dream.content
-        }
+          role: 'user',
+          content: dream.content,
+        },
       ],
-      model: "gpt-4o-mini",
+      model: 'gpt-4o-mini',
     });
 
     const analysis = JSON.parse(completion.choices[0].message.content || '{}');
@@ -83,12 +81,12 @@ export async function POST(req: Request) {
           where: { name: emotion.name },
           update: {
             valence: emotion.intensity > 0 ? 1 : -1,
-            arousal: Math.abs(emotion.intensity)
+            arousal: Math.abs(emotion.intensity),
           },
           create: {
             name: emotion.name,
             valence: emotion.intensity > 0 ? 1 : -1,
-            arousal: Math.abs(emotion.intensity)
+            arousal: Math.abs(emotion.intensity),
           },
         })
       )
@@ -117,9 +115,6 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error('Error extracting dream metadata:', error);
-    return NextResponse.json(
-      { error: 'Failed to extract dream metadata' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to extract dream metadata' }, { status: 500 });
   }
-} 
+}
