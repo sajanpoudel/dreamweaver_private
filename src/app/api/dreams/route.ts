@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     console.log('Session:', session);
     console.log('User ID:', session?.user?.id);
-    
+
     if (!session?.user?.id) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
@@ -111,10 +111,9 @@ export async function POST(req: Request) {
     return NextResponse.json(dream);
   } catch (error) {
     console.error('Error creating dream:', error);
-    return new NextResponse(
-      error instanceof Error ? error.message : 'Failed to create dream',
-      { status: 500 }
-    );
+    return new NextResponse(error instanceof Error ? error.message : 'Failed to create dream', {
+      status: 500,
+    });
   }
 }
 
@@ -159,4 +158,4 @@ export async function GET() {
     console.error('Error fetching dreams:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
-} 
+}
