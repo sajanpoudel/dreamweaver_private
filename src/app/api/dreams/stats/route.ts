@@ -23,28 +23,37 @@ export async function GET(req: Request) {
     });
 
     // Calculate top symbols
-    const symbolCounts = stats.reduce((acc, dream) => {
-      dream.symbols.forEach(symbol => {
-        acc[symbol.name] = (acc[symbol.name] || 0) + 1;
-      });
-      return acc;
-    }, {} as Record<string, number>);
+    const symbolCounts = stats.reduce(
+      (acc, dream) => {
+        dream.symbols.forEach((symbol) => {
+          acc[symbol.name] = (acc[symbol.name] || 0) + 1;
+        });
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
     // Calculate top themes
-    const themeCounts = stats.reduce((acc, dream) => {
-      dream.themes.forEach(theme => {
-        acc[theme.name] = (acc[theme.name] || 0) + 1;
-      });
-      return acc;
-    }, {} as Record<string, number>);
+    const themeCounts = stats.reduce(
+      (acc, dream) => {
+        dream.themes.forEach((theme) => {
+          acc[theme.name] = (acc[theme.name] || 0) + 1;
+        });
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
     // Calculate top emotions
-    const emotionCounts = stats.reduce((acc, dream) => {
-      dream.emotions.forEach(emotion => {
-        acc[emotion.name] = (acc[emotion.name] || 0) + 1;
-      });
-      return acc;
-    }, {} as Record<string, number>);
+    const emotionCounts = stats.reduce(
+      (acc, dream) => {
+        dream.emotions.forEach((emotion) => {
+          acc[emotion.name] = (acc[emotion.name] || 0) + 1;
+        });
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
     // Update or create dashboard stats
     const dashboardStats = await db.dashboardStats.upsert({
@@ -70,4 +79,4 @@ export async function GET(req: Request) {
       { status: 500 }
     );
   }
-} 
+}
