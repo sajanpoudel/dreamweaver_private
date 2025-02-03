@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { NewDreamForm } from '@/components/dreams/NewDreamForm';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import React from 'react';
+import { FallingStars } from '@/components/FallingStars';
 
 export default async function NewDreamPage() {
   const session = await getServerSession(authOptions);
@@ -13,7 +14,8 @@ export default async function NewDreamPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1a1c2e] via-[#2d2b55] to-[#3c1f52] pb-20">
+     <div className="min-h-screen bg-gradient-to-br from-[#1a1c2e] via-[#2d2b55] to-[#3c1f52]">
+      <FallingStars />
       <DashboardHeader />
       <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-full blur-3xl -z-10" />
       <main className="container max-w-2xl mx-auto px-4 py-8">

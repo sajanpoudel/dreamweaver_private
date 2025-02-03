@@ -79,8 +79,7 @@ export function DreamAnalysis({ dreamId, initialAnalysis }: DreamAnalysisProps) 
 
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-12 space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
-          <p className="text-purple-200">Analyzing your dream...</p> 
+          /* Waiting  for the analysis to complete */
         </div>
       ) : analysis ? (
         <Card className="relative backdrop-blur-lg bg-white/5 rounded-2xl shadow-[0_0_15px_rgba(168,85,247,0.15)] border border-purple-500/20 overflow-hidden">

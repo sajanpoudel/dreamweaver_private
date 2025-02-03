@@ -1,11 +1,15 @@
 import { db } from './prisma';
 import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { Dream, User, Prisma, Symbol, Theme, Emotion } from '@prisma/client';
 import { analyzeDream, parseAnalysis, type DreamAnalysis } from './dream-analysis';
 
+// Initialize AI clients
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+const gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 interface DreamPattern {
   pattern: string;
@@ -252,13 +256,42 @@ Based on this data, identify the top 5 most significant dream patterns. For each
 
 Format as JSON array of objects with properties: pattern, frequency, description, significance, recommendations`;
 
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [{ role: "user", content: prompt }],
-    response_format: { type: "json_object" },
-  });
+  const provider = process.env.AI_PROVIDER || 'openai';
+  let responseContent: string;
 
-  return JSON.parse(completion.choices[0].message.content!).patterns;
+  if (provider === 'openai') {
+    const response = await openai.chat.completions.create({
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
+    });
+    responseContent = response.choices[0]?.message?.content || '[]';
+  } else {
+    const model = gemini.getGenerativeModel({ model: 'gemini-1.5-pro' });
+    const result = await model.generateContent([
+      { text: "You are a dream analysis expert. Return ONLY valid JSON matching the specified format." },
+      { text: prompt }
+    ]);
+    const response = await result.response;
+    responseContent = response.text();
+  }
+
+  try {
+    const patterns = JSON.parse(responseContent);
+    return Array.isArray(patterns) ? patterns : [];
+  } catch (error) {
+    console.error('Failed to parse patterns:', error);
+    return [];
+  }
+}
+
+function cleanResponseText(text: string): string {
+  // Remove markdown code block syntax if present
+  return text.replace(/^```json\n/, '')
+            .replace(/\n```$/, '')
+            .replace(/^```\n/, '')
+            .replace(/\n```$/, '')
+            .trim();
 }
 
 async function analyzeEmotions(
@@ -277,11 +310,40 @@ Based on this data, identify the most significant emotional patterns. For each e
 
 Format as JSON array of objects with properties: emotion, frequency, trend, impact, suggestions`;
 
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [{ role: "user", content: prompt }],
-    response_format: { type: "json_object" },
-  });
+  const provider = process.env.AI_PROVIDER || 'openai';
+  let responseContent: string;
 
-  return JSON.parse(completion.choices[0].message.content!).emotions;
+  if (provider === 'openai') {
+    const response = await openai.chat.completions.create({
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are a dream analysis expert. Return ONLY valid JSON matching the specified format."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      response_format: { type: "json_object" },
+    });
+    responseContent = response.choices[0]?.message?.content || '{"emotions":[]}';
+  } else {
+    const model = gemini.getGenerativeModel({ model: 'gemini-1.5-pro' });
+    const result = await model.generateContent([
+      { text: "You are a dream analysis expert. Return ONLY valid JSON matching the specified format. Do not wrap the response in markdown code blocks." },
+      { text: prompt }
+    ]);
+    const response = await result.response;
+    responseContent = cleanResponseText(response.text());
+  }
+
+  try {
+    const parsed = JSON.parse(responseContent);
+    return Array.isArray(parsed) ? parsed : parsed.emotions || [];
+  } catch (error) {
+    console.error('Failed to parse emotions:', error);
+    return [];
+  }
 } 

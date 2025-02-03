@@ -148,11 +148,13 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
     setIsPublishing(true);
     setError(null);
     try {
-      await publishStory(dreamId);
-      // You could update the UI to show the story is published
+      const result = await publishStory(dreamId);
+      toast.success('Story published successfully! 🎉');
+      setStory(result.story);
     } catch (err) {
       console.error('Story publishing error:', err);
       setError(err instanceof Error ? err.message : 'Failed to publish story');
+      toast.error('Failed to publish story');
     } finally {
       setIsPublishing(false);
     }

@@ -9,6 +9,7 @@ import { Heart, MessageCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Story, parseStoryContent } from '@/types/story';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
+import { FallingStars } from '@/components/FallingStars';
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
@@ -98,12 +99,13 @@ export default async function StoriesPage() {
       } : undefined,
       themes: dbStory.themes.map(t => ({ id: t.id, name: t.name })),
       symbols: dbStory.symbols.map(s => ({ id: s.id, name: s.name })),
-      likes: dbStory.likes.map(l => ({ id: l.id })),
+      likes: dbStory.likes.map(l => ({ id: l.id })),  
       _count: dbStory._count,
     }));
 
     return (
-      <div className="min-h-screen bg-[#0f0f1a] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]">
+      <div className="min-h-screen bg-gradient-to-br from-[#1a1c2e] via-[#2d2b55] to-[#3c1f52]">
+        <FallingStars />
         <DashboardHeader />
         <div className="container max-w-6xl mx-auto py-12 px-4">
           <div className="mb-12">
@@ -139,7 +141,7 @@ export default async function StoriesPage() {
                     href={`/stories/${story.id}`}
                     className="block transform transition-all duration-300 hover:-translate-y-1"
                   >
-                    <Card className="relative overflow-hidden backdrop-blur-lg bg-gradient-to-br from-gray-900/90 to-gray-800/90 border border-purple-500/20 hover:border-purple-500/40 transition-all duration-500 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-purple-500/20">
+                    <Card className="relative overflow-hidden backdrop-blur-lg  bg-white/5 rounded-xl border border-purple-500/20 overflow-hidden hover:border-purple-500/30">
                       <CardContent className="relative p-6">
                         <div className="flex flex-col md:flex-row gap-6">
                           <div className="relative w-full md:w-[300px] aspect-[16/9] md:aspect-[4/3] rounded-lg overflow-hidden border border-purple-500/20 bg-gray-900/50">

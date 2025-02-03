@@ -31,7 +31,13 @@ export default async function DreamPage({ params }: { params: { id: string } }) 
       redirect('/dashboard');
     }
 
-    return <DreamView dream={dream} />;
+    const dreamData = {
+      ...dream,
+      analysis: dream.analysis ? String(dream.analysis) : null,
+      rawAnalysis: dream.rawAnalysis ? String(dream.rawAnalysis) : null,
+    };
+
+    return <DreamView dream={dreamData} />;
   } catch (error) {
     console.error('Error fetching dream:', error);
     throw error;

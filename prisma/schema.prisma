@@ -190,22 +190,24 @@ model Emotion {
 
 model DreamStory {
   id          String    @id @default(cuid())
-  dreamId     String    @unique
-  userId      String
   title       String
-  content     Json
-  isPublic    Boolean   @default(false)
-  publishedAt DateTime?
+  content     String    @db.Text
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  dream       Dream     @relation(fields: [dreamId], references: [id], onDelete: Cascade)
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  themes      Theme[]   @relation("DreamStoryThemes")
-  symbols     Symbol[]  @relation("DreamStorySymbols")
+  publishedAt DateTime?
+  isPublic    Boolean   @default(false)
+  userId      String
+  dreamId     String
+  user        User      @relation(fields: [userId], references: [id])
+  dream       Dream     @relation(fields: [dreamId], references: [id])
+  themes      Theme[]
+  symbols     Symbol[]
   likes       Like[]
   comments    Comment[]
 
+  @@unique([dreamId, userId])
   @@index([userId])
+  @@index([dreamId])
 }
 
 model Like {

@@ -13,6 +13,7 @@ import { motion } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { Camera, User, Mail, FileText, Upload } from 'lucide-react';
+import { FallingStars } from '@/components/FallingStars';
 
 interface ProfileFormData {
   name: string;
@@ -165,7 +166,8 @@ export default function ProfilePage() {
 
   if (status === 'loading' || isLoading) {
     return (
-      <div className="min-h-screen bg-[#0f0f1a]">
+      <div className="min-h-screen bg-gradient-to-br from-[#1a1c2e] via-[#2d2b55] to-[#3c1f52]">
+        <FallingStars />
         <DashboardHeader />
         <main className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center h-64">
@@ -180,7 +182,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f0f1a] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]">
+    <div className="min-h-screen bg-gradient-to-br from-[#1a1c2e] via-[#2d2b55] to-[#3c1f52]">
+      <FallingStars />
       <DashboardHeader />
       <main className="container mx-auto px-4 py-12">
         <motion.div
@@ -195,7 +198,7 @@ export default function ProfilePage() {
             <p className="text-gray-300">Manage your personal information and preferences</p>
           </div>
 
-          <Card className="backdrop-blur-xl bg-gradient-to-br from-gray-900/90 to-gray-800/90 border border-purple-500/20 hover:border-purple-500/40 transition-all duration-500">
+          <Card className="backdrop-blur-xl bg-white/5 border border-purple-500/20 transition-all duration-500">
             <CardContent className="p-0">
               <div className="relative h-48 bg-gradient-to-r from-purple-600/30 via-pink-600/30 to-purple-600/30">
                 <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2">
@@ -220,7 +223,7 @@ export default function ProfilePage() {
                       className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer"
                       onClick={handleImageClick}
                     >
-                      <div className="bg-black/50 w-full h-full rounded-full flex items-center justify-center">
+                      <div className="bg-white/5 w-full h-full rounded-full flex items-center justify-center">
                         {isUploading ? (
                           <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-r-transparent" />
                         ) : (

@@ -1,41 +1,41 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { db } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
-import type { Session } from 'next-auth';
-import OpenAI from 'openai';
+import { db } from '@/lib/prisma';
+import { generateStoryFromDream, generateDreamImage } from '@/lib/ai-service';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function generateImageWithRetry(prompt: string, retries = 2): Promise<{ url: string; provider: string }> {
+  try {
+    return await generateDreamImage(prompt);
+  } catch (error) {
+    if (retries > 0) {
+      await delay(1000); // Wait 1 second before retrying
+      return generateImageWithRetry(prompt, retries - 1);
+    }
+    throw error;
+  }
+}
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions) as Session & {
-      user: {
-        id: string;
-        email: string;
-        name: string;
-      };
-    };
-
+    const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
     const { dreamId } = await request.json();
-    
     if (!dreamId) {
       return new NextResponse('Dream ID is required', { status: 400 });
     }
 
-    // Get the dream content
+    // Get the dream
     const dream = await db.dream.findUnique({
       where: { id: dreamId },
       include: {
-        symbols: true,
         themes: true,
-        emotions: true,
+        symbols: true,
       },
     });
 
@@ -47,125 +47,72 @@ export async function POST(request: Request) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    // Generate story using OpenAI
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: "You are a creative storyteller who transforms dreams into engaging narratives in a Medium article style. Create well-structured stories with clear sections, vivid descriptions, and meaningful insights."
-        },
-        {
-          role: "user",
-          content: `Transform this dream into a captivating story article. Structure it like a professional Medium post with sections and visual elements. Your response must be a valid JSON object with this structure:
-{
-  "title": "An engaging title that captures the essence of the dream",
-  "subtitle": "A compelling subtitle that hints at the story's meaning",
-  "introduction": "An engaging opening paragraph that sets the scene",
-  "sections": [
-    {
-      "title": "Section title",
-      "content": "Section content with rich narrative and insights",
-      "imagePrompt": "Detailed prompt for an image that captures this section's essence"
-    }
-  ],
-  "conclusion": "A thoughtful conclusion that ties everything together",
-  "themes": ["Key theme 1", "Key theme 2"],
-  "interpretation": "Brief interpretation of the dream's significance"
-}
+    // Generate story content using AI
+    const { text: storyContent, model } = await generateStoryFromDream(dream);
 
-Dream content: ${dream.content}
-Symbols to include: ${dream.symbols.map(s => s.name).join(', ')}
-Themes to incorporate: ${dream.themes.map(t => t.name).join(', ')}
-Emotions to convey: ${dream.emotions.map(e => e.name).join(', ')}`
-        }
-      ],
-      temperature: 0.7
-    });
+    // Parse the story content
+    const storyData = JSON.parse(storyContent);
 
-    let storyData;
-    try {
-      const content = completion.choices[0].message.content;
-      if (!content) {
-        throw new Error('No content received from OpenAI');
+    // Generate images sequentially with delays
+    const sectionsWithImages = [];
+    for (const section of storyData.sections) {
+      try {
+        const { url: imageUrl, provider } = await generateImageWithRetry(section.imagePrompt);
+        sectionsWithImages.push({
+          ...section,
+          imageUrl,
+          imageProvider: provider
+        });
+        // Add a delay between image generations
+        await delay(1000);
+      } catch (error) {
+        console.error('Error generating image for section:', section.title, error);
+        // Continue with the section but without an image
+        sectionsWithImages.push({
+          ...section,
+          imageUrl: null,
+          imageProvider: null,
+          imageError: 'Failed to generate image'
+        });
       }
-      
-      // Remove any potential markdown code block markers
-      const jsonString = content.replace(/```json\n?|\n?```/g, '').trim();
-      storyData = JSON.parse(jsonString);
-      
-      // Validate the response structure
-      if (!storyData.title || !storyData.sections || !Array.isArray(storyData.sections)) {
-        throw new Error('Invalid story data structure');
-      }
-    } catch (error) {
-      console.error('Error parsing OpenAI response:', error);
-      console.log('Raw response:', completion.choices[0].message.content);
-      return new NextResponse('Failed to parse story data', { status: 500 });
     }
 
-    // Generate images for each scene
-    const scenes = await Promise.all(
-      storyData.sections.map(async (section: { title: string, content: string, imagePrompt: string }) => {
-        try {
-          const image = await openai.images.generate({
-            model: "dall-e-3",
-            prompt: section.imagePrompt,
-            n: 1,
-            size: "1024x1024",
-          });
-
-          return {
-            ...section,
-            imageUrl: image.data[0].url,
-          };
-        } catch (error) {
-          console.error('Error generating image:', error);
-          return {
-            ...section,
-            imageUrl: null,
-          };
-        }
-      })
-    );
-
-    // Prepare the complete story content
-    const completeStory = {
+    // Update the story data with images
+    const finalStoryData = {
       ...storyData,
-      sections: scenes
+      sections: sectionsWithImages,
+      model,
     };
 
-    // Create the story in the database
-    const story = await db.dreamStory.create({
-      data: {
-        title: storyData.title,
-        content: JSON.stringify(completeStory), // Serialize the complete story data
+    // Create or update the story in the database
+    const story = await db.dreamStory.upsert({
+      where: {
+        dreamId: dream.id,
         userId: session.user.id,
-        dreamId: dreamId,
-        symbols: {
-          connect: dream.symbols.map(symbol => ({ id: symbol.id }))
-        },
-        themes: {
-          connect: dream.themes.map(theme => ({ id: theme.id }))
-        }
       },
-      include: {
-        symbols: true,
-        themes: true,
+      update: {
+        content: JSON.stringify(finalStoryData),
+        title: storyData.title,
+      },
+      create: {
+        dreamId: dream.id,
+        userId: session.user.id,
+        content: JSON.stringify(finalStoryData),
+        title: storyData.title,
+        isPublic: false,
       },
     });
 
-    return NextResponse.json({
-      story: {
-        ...story,
-        ...completeStory // Include the complete story data in the response
-      }
+    return NextResponse.json({ 
+      story,
+      aiModel: model
     });
+
   } catch (error) {
-    console.error('Error saving story:', error);
-    if (error instanceof Error) {
-      return new NextResponse(error.message, { status: 500 });
-    }
-    return new NextResponse('Internal Server Error', { status: 500 });
+    console.error('Error generating story:', error);
+    return new NextResponse(
+      error instanceof Error ? error.message : 'Failed to generate story',
+      { status: 500 }
+    );
   }
 } 

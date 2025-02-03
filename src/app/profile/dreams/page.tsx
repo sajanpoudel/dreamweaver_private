@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { formatDate } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { FallingStars } from '@/components/FallingStars';
 
 interface Dream {
   id: string;
@@ -52,7 +53,8 @@ export default function DreamsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0f0f1a]">
+      <div className="min-h-screen bg-gradient-to-br from-[#1a1c2e] via-[#2d2b55] to-[#3c1f52]">
+        <FallingStars />
         <DashboardHeader />
         <main className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center h-64">
@@ -67,7 +69,8 @@ export default function DreamsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f0f1a] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]">
+    <div className="min-h-screen bg-gradient-to-br from-[#1a1c2e] via-[#2d2b55] to-[#3c1f52]">
+      <FallingStars />
       <DashboardHeader />
       <main className="container mx-auto px-4 py-8">
         <motion.div
@@ -106,7 +109,7 @@ export default function DreamsPage() {
                 className="group"
               >
                 <Link href={`/dreams/${dream.id}`} className="block transform transition-all duration-300 hover:-translate-y-1">
-                  <Card className="relative overflow-hidden backdrop-blur-lg bg-gradient-to-br from-gray-900/90 to-gray-800/90 border border-purple-500/20 hover:border-purple-500/40 transition-all duration-500 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-purple-500/20">
+                  <Card className="relative overflow-hidden backdrop-blur-lg bg-white/5 border border-purple-500/20 transition-all duration-500 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-purple-500/20">
                     <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     <div className="absolute inset-0 bg-gradient-to-tl from-transparent via-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />

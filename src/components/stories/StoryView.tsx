@@ -13,6 +13,7 @@ import { Home, Share2, Heart, MessageCircle, Download, Send } from 'lucide-react
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Input } from '../ui/input';
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 
 interface Comment {
   id: string;
@@ -209,261 +210,264 @@ export function StoryView({ story, isOwner, currentUserId, relatedStories }: Sto
   };
 
   return (
-    <div className="container max-w-4xl mx-auto px-4 py-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex justify-between items-center mb-8"
-      >
-        <Button
-          onClick={() => router.push('/feed')}
-          variant="ghost"
-          className="text-purple-200/80 hover:text-purple-200 hover:bg-purple-500/10 flex items-center gap-2"
+    <>
+      <DashboardHeader />
+      <div className="container max-w-4xl mx-auto px-4 py-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex justify-between items-center mb-8"
         >
-          <Home className="h-4 w-4" />
-          Back to Feed
-        </Button>
-        <div className="flex items-center gap-2">
           <Button
+            onClick={() => router.push('/feed')}
             variant="ghost"
-            size="icon"
-            onClick={() => handleShare('twitter')}
-            className="text-purple-200/80 hover:text-purple-200 hover:bg-purple-500/10"
+            className="text-purple-200/80 hover:text-purple-200 hover:bg-purple-500/10 flex items-center gap-2"
           >
-            <Share2 className="h-4 w-4" />
+            <Home className="h-4 w-4" />
+            Back to Feed
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleDownload}
-            className="text-purple-200/80 hover:text-purple-200 hover:bg-purple-500/10"
-          >
-            <Download className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            disabled={isLoading}
-            onClick={handleLike}
-            className={`${
-              isLiked ? 'text-pink-500' : 'text-purple-200/80'
-            } hover:text-pink-500 hover:bg-purple-500/10`}
-          >
-            <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
-          </Button>
-        </div>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="space-y-8"
-      >
-        <div className="text-center space-y-4">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <Avatar className="h-12 w-12 border-2 border-purple-500/20">
-              <AvatarImage src={getImageUrl(story.user.image)} />
-              <AvatarFallback>
-                {story.user.name?.charAt(0) || '?'}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="text-purple-100 font-medium">{story.user.name}</p>
-              <p className="text-sm text-purple-200/70">
-                {formatDate(story.publishedAt || new Date())}
-              </p>
-            </div>
-          </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 text-transparent bg-clip-text">
-            {storyContent.title}
-          </h1>
-          {storyContent.subtitle && (
-            <p className="text-xl text-purple-200/80 italic">
-              {storyContent.subtitle}
-            </p>
-          )}
-        </div>
-
-        <div className="text-center max-w-2xl mx-auto">
-          <p className="text-xl text-purple-200/90">
-            {cleanHtmlContent(storyContent.introduction)}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap gap-2 justify-center">
-          {story.themes.map((theme) => (
-            <Badge
-              key={theme.name}
-              variant="secondary"
-              className="bg-purple-500/20 text-purple-200 border-purple-500/20"
-            >
-              {theme.name}
-            </Badge>
-          ))}
-        </div>
-
-        <div className="space-y-16">
-          {storyContent.sections?.map((section: any, index: number) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="relative"
-            >
-              <div className="absolute inset-0 bg-purple-500/5 rounded-xl blur-sm"></div>
-              <div className="relative space-y-6">
-                <h2 className="text-2xl font-semibold text-purple-100">
-                  {section.title}
-                </h2>
-
-                {section.imageUrl && (
-                  <div className="aspect-[16/9] relative overflow-hidden rounded-xl">
-                    <Image
-                      src={section.imageUrl}
-                      alt={section.title}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                )}
-
-                <div className="prose prose-invert max-w-none">
-                  <p className="text-purple-200/90">
-                    {cleanHtmlContent(section.content)}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {storyContent.conclusion && (
-          <div className="mt-16 space-y-4">
-            <h2 className="text-2xl font-semibold text-purple-100">
-              Conclusion
-            </h2>
-            <p className="text-purple-200/90 leading-relaxed">
-              {cleanHtmlContent(storyContent.conclusion)}
-            </p>
-          </div>
-        )}
-
-        {storyContent.interpretation && (
-          <div className="mt-8 p-6 bg-purple-500/10 rounded-xl border border-purple-500/20">
-            <h2 className="text-xl font-semibold text-purple-100 mb-4">
-              Dream Interpretation
-            </h2>
-            <p className="text-purple-200/90">
-              {cleanHtmlContent(storyContent.interpretation)}
-            </p>
-          </div>
-        )}
-
-        <div className="mt-16 space-y-6">
-          <h2 className="text-2xl font-semibold text-purple-100">
-            Comments ({comments.length})
-          </h2>
-          
-          <div className="flex gap-4 mb-8">
-            <Input
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Add a comment..."
-              className="flex-1 bg-purple-500/10 border-purple-500/20 text-purple-100"
-            />
+          <div className="flex items-center gap-2">
             <Button
-              onClick={handleSubmitComment}
-              disabled={isLoading || !newComment.trim()}
-              className="bg-purple-500/20 text-purple-100 hover:bg-purple-500/30"
+              variant="ghost"
+              size="icon"
+              onClick={() => handleShare('twitter')}
+              className="text-purple-200/80 hover:text-purple-200 hover:bg-purple-500/10"
             >
-              <Send className="h-4 w-4 mr-2" />
-              Comment
+              <Share2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleDownload}
+              className="text-purple-200/80 hover:text-purple-200 hover:bg-purple-500/10"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              disabled={isLoading}
+              onClick={handleLike}
+              className={`${
+                isLiked ? 'text-pink-500' : 'text-purple-200/80'
+              } hover:text-pink-500 hover:bg-purple-500/10`}
+            >
+              <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
             </Button>
           </div>
+        </motion.div>
 
-          <div className="space-y-6">
-            {comments.map((comment) => (
-              <motion.div
-                key={comment.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-start gap-4 p-4 rounded-lg bg-purple-500/5 border border-purple-500/10"
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-8"
+        >
+          <div className="text-center space-y-4">
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <Avatar className="h-12 w-12 border-2 border-purple-500/20">
+                <AvatarImage src={getImageUrl(story.user.image)} />
+                <AvatarFallback>
+                  {story.user.name?.charAt(0) || '?'}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-purple-100 font-medium">{story.user.name}</p>
+                <p className="text-sm text-purple-200/70">
+                  {formatDate(story.publishedAt || new Date())}
+                </p>
+              </div>
+            </div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 text-transparent bg-clip-text">
+              {storyContent.title}
+            </h1>
+            {storyContent.subtitle && (
+              <p className="text-xl text-purple-200/80 italic">
+                {storyContent.subtitle}
+              </p>
+            )}
+          </div>
+
+          <div className="text-center max-w-2xl mx-auto">
+            <p className="text-xl text-purple-200/90">
+              {cleanHtmlContent(storyContent.introduction)}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2 justify-center">
+            {story.themes.map((theme) => (
+              <Badge
+                key={theme.name}
+                variant="secondary"
+                className="bg-purple-500/20 text-purple-200 border-purple-500/20"
               >
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={comment.user.image || undefined} />
-                  <AvatarFallback>
-                    {comment.user.name?.charAt(0) || '?'}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="text-sm font-medium text-purple-100">
-                      {comment.user.name || 'Anonymous'}
+                {theme.name}
+              </Badge>
+            ))}
+          </div>
+
+          <div className="space-y-16">
+            {storyContent.sections?.map((section: any, index: number) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="relative"
+              >
+                <div className="absolute inset-0 bg-purple-500/5 rounded-xl blur-sm"></div>
+                <div className="relative space-y-6">
+                  <h2 className="text-2xl font-semibold text-purple-100">
+                    {section.title}
+                  </h2>
+
+                  {section.imageUrl && (
+                    <div className="aspect-[16/9] relative overflow-hidden rounded-xl">
+                      <Image
+                        src={section.imageUrl}
+                        alt={section.title}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
+
+                  <div className="prose prose-invert max-w-none">
+                    <p className="text-purple-200/90">
+                      {cleanHtmlContent(section.content)}
                     </p>
-                    <span className="text-xs text-purple-200/60">
-                      {formatDate(new Date(comment.createdAt))}
-                    </span>
                   </div>
-                  <p className="text-purple-200/80">{comment.content}</p>
                 </div>
               </motion.div>
             ))}
           </div>
-        </div>
 
-        {relatedStories.length > 0 && (
-          <div className="mt-16">
-            <h2 className="text-2xl font-semibold text-purple-100 mb-6">
-              Related Stories
+          {storyContent.conclusion && (
+            <div className="mt-16 space-y-4">
+              <h2 className="text-2xl font-semibold text-purple-100">
+                Conclusion
+              </h2>
+              <p className="text-purple-200/90 leading-relaxed">
+                {cleanHtmlContent(storyContent.conclusion)}
+              </p>
+            </div>
+          )}
+
+          {storyContent.interpretation && (
+            <div className="mt-8 p-6 bg-purple-500/10 rounded-xl border border-purple-500/20">
+              <h2 className="text-xl font-semibold text-purple-100 mb-4">
+                Dream Interpretation
+              </h2>
+              <p className="text-purple-200/90">
+                {cleanHtmlContent(storyContent.interpretation)}
+              </p>
+            </div>
+          )}
+
+          <div className="mt-16 space-y-6">
+            <h2 className="text-2xl font-semibold text-purple-100">
+              Comments ({comments.length})
             </h2>
-            <div className="grid gap-6 md:grid-cols-2">
-              {relatedStories.map((relatedStory) => {
-                const content = JSON.parse(relatedStory.content);
-                const firstSection = content.sections?.[0];
+            
+            <div className="flex gap-4 mb-8">
+              <Input
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Add a comment..."
+                className="flex-1 bg-purple-500/10 border-purple-500/20 text-purple-100"
+              />
+              <Button
+                onClick={handleSubmitComment}
+                disabled={isLoading || !newComment.trim()}
+                className="bg-purple-500/20 text-purple-100 hover:bg-purple-500/30"
+              >
+                <Send className="h-4 w-4 mr-2" />
+                Comment
+              </Button>
+            </div>
 
-                return (
-                  <Link
-                    key={relatedStory.id}
-                    href={`/stories/${relatedStory.id}`}
-                    className="block"
-                  >
-                    <Card className="relative overflow-hidden backdrop-blur-lg bg-white/5 rounded-xl border border-purple-500/20 hover:border-purple-500/40 transition-all duration-300">
-                      {firstSection?.imageUrl && (
-                        <div className="aspect-video relative">
-                          <Image
-                            src={firstSection.imageUrl}
-                            alt={content.title}
-                            fill
-                            className="object-cover"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                        </div>
-                      )}
-                      <CardContent className="relative -mt-16 z-10">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Avatar className="h-6 w-6 border border-purple-500/20">
-                            <AvatarImage src={relatedStory.user.image || undefined} />
-                            <AvatarFallback>
-                              {relatedStory.user.name?.charAt(0) || '?'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <p className="text-sm text-purple-200/90">
-                            {relatedStory.user.name}
-                          </p>
-                        </div>
-                        <h3 className="text-lg font-semibold text-purple-100 line-clamp-2">
-                          {content.title}
-                        </h3>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                );
-              })}
+            <div className="space-y-6">
+              {comments.map((comment) => (
+                <motion.div
+                  key={comment.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-start gap-4 p-4 rounded-lg bg-purple-500/5 border border-purple-500/10"
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={comment.user.image || undefined} />
+                    <AvatarFallback>
+                      {comment.user.name?.charAt(0) || '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-sm font-medium text-purple-100">
+                        {comment.user.name || 'Anonymous'}
+                      </p>
+                      <span className="text-xs text-purple-200/60">
+                        {formatDate(new Date(comment.createdAt))}
+                      </span>
+                    </div>
+                    <p className="text-purple-200/80">{comment.content}</p>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </div>
-        )}
-      </motion.div>
-    </div>
+
+          {relatedStories.length > 0 && (
+            <div className="mt-16">
+              <h2 className="text-2xl font-semibold text-purple-100 mb-6">
+                Related Stories
+              </h2>
+              <div className="grid gap-6 md:grid-cols-2">
+                {relatedStories.map((relatedStory) => {
+                  const content = JSON.parse(relatedStory.content);
+                  const firstSection = content.sections?.[0];
+
+                  return (
+                    <Link
+                      key={relatedStory.id}
+                      href={`/stories/${relatedStory.id}`}
+                      className="block"
+                    >
+                      <Card className="relative overflow-hidden backdrop-blur-lg bg-white/5 rounded-xl border border-purple-500/20 hover:border-purple-500/40 transition-all duration-300">
+                        {firstSection?.imageUrl && (
+                          <div className="aspect-video relative">
+                            <Image
+                              src={firstSection.imageUrl}
+                              alt={content.title}
+                              fill
+                              className="object-cover"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                          </div>
+                        )}
+                        <CardContent className="relative -mt-16 z-10">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Avatar className="h-6 w-6 border border-purple-500/20">
+                              <AvatarImage src={relatedStory.user.image || undefined} />
+                              <AvatarFallback>
+                                {relatedStory.user.name?.charAt(0) || '?'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <p className="text-sm text-purple-200/90">
+                              {relatedStory.user.name}
+                            </p>
+                          </div>
+                          <h3 className="text-lg font-semibold text-purple-100 line-clamp-2">
+                            {content.title}
+                          </h3>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </motion.div>
+      </div>
+    </>
   );
 } 
