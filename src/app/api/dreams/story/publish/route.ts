@@ -54,9 +54,8 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error('Story publishing error:', error);
-    return new NextResponse(
-      error instanceof Error ? error.message : 'Failed to publish story',
-      { status: 500 }
-    );
+    return new NextResponse(error instanceof Error ? error.message : 'Failed to publish story', {
+      status: 500,
+    });
   }
-} 
+}
