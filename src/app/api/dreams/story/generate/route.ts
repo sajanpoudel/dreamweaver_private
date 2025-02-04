@@ -11,7 +11,7 @@ const openai = new OpenAI({
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions) as Session & {
+    const session = (await getServerSession(authOptions)) as Session & {
       user: {
         id: string;
         email: string;
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     }
 
     const { dreamId } = await request.json();
-    
+
     if (!dreamId) {
       return new NextResponse('Dream ID is required', { status: 400 });
     }
@@ -49,14 +49,15 @@ export async function POST(request: Request) {
 
     // Generate story using OpenAI
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: 'gpt-4o-mini',
       messages: [
         {
-          role: "system",
-          content: "You are a creative storyteller who transforms dreams into engaging narratives in a Medium article style. Create well-structured stories with clear sections, vivid descriptions, and meaningful insights."
+          role: 'system',
+          content:
+            'You are a creative storyteller who transforms dreams into engaging narratives in a Medium article style. Create well-structured stories with clear sections, vivid descriptions, and meaningful insights.',
         },
         {
-          role: "user",
+          role: 'user',
           content: `Transform this dream into a captivating story article. Structure it like a professional Medium post with sections and visual elements. Your response must be a valid JSON object with this structure:
 {
   "title": "An engaging title that captures the essence of the dream",
@@ -75,12 +76,12 @@ export async function POST(request: Request) {
 }
 
 Dream content: ${dream.content}
-Symbols to include: ${dream.symbols.map(s => s.name).join(', ')}
-Themes to incorporate: ${dream.themes.map(t => t.name).join(', ')}
-Emotions to convey: ${dream.emotions.map(e => e.name).join(', ')}`
-        }
+Symbols to include: ${dream.symbols.map((s) => s.name).join(', ')}
+Themes to incorporate: ${dream.themes.map((t) => t.name).join(', ')}
+Emotions to convey: ${dream.emotions.map((e) => e.name).join(', ')}`,
+        },
       ],
-      temperature: 0.7
+      temperature: 0.7,
     });
 
     let storyData;
@@ -89,11 +90,11 @@ Emotions to convey: ${dream.emotions.map(e => e.name).join(', ')}`
       if (!content) {
         throw new Error('No content received from OpenAI');
       }
-      
+
       // Remove any potential markdown code block markers
       const jsonString = content.replace(/```json\n?|\n?```/g, '').trim();
       storyData = JSON.parse(jsonString);
-      
+
       // Validate the response structure
       if (!storyData.title || !storyData.sections || !Array.isArray(storyData.sections)) {
         throw new Error('Invalid story data structure');
@@ -106,33 +107,35 @@ Emotions to convey: ${dream.emotions.map(e => e.name).join(', ')}`
 
     // Generate images for each scene
     const scenes = await Promise.all(
-      storyData.sections.map(async (section: { title: string, content: string, imagePrompt: string }) => {
-        try {
-          const image = await openai.images.generate({
-            model: "dall-e-3",
-            prompt: section.imagePrompt,
-            n: 1,
-            size: "1024x1024",
-          });
+      storyData.sections.map(
+        async (section: { title: string; content: string; imagePrompt: string }) => {
+          try {
+            const image = await openai.images.generate({
+              model: 'dall-e-3',
+              prompt: section.imagePrompt,
+              n: 1,
+              size: '1024x1024',
+            });
 
-          return {
-            ...section,
-            imageUrl: image.data[0].url,
-          };
-        } catch (error) {
-          console.error('Error generating image:', error);
-          return {
-            ...section,
-            imageUrl: null,
-          };
+            return {
+              ...section,
+              imageUrl: image.data[0].url,
+            };
+          } catch (error) {
+            console.error('Error generating image:', error);
+            return {
+              ...section,
+              imageUrl: null,
+            };
+          }
         }
-      })
+      )
     );
 
     // Prepare the complete story content
     const completeStory = {
       ...storyData,
-      sections: scenes
+      sections: scenes,
     };
 
     // Create the story in the database
@@ -143,11 +146,11 @@ Emotions to convey: ${dream.emotions.map(e => e.name).join(', ')}`
         userId: session.user.id,
         dreamId: dreamId,
         symbols: {
-          connect: dream.symbols.map(symbol => ({ id: symbol.id }))
+          connect: dream.symbols.map((symbol) => ({ id: symbol.id })),
         },
         themes: {
-          connect: dream.themes.map(theme => ({ id: theme.id }))
-        }
+          connect: dream.themes.map((theme) => ({ id: theme.id })),
+        },
       },
       include: {
         symbols: true,
@@ -158,8 +161,8 @@ Emotions to convey: ${dream.emotions.map(e => e.name).join(', ')}`
     return NextResponse.json({
       story: {
         ...story,
-        ...completeStory // Include the complete story data in the response
-      }
+        ...completeStory, // Include the complete story data in the response
+      },
     });
   } catch (error) {
     console.error('Error saving story:', error);
@@ -168,4 +171,4 @@ Emotions to convey: ${dream.emotions.map(e => e.name).join(', ')}`
     }
     return new NextResponse('Internal Server Error', { status: 500 });
   }
-} 
+}
