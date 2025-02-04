@@ -4,12 +4,9 @@ import { db } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import type { Session } from 'next-auth';
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
-    const session = await getServerSession(authOptions) as Session & {
+    const session = (await getServerSession(authOptions)) as Session & {
       user: {
         id: string;
         email: string;
@@ -22,7 +19,7 @@ export async function PUT(
     }
 
     const { content } = await request.json();
-    
+
     if (!content) {
       return new NextResponse('Content is required', { status: 400 });
     }
@@ -67,4 +64,4 @@ export async function PUT(
     }
     return new NextResponse('Internal Server Error', { status: 500 });
   }
-} 
+}
