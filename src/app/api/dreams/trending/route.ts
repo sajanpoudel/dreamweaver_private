@@ -44,7 +44,7 @@ export async function GET() {
     });
 
     // Transform the data to match the expected format
-    const transformedDreams = dreams.map(dream => ({
+    const transformedDreams = dreams.map((dream) => ({
       id: dream.id,
       title: dream.title,
       theme: dream.themes[0]?.name || 'General',
@@ -57,4 +57,4 @@ export async function GET() {
     console.error('Error getting trending dreams:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
-} 
+}
