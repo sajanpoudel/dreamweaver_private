@@ -198,7 +198,7 @@ export async function analyzeDream(dream: DreamWithRelations, userId: string): P
     const analysis = await performAIAnalysis(dream, dreamContext);
 
     // Use a transaction to ensure all updates are atomic
-    return await db.$transaction(async (tx) => {
+    const result = await db.$transaction(async (tx) => {
       console.log('Starting transaction for dream analysis...');
       
       try {
@@ -239,49 +239,48 @@ export async function analyzeDream(dream: DreamWithRelations, userId: string): P
         const updatedDream = await tx.dream.update({
           where: { id: dream.id },
           data: {
-            analysis: JSON.stringify(analysis) as unknown as Prisma.InputJsonValue,
+            analysis: analysis as unknown as Prisma.InputJsonValue,
             rawAnalysis: JSON.stringify(analysis),
-            // Ensure proper connections by disconnecting old ones first
             symbols: {
-              set: [], // Disconnect all existing symbols
-              connect: symbols.map(s => ({ id: s.id })), // Connect new ones
+              set: [], // First disconnect all existing symbols
+              connect: symbols.map(s => ({ id: s.id })) // Then connect the new ones
             },
             themes: {
-              set: [], // Disconnect all existing themes
-              connect: themes.map(t => ({ id: t.id })), // Connect new ones
+              set: [], // First disconnect all existing themes
+              connect: themes.map(t => ({ id: t.id })) // Then connect the new ones
             },
             emotions: {
-              set: [], // Disconnect all existing emotions
-              connect: emotions.map(e => ({ id: e.id })), // Connect new ones
+              set: [], // First disconnect all existing emotions
+              connect: emotions.map(e => ({ id: e.id })) // Then connect the new ones
             },
             patterns: {
-              set: [], // Disconnect all existing patterns
-              connect: patterns.map(p => ({ id: p.id })), // Connect new ones
+              connect: patterns.map(p => ({ id: p.id }))
             },
+            mentalState: {
+              connect: { id: mentalState.id }
+            },
+            checkpoints: {
+              connect: { id: checkpoint.id }
+            }
           },
           include: {
             symbols: true,
             themes: true,
             emotions: true,
             patterns: true,
-          },
+            mentalState: true,
+            checkpoints: true
+          }
         });
 
-        // Add debug logging
-        console.log('Dream update details:', {
-          dreamId: updatedDream.id,
-          symbols: updatedDream.symbols.map(s => ({ id: s.id, name: s.name })),
-          themes: updatedDream.themes.map(t => ({ id: t.id, name: t.name, category: t.category })),
-          emotions: updatedDream.emotions.map(e => ({ id: e.id, name: e.name })),
-          patterns: updatedDream.patterns.map(p => ({ id: p.id, type: p.type }))
-        });
-
-        return analysis;
+        return { analysis, updatedDream };
       } catch (error) {
         console.error('Error in transaction:', error);
         throw error;
       }
     });
+
+    return result.analysis;
   } catch (error) {
     console.error('Error in analyzeDream:', error);
     throw error;
@@ -289,85 +288,32 @@ export async function analyzeDream(dream: DreamWithRelations, userId: string): P
 }
 
 function cleanResponseText(text: string): string {
-  // Remove markdown code block syntax if present
-  return text.replace(/^```json\n/, '')
-            .replace(/\n```$/, '')
-            .replace(/^```\n/, '')
-            .replace(/\n```$/, '')
-            .trim();
+  // Remove any markdown code block indicators
+  text = text.replace(/```json\s*/g, '');
+  text = text.replace(/```\s*$/g, '');
+  
+  // Remove any trailing commas before closing braces/brackets
+  text = text.replace(/,(\s*[}\]])/g, '$1');
+  
+  // Remove any non-JSON content after the main JSON object
+  const firstBrace = text.indexOf('{');
+  const lastBrace = text.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1) {
+    text = text.substring(firstBrace, lastBrace + 1);
+  }
+
+  // Ensure all properties are properly quoted
+  text = text.replace(/([{,]\s*)(\w+)(\s*:)/g, '$1"$2"$3');
+  
+  return text.trim();
 }
 
 async function performAIAnalysis(dream: DreamWithRelations, context: ReturnType<typeof prepareDreamContext>): Promise<DreamAnalysis> {
-  const prompt = `Analyze the following dream in detail, considering the user's dream history and patterns:
-
-Dream Content: ${dream.content}
-
-Historical Context:
-- Dream Frequency: ${context.frequency.averageDreamsPerWeek.toFixed(1)} dreams per week (${context.frequency.trend} trend)
-- Common Symbols: ${JSON.stringify(context.commonElements.symbols)}
-- Common Themes: ${JSON.stringify(context.commonElements.themes)}
-- Emotional Patterns: ${JSON.stringify(context.patterns.emotions)}
-- Previous Insights: ${JSON.stringify(context.previousInsights)}
-
-Consider these patterns when analyzing the current dream. Pay special attention to:
-- Recurring symbols and their evolution
-- Emotional patterns and their progression
-- Theme development over time
-- Connections to previous psychological insights
-
-Return a JSON object with EXACTLY this structure:
-{
-  "narrative": {
-    "setting": string,
-    "characters": [{ "type": "person" | "creature" | "object", "description": string, "familiarity": number }],
-    "actions": string[],
-    "timeline": "past" | "present" | "future" | "mixed"
-  },
-  "emotions": [{
-    "name": string,
-    "intensity": number (0-1),
-    "valence": number (-1 to 1),
-    "triggers": string[]
-  }],
-  "symbols": [{
-    "name": string,
-    "type": "personal" | "cultural" | "archetypal",
-    "meaning": string,
-    "significance": number (0-1)
-  }],
-  "themes": [{
-    "name": string,
-    "category": string,
-    "description": string,
-    "confidence": number (0-1)
-  }],
-  "patterns": [{
-    "type": "recurring" | "evolving" | "cyclical",
-    "elements": string[],
-    "confidence": number (0-1),
-    "description": string
-  }],
-  "psychologicalInsights": [{
-    "title": string,
-    "description": string,
-    "category": string,
-    "confidence": number (0-1),
-    "actionable": boolean,
-    "recommendation": string (optional)
-  }],
-  "mentalState": {
-    "stressLevel": number (0-10),
-    "anxietyLevel": number (0-10),
-    "moodScore": number (0-10),
-    "dominantEmotions": string[],
-    "notes": string (optional)
-  }
-}`;
-
-  const provider = process.env.AI_PROVIDER || 'openai';
-  let responseContent: string;
-
-  if (provider === 'openai') {
+  let responseContent = '';
+  
+  if (process.env.AI_MODEL === 'openai') {
+    const prompt = `Analyze this dream in detail, considering the following context: ${context}\n\nDream Content: ${dream.content}`;
+    
     const response = await openai.chat.completions.create({
       model: process.env.OPENAI_MODEL || "gpt-4-turbo-preview",
       messages: [
@@ -385,197 +331,236 @@ Return a JSON object with EXACTLY this structure:
 
     responseContent = response.choices[0]?.message?.content || '';
   } else {
-    const model = gemini.getGenerativeModel({ model: 'gemini-1.5-pro' });
-    const systemPrompt = `You are an expert dream analyst with deep knowledge of psychology, symbolism, and pattern recognition. 
-Return ONLY valid JSON matching the specified structure exactly. 
-Theme categories MUST be one of: relationships, career, personal_growth, spirituality, health, adventure, fear, conflict, success, family, education, creativity.
-Each theme MUST have a specific category from the list above.
-Each symbol MUST have a type (personal, cultural, or archetypal) and a meaningful description.
-Ensure all themes and symbols are meaningful and specific to the dream content.
-Do not include any markdown formatting or code blocks in your response.
-Pay special attention to recurring symbols and themes that could create connections between dreams.`;
+    // Use Gemini
+    const model = gemini.getGenerativeModel({ model: "gemini-pro" });
     
-    const result = await model.generateContent([
-      { text: systemPrompt },
-      { text: prompt }
-    ]);
-    const response = await result.response;
-    responseContent = cleanResponseText(response.text());
-
-    // Validate and fix Gemini response structure if needed
-    try {
-      const parsed = JSON.parse(responseContent);
-      // Ensure all required fields exist with proper structure
-      const validatedResponse = {
-        narrative: {
-          setting: parsed.narrative?.setting || '',
-          characters: Array.isArray(parsed.narrative?.characters) ? parsed.narrative.characters : [],
-          actions: Array.isArray(parsed.narrative?.actions) ? parsed.narrative.actions : [],
-          timeline: parsed.narrative?.timeline || 'present'
-        },
-        emotions: Array.isArray(parsed.emotions) ? parsed.emotions.map((e: GeminiEmotion) => ({
-          name: e.name || '',
-          intensity: typeof e.intensity === 'number' ? e.intensity : 0.5,
-          valence: typeof e.valence === 'number' ? e.valence : 0,
-          triggers: Array.isArray(e.triggers) ? e.triggers : []
-        })) : [],
-        symbols: Array.isArray(parsed.symbols) ? parsed.symbols.map((s: GeminiSymbol) => ({
-          name: s.name || '',
-          type: s.type || 'cultural',
-          meaning: s.meaning || '',
-          significance: typeof s.significance === 'number' ? s.significance : 0.5,
-          description: s.meaning || '' // Ensure description is set for database storage
-        })) : [],
-        themes: Array.isArray(parsed.themes) ? parsed.themes.map((t: GeminiTheme) => {
-          const validatedCategory = validateThemeCategory(t.category || 'personal_growth');
-          console.log('Validating theme category:', { original: t.category, validated: validatedCategory });
-          return {
-            name: t.name || '',
-            category: validatedCategory,
-            description: t.description || '',
-            confidence: typeof t.confidence === 'number' ? t.confidence : 0.5
-          };
-        }) : [],
-        patterns: Array.isArray(parsed.patterns) ? parsed.patterns.map((p: GeminiPattern) => ({
-          type: p.type || 'recurring',
-          elements: Array.isArray(p.elements) ? p.elements : [],
-          confidence: typeof p.confidence === 'number' ? p.confidence : 0.5,
-          description: p.description || ''
-        })) : [],
-        psychologicalInsights: Array.isArray(parsed.psychologicalInsights) ? parsed.psychologicalInsights.map((i: GeminiInsight) => ({
-          title: i.title || '',
-          description: i.description || '',
-          category: i.category || 'general',
-          confidence: typeof i.confidence === 'number' ? i.confidence : 0.5,
-          actionable: !!i.actionable,
-          recommendation: i.recommendation
-        })) : [],
-        mentalState: {
-          stressLevel: typeof parsed.mentalState?.stressLevel === 'number' ? parsed.mentalState.stressLevel : 5,
-          anxietyLevel: typeof parsed.mentalState?.anxietyLevel === 'number' ? parsed.mentalState.anxietyLevel : 5,
-          moodScore: typeof parsed.mentalState?.moodScore === 'number' ? parsed.mentalState.moodScore : 5,
-          dominantEmotions: Array.isArray(parsed.mentalState?.dominantEmotions) ? parsed.mentalState.dominantEmotions : [],
-          notes: parsed.mentalState?.notes || ''
-        }
-      };
-      responseContent = JSON.stringify(validatedResponse);
-    } catch (error) {
-      console.error('Error validating Gemini response:', error);
-      throw new Error('Invalid response structure from Gemini');
-    }
-  }
-
-  if (!responseContent) {
-    throw new Error('No analysis generated');
-  }
-
-  console.log('Raw AI Response:', responseContent);
-  
-  try {
-    const parsedAnalysis = JSON.parse(responseContent) as DreamAnalysis;
-    console.log('Parsed Analysis:', JSON.stringify(parsedAnalysis, null, 2));
-    return parsedAnalysis;
-  } catch (error) {
-    console.error('JSON Parse Error:', error);
-    console.error('Response that failed to parse:', responseContent);
-    throw error;
+    const contextString = JSON.stringify({
+      dreamFrequency: context.frequency.averageDreamsPerWeek,
+      commonSymbols: context.commonElements.symbols,
+      commonThemes: context.commonElements.themes,
+      emotionalPatterns: context.patterns.emotions,
+      previousInsights: context.previousInsights
+    });
+    
+    const systemPrompt = `You are a dream analysis AI that provides structured analysis of dreams. 
+Your responses must be valid JSON objects with the following structure:
+{
+  "narrative": {
+    "setting": string,
+    "characters": Array<{type: string, description: string, familiarity: number}>,
+    "actions": string[],
+    "timeline": "past" | "present" | "future" | "mixed"
+  },
+  "emotions": Array<{
+    name: string,
+    intensity: number,
+    valence: number,
+    triggers: string[]
+  }>,
+  "symbols": Array<{
+    name: string,
+    type: "personal" | "cultural" | "archetypal",
+    meaning: string,
+    significance: number,
+    description: string
+  }>,
+  "themes": Array<{
+    name: string,
+    category: string,
+    description: string,
+    confidence: number
+  }>,
+  "patterns": Array<{
+    type: "recurring" | "evolving" | "cyclical",
+    elements: string[],
+    confidence: number,
+    description: string
+  }>,
+  "psychologicalInsights": Array<{
+    title: string,
+    description: string,
+    category: string,
+    confidence: number,
+    actionable: boolean,
+    recommendation?: string
+  }>,
+  "mentalState": {
+    stressLevel: number,
+    anxietyLevel: number,
+    moodScore: number,
+    dominantEmotions: string[],
+    notes?: string
   }
 }
 
-async function processSymbolsWithTx(tx: Prisma.TransactionClient, symbols: DreamAnalysis['symbols']) {
-  const processedSymbols: Symbol[] = [];
+Ensure all themes and symbols are meaningful and specific to the dream content.
+Do not include any markdown formatting or code blocks in your response.
+Pay special attention to recurring symbols and themes that could create connections between dreams.
+Respond ONLY with the JSON object, no additional text or formatting.`;
+    
+    const prompt = `Analyze this dream in detail, considering the following context: ${contextString}\n\nDream Content: ${dream.content}`;
+    
+    try {
+      const result = await model.generateContent([
+        { text: systemPrompt },
+        { text: prompt }
+      ]);
+      const response = await result.response;
+      responseContent = cleanResponseText(response.text());
+      
+      // Validate JSON structure
+      try {
+        const parsed = JSON.parse(responseContent);
+        console.log('Successfully parsed Gemini response');
+        
+        // Ensure all required fields exist with proper structure
+        const validatedResponse = {
+          narrative: {
+            setting: parsed.narrative?.setting || '',
+            characters: Array.isArray(parsed.narrative?.characters) ? parsed.narrative.characters : [],
+            actions: Array.isArray(parsed.narrative?.actions) ? parsed.narrative.actions : [],
+            timeline: parsed.narrative?.timeline || 'present'
+          },
+          emotions: Array.isArray(parsed.emotions) ? parsed.emotions.map((e: GeminiEmotion) => ({
+            name: e.name || '',
+            intensity: typeof e.intensity === 'number' ? e.intensity : 0.5,
+            valence: typeof e.valence === 'number' ? e.valence : 0,
+            triggers: Array.isArray(e.triggers) ? e.triggers : []
+          })) : [],
+          symbols: Array.isArray(parsed.symbols) ? parsed.symbols.map((s: GeminiSymbol) => ({
+            name: s.name || '',
+            type: s.type || 'cultural',
+            meaning: s.meaning || '',
+            significance: typeof s.significance === 'number' ? s.significance : 0.5,
+            description: s.meaning || ''
+          })) : [],
+          themes: Array.isArray(parsed.themes) ? parsed.themes.map((t: GeminiTheme) => {
+            const validatedCategory = validateThemeCategory(t.category || 'personal_growth');
+            return {
+              name: t.name || '',
+              category: validatedCategory,
+              description: t.description || '',
+              confidence: typeof t.confidence === 'number' ? t.confidence : 0.5
+            };
+          }) : [],
+          patterns: Array.isArray(parsed.patterns) ? parsed.patterns : [],
+          psychologicalInsights: Array.isArray(parsed.psychologicalInsights) ? parsed.psychologicalInsights : [],
+          mentalState: {
+            stressLevel: typeof parsed.mentalState?.stressLevel === 'number' ? parsed.mentalState.stressLevel : 5,
+            anxietyLevel: typeof parsed.mentalState?.anxietyLevel === 'number' ? parsed.mentalState.anxietyLevel : 5,
+            moodScore: typeof parsed.mentalState?.moodScore === 'number' ? parsed.mentalState.moodScore : 5,
+            dominantEmotions: Array.isArray(parsed.mentalState?.dominantEmotions) ? parsed.mentalState.dominantEmotions : [],
+            notes: parsed.mentalState?.notes || ''
+          }
+        };
+        
+        return validatedResponse;
+      } catch (parseError) {
+        console.error('Error parsing Gemini response:', parseError);
+        console.error('Raw response:', responseContent);
+        throw new Error('Invalid response structure from Gemini');
+      }
+    } catch (error) {
+      console.error('Error generating content with Gemini:', error);
+      throw error;
+    }
+  }
+
+  throw new Error('No AI model configured');
+}
+
+async function processSymbolsWithTx(tx: Prisma.TransactionClient, symbols: GeminiSymbol[]): Promise<Symbol[]> {
+  const processedSymbols = [];
   
   for (const symbol of symbols) {
-    const existing = await tx.symbol.findFirst({
-      where: { name: symbol.name }
+    if (!symbol.name) continue;
+    
+    // First try to find an exact match
+    let existingSymbol = await tx.symbol.findFirst({
+      where: {
+        name: {
+          equals: symbol.name,
+          mode: 'insensitive'
+        },
+        type: symbol.type || 'personal'
+      }
     });
     
-    if (existing) {
-      const updated = await tx.symbol.update({
-        where: { id: existing.id },
+    if (!existingSymbol) {
+      // Create new symbol if none exists
+      existingSymbol = await tx.symbol.create({
         data: {
-          description: String(symbol.meaning),
+          name: symbol.name,
+          type: symbol.type || 'personal',
+          description: symbol.meaning || '',
+          frequency: 1
+        }
+      });
+      console.log('Created new symbol:', { name: symbol.name, type: symbol.type });
+    } else {
+      // Update existing symbol with new information
+      existingSymbol = await tx.symbol.update({
+        where: { id: existingSymbol.id },
+        data: {
+          description: symbol.meaning || existingSymbol.description,
           frequency: { increment: 1 }
         }
       });
-      processedSymbols.push(updated);
-    } else {
-      const newSymbol = await tx.symbol.create({
-        data: {
-          name: symbol.name,
-          description: String(symbol.meaning),
-          frequency: 1,
-          type: symbol.type
-        }
-      });
-      processedSymbols.push(newSymbol);
+      console.log('Updated existing symbol:', { name: symbol.name, frequency: existingSymbol.frequency + 1 });
     }
+    
+    processedSymbols.push(existingSymbol);
   }
   
   return processedSymbols;
 }
 
-async function processThemesWithTx(tx: Prisma.TransactionClient, themes: DreamAnalysis['themes']) {
-  const processedThemes: Theme[] = [];
+async function processThemesWithTx(tx: Prisma.TransactionClient, themes: GeminiTheme[]): Promise<Theme[]> {
+  const processedThemes = [];
   
   for (const theme of themes) {
-    // Validate and normalize the theme category
-    const validatedCategory = validateThemeCategory(theme.category);
+    if (!theme.name) continue;
+    
+    const validatedCategory = validateThemeCategory(theme.category || 'personal_growth');
     console.log('Processing theme:', { name: theme.name, category: validatedCategory });
     
-    // First try to find by exact name and category
-    let existing = await tx.theme.findFirst({
-      where: { 
-        name: theme.name,
+    // First try to find an exact match by name and category
+    let existingTheme = await tx.theme.findFirst({
+      where: {
+        name: {
+          equals: theme.name,
+          mode: 'insensitive'
+        },
         category: validatedCategory
       }
     });
-    
-    // If not found, try to find by name only and update the category
-    if (!existing) {
-      existing = await tx.theme.findUnique({
-        where: { name: theme.name }
-      });
-      
-      if (existing) {
-        // Update existing theme with new category
-        const updated = await tx.theme.update({
-          where: { id: existing.id },
-          data: {
-            description: theme.description,
-            category: validatedCategory,
-            frequency: { increment: 1 }
-          }
-        });
-        processedThemes.push(updated);
-        console.log('Updated existing theme category:', { name: theme.name, oldCategory: existing.category, newCategory: validatedCategory });
-      } else {
-        // Create new theme
-        const newTheme = await tx.theme.create({
-          data: {
-            name: theme.name,
-            description: theme.description,
-            category: validatedCategory,
-            frequency: 1
-          }
-        });
-        processedThemes.push(newTheme);
-        console.log('Created new theme:', { name: theme.name, category: validatedCategory });
-      }
-    } else {
-      // Update frequency of existing theme
-      const updated = await tx.theme.update({
-        where: { id: existing.id },
+
+    if (!existingTheme) {
+      // Create new theme if none exists
+      existingTheme = await tx.theme.create({
         data: {
+          name: theme.name,
+          category: validatedCategory,
+          description: theme.description || '',
+          frequency: 1
+        }
+      });
+      console.log('Created new theme:', { name: theme.name, category: validatedCategory });
+    } else {
+      // Update existing theme with new information
+      existingTheme = await tx.theme.update({
+        where: { id: existingTheme.id },
+        data: {
+          description: theme.description || existingTheme.description,
           frequency: { increment: 1 }
         }
       });
-      processedThemes.push(updated);
-      console.log('Incremented existing theme frequency:', { name: theme.name, category: validatedCategory });
+      console.log('Updated existing theme:', { name: theme.name, category: validatedCategory, frequency: existingTheme.frequency + 1 });
     }
+    
+    processedThemes.push(existingTheme);
   }
   
-  console.log('Processed themes:', processedThemes.map(t => ({ name: t.name, category: t.category })));
   return processedThemes;
 }
 
@@ -667,8 +652,18 @@ async function updateDreamPatternsWithTx(
 }
 
 function hasCommonElements(arr1: string[], arr2: string[] | Prisma.JsonValue): boolean {
-  const arr2Strings = Array.isArray(arr2) ? arr2 : JSON.parse(String(arr2)) as string[];
-  return arr1.some(el => arr2Strings.includes(el));
+  if (Array.isArray(arr2)) {
+    return arr1.some(el => arr2.includes(el));
+  }
+  try {
+    const arr2Strings = typeof arr2 === 'string' ? 
+      JSON.parse(arr2) as string[] : 
+      Array.isArray(arr2) ? arr2 : [];
+    return arr1.some(el => arr2Strings.includes(el));
+  } catch (e) {
+    console.error('Error parsing pattern elements:', e);
+    return false;
+  }
 }
 
 function prepareDreamContext(dreams: DreamWithRelations[], existingPatterns: Array<DreamPattern & { dreams: Dream[] }>): {
@@ -732,7 +727,11 @@ function prepareDreamContext(dreams: DreamWithRelations[], existingPatterns: Arr
   const emotionalTrends = dreams.map(dream => ({
     date: dream.createdAt,
     emotions: dream.emotions.map(e => e.name),
-    analysis: dream.analysis ? JSON.parse(String(dream.analysis)) as DreamAnalysis : null
+    analysis: dream.analysis ? 
+      (typeof dream.analysis === 'string' ? 
+        JSON.parse(dream.analysis) : 
+        dream.analysis) as DreamAnalysis : 
+      null
   }));
 
   return {
@@ -755,9 +754,9 @@ function prepareDreamContext(dreams: DreamWithRelations[], existingPatterns: Arr
       .filter(d => d.analysis)
       .map(d => {
         try {
-          const analysis = JSON.parse(d.analysis as string);
-          return analysis.psychologicalInsights;
+          return typeof d.analysis === 'string' ? JSON.parse(d.analysis) : d.analysis;
         } catch (e) {
+          console.error('Error parsing previous insight:', e);
           return null;
         }
       })

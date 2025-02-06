@@ -103,6 +103,7 @@ model Dream {
   mentalState MentalStateSnapshot[]
   stories     DreamStory[]
   metrics     DreamMetrics?
+  spaces      DreamSpace[]
 
   @@index([userId])
 }
@@ -161,21 +162,29 @@ model MentalStateSnapshot {
 model Theme {
   id          String   @id @default(cuid())
   name        String   @unique
-  category    String   @default("psychological")
   description String?
+  category    String   @default("personal_growth")
   frequency   Int      @default(1)
+  confidence  Float    @default(1.0)
   dreams      Dream[]
   stories     DreamStory[] @relation("DreamStoryThemes")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime? @updatedAt
+  spaces      DreamSpace[]
 }
 
 model Symbol {
   id          String   @id @default(cuid())
   name        String   @unique
-  type        String   @default("cultural") // personal, cultural, archetypal
+  type        String   @default("personal")
   description String?
   frequency   Int      @default(1)
+  significance Float   @default(1.0)
   dreams      Dream[]
   stories     DreamStory[] @relation("DreamStorySymbols")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime? @updatedAt
+  spaces      DreamSpace[]
 }
 
 model Emotion {
@@ -191,23 +200,19 @@ model Emotion {
 model DreamStory {
   id          String    @id @default(cuid())
   title       String
-  content     String    @db.Text
+  content     Json
+  isPublic    Boolean   @default(false)
+  publishedAt DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  publishedAt DateTime?
-  isPublic    Boolean   @default(false)
   userId      String
-  dreamId     String
+  dreamId     String    @unique
   user        User      @relation(fields: [userId], references: [id])
   dream       Dream     @relation(fields: [dreamId], references: [id])
-  themes      Theme[]
-  symbols     Symbol[]
+  themes      Theme[]   @relation("DreamStoryThemes")
+  symbols     Symbol[]  @relation("DreamStorySymbols")
   likes       Like[]
   comments    Comment[]
-
-  @@unique([dreamId, userId])
-  @@index([userId])
-  @@index([dreamId])
 }
 
 model Like {
@@ -424,4 +429,23 @@ model DashboardStats {
   topThemes   Json
   topEmotions Json
   updatedAt   DateTime @updatedAt
+}
+
+model DreamSpace {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  primarySymbol String
+  relatedSymbols String[]
+  dominantTheme String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  dreams        Dream[]
+  symbols       Symbol[]
+  themes        Theme[]
+
+  @@index([primarySymbol])
+  @@index([dominantTheme])
 }

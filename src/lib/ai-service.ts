@@ -255,51 +255,82 @@ export async function generateDreamImage(description: string): Promise<ImageResp
   const prompt = `Create a dreamlike, artistic interpretation of this scene: ${description}. Make it ethereal and surreal, using soft colors and mystical elements.`;
   const provider = process.env.IMAGE_PROVIDER || 'dalle';
   
-  if (provider === 'dalle') {
-    const response = await openai.images.generate({
-      model: "dall-e-3",
-      prompt: prompt,
-      n: 1,
-      size: "1024x1024",
-      response_format: 'url'
-    });
-    
-    return {
-      url: response.data[0]?.url || '',
-      provider: 'dall-e-3'
-    };
-  } else {
-    // Use Vertex AI for Imagen
-    const location = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
-    const projectId = process.env.GOOGLE_CLOUD_PROJECT || '';
-    const client = await auth.getClient();
-    const accessToken = await client.getAccessToken();
-    
-    const response = await fetch(
-      `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/imagen-3.0-generate-002:predict`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken.token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          instances: [{ prompt }],
-          parameters: {
-            sampleCount: 1,
-            aspectRatio: "1:1",
-            imageSize: "1024x1024"
+  try {
+    if (provider === 'dalle' || provider === 'openai') {
+      const response = await openai.images.generate({
+        model: "dall-e-3",
+        prompt: prompt,
+        n: 1,
+        size: "1024x1024",
+        response_format: 'url'
+      });
+      
+      return {
+        url: response.data[0]?.url || '',
+        provider: 'dall-e-3'
+      };
+    } else if (provider === 'imagen') {
+      try {
+        const location = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
+        const projectId = process.env.GOOGLE_CLOUD_PROJECT || '';
+        const client = await auth.getClient();
+        const accessToken = await client.getAccessToken();
+        
+        const response = await fetch(
+          `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/imagen-3.0-generate-002:predict`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken.token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              instances: [{ prompt }],
+              parameters: {
+                sampleCount: 1,
+                aspectRatio: "1:1",
+                imageSize: "1024x1024"
+              }
+            })
           }
-        })
-      }
-    );
+        );
 
-    const result = await response.json();
-    const image = result.predictions?.[0]?.bytesBase64Encoded;
-    
-    return {
-      url: `data:image/png;base64,${image}` || '',
-      provider: 'imagen-3'
-    };
+        if (!response.ok) {
+          throw new Error(`Imagen API error: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        const image = result.predictions?.[0]?.bytesBase64Encoded;
+        
+        if (!image) {
+          throw new Error('No image data received from Imagen');
+        }
+
+        return {
+          url: `data:image/png;base64,${image}`,
+          provider: 'imagen-3'
+        };
+      } catch (imagenError) {
+        console.error('Imagen generation failed, falling back to DALL-E:', imagenError);
+        // Fall back to DALL-E
+        const response = await openai.images.generate({
+          model: "dall-e-3",
+          prompt: prompt,
+          n: 1,
+          size: "1024x1024",
+          response_format: 'url'
+        });
+        
+        return {
+          url: response.data[0]?.url || '',
+          provider: 'dall-e-3 (fallback)'
+        };
+      }
+    }
+  } catch (error) {
+    console.error('Error generating image:', error);
+    throw new Error('Failed to generate image');
   }
+
+  throw new Error('No valid image provider configured');
 } 

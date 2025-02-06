@@ -97,7 +97,22 @@ export function DreamAnalysis({ dreamId, initialAnalysis }: DreamAnalysisProps) 
                     <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 rounded-xl blur-2xl"></div>
                     <div className="relative z-10">
                       <h4 className="font-medium text-purple-200 mb-2">Setting</h4>
-                      <p className="text-sm text-purple-200/80">{analysis.narrative.setting}</p>
+                      <div className="text-sm text-purple-200/80">
+                        {typeof analysis.narrative.setting === 'object' ? (
+                          <div className="space-y-2">
+                            {Object.entries(analysis.narrative.setting).map(([location, details]: [string, any]) => (
+                              <div key={location} className="flex justify-between items-start">
+                                <span className="capitalize">{location.replace(/_/g, ' ')}</span>
+                                <span className="text-xs px-2 py-1 rounded-full bg-purple-500/20">
+                                  {details.type}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          analysis.narrative.setting
+                        )}
+                      </div>
                     </div>
                   </Card>
                   <Card className="relative p-4 rounded-xl border border-purple-500/20 bg-[#3c1f52]/10">
@@ -124,7 +139,7 @@ export function DreamAnalysis({ dreamId, initialAnalysis }: DreamAnalysisProps) 
                           <div className="flex justify-between items-start mb-2">
                             <span className="text-sm font-medium text-purple-200">{character.type}</span>
                             <span className="text-xs px-2 py-1 rounded-full bg-purple-500/20 text-purple-200">
-                              Familiarity: {Math.round(character.familiarity * 100)}%
+                              Familiarity: {Math.min(100, Math.round(character.familiarity * 100))}%
                             </span>
                           </div>
                           <p className="text-sm text-purple-200/80">{character.description}</p>
@@ -162,9 +177,9 @@ export function DreamAnalysis({ dreamId, initialAnalysis }: DreamAnalysisProps) 
                           <div>
                             <div className="flex justify-between text-sm text-purple-200/80 mb-1">
                               <span>Intensity</span>
-                              <span>{Math.round(emotion.intensity * 100)}%</span>
+                              <span>{Math.min(100, Math.round(emotion.intensity * 100))}%</span>
                             </div>
-                            <Progress value={emotion.intensity * 100} className="h-2" />
+                            <Progress value={Math.min(100, emotion.intensity * 100)} className="h-2" />
                           </div>
                           {emotion.triggers.length > 0 && (
                             <div className="text-sm text-purple-200/80">
@@ -205,8 +220,8 @@ export function DreamAnalysis({ dreamId, initialAnalysis }: DreamAnalysisProps) 
                         <p className="text-sm text-purple-200/80 mb-2">{symbol.meaning}</p>
                         <div className="flex items-center gap-2 text-xs text-purple-200/60">
                           <span>Significance:</span>
-                          <Progress value={symbol.significance * 100} className="h-1 flex-1" />
-                          <span>{Math.round(symbol.significance * 100)}%</span>
+                          <Progress value={Math.min(100, symbol.significance * 100)} className="h-1 flex-1" />
+                          <span>{Math.min(100, Math.round(symbol.significance * 100))}%</span>
                         </div>
                       </div>
                     </motion.div>
@@ -237,7 +252,7 @@ export function DreamAnalysis({ dreamId, initialAnalysis }: DreamAnalysisProps) 
                             <span className="text-xs text-purple-200/60">{theme.category}</span>
                           </div>
                           <span className="text-xs px-2 py-1 rounded-full bg-purple-500/20 text-purple-200">
-                            {Math.round(theme.confidence * 100)}% confidence
+                            {Math.min(100, Math.round(theme.confidence * 100))}% confidence
                           </span>
                         </div>
                         <p className="text-sm text-purple-200/80">{theme.description}</p>
@@ -268,7 +283,7 @@ export function DreamAnalysis({ dreamId, initialAnalysis }: DreamAnalysisProps) 
                           <div className="flex justify-between items-start mb-2">
                             <span className="text-sm font-medium text-purple-200">{pattern.type}</span>
                             <span className="text-xs px-2 py-1 rounded-full bg-purple-500/20 text-purple-200">
-                              {Math.round(pattern.confidence * 100)}% confidence
+                              {Math.min(100, Math.round(pattern.confidence * 100))}% confidence
                             </span>
                           </div>
                           <p className="text-sm text-purple-200/80 mb-2">{pattern.description}</p>
@@ -313,7 +328,7 @@ export function DreamAnalysis({ dreamId, initialAnalysis }: DreamAnalysisProps) 
                               {insight.category}
                             </span>
                             <span className="text-xs text-purple-200/80">
-                              {Math.round(insight.confidence * 100)}%
+                              {Math.min(100, Math.round(insight.confidence * 100))}%
                             </span>
                           </div>
                         </div>
