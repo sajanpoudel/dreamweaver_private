@@ -13,7 +13,7 @@ export async function GET() {
     // Verify user exists in database
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      select: { id: true }
+      select: { id: true },
     });
 
     if (!user) {
@@ -29,14 +29,14 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       count,
       pendingCount: await db.friendship.count({
         where: {
           addresseeId: session.user.id,
-          status: 'pending'
-        }
-      })
+          status: 'pending',
+        },
+      }),
     });
   } catch (error) {
     console.error('Error getting friend count:', error);
@@ -45,4 +45,4 @@ export async function GET() {
     }
     return new NextResponse('Internal Server Error', { status: 500 });
   }
-} 
+}
