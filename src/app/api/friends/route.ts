@@ -16,7 +16,7 @@ export async function GET() {
       where: {
         OR: [
           { requesterId: session.user.id, status: 'accepted' },
-          { addresseeId: session.user.id, status: 'accepted' }
+          { addresseeId: session.user.id, status: 'accepted' },
         ],
       },
       include: {
@@ -55,10 +55,9 @@ export async function GET() {
     });
 
     // Transform friendships into a list of friends
-    const friends = friendships.map(friendship => {
-      const friend = friendship.requesterId === session.user.id
-        ? friendship.addressee
-        : friendship.requester;
+    const friends = friendships.map((friendship) => {
+      const friend =
+        friendship.requesterId === session.user.id ? friendship.addressee : friendship.requester;
       return {
         ...friend,
         friendshipId: friendship.id,
@@ -182,10 +181,7 @@ export async function DELETE(req: Request) {
     const friendship = await db.friendship.findFirst({
       where: {
         id: friendshipId,
-        OR: [
-          { requesterId: session.user.id },
-          { addresseeId: session.user.id },
-        ],
+        OR: [{ requesterId: session.user.id }, { addresseeId: session.user.id }],
       },
     });
 
@@ -203,4 +199,4 @@ export async function DELETE(req: Request) {
     console.error('Error removing friend:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
-} 
+}
