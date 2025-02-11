@@ -13,11 +13,8 @@ export async function GET() {
     // Get current user's connections
     const existingConnections = await db.friendship.findMany({
       where: {
-        OR: [
-          { requesterId: session.user.id },
-          { addresseeId: session.user.id },
-        ],
-        status: { not: 'rejected' }
+        OR: [{ requesterId: session.user.id }, { addresseeId: session.user.id }],
+        status: { not: 'rejected' },
       },
       select: {
         requesterId: true,
@@ -28,8 +25,8 @@ export async function GET() {
     // Create a set of users to exclude
     const excludeUserIds = new Set([
       session.user.id,
-      ...existingConnections.map(c => c.requesterId),
-      ...existingConnections.map(c => c.addresseeId),
+      ...existingConnections.map((c) => c.requesterId),
+      ...existingConnections.map((c) => c.addresseeId),
     ]);
 
     // Find users who are not connected
@@ -56,11 +53,11 @@ export async function GET() {
 
     // Process suggestions with safer theme extraction
     const suggestions = suggestedUsers
-      .filter(user => user.dreams.length > 0) // Only include users with dreams
+      .filter((user) => user.dreams.length > 0) // Only include users with dreams
       .map((user) => {
         // Extract dream interests (themes) safely
         const dreamInterests = user.dreams
-          .flatMap(dream => {
+          .flatMap((dream) => {
             if (!dream.themes) return [];
             try {
               const themes = JSON.parse(dream.themes as string);
@@ -69,8 +66,9 @@ export async function GET() {
               return [];
             }
           })
-          .filter((theme, index, self) => 
-            theme && typeof theme === 'string' && self.indexOf(theme) === index
+          .filter(
+            (theme, index, self) =>
+              theme && typeof theme === 'string' && self.indexOf(theme) === index
           )
           .slice(0, 3);
 
@@ -89,4 +87,4 @@ export async function GET() {
     console.error('Error getting friend suggestions:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
-} 
+}
