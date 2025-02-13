@@ -14,7 +14,7 @@ interface StoryContent {
 const extractStoryPreview = (content: any): string => {
   try {
     let storyContent: StoryContent;
-    
+
     if (typeof content === 'string') {
       try {
         storyContent = JSON.parse(content);
@@ -27,19 +27,19 @@ const extractStoryPreview = (content: any): string => {
 
     // Build preview from available fields
     const parts: string[] = [];
-    
+
     if (storyContent.introduction) {
       return storyContent.introduction;
     }
-    
+
     if (storyContent.subtitle) {
       parts.push(storyContent.subtitle);
     }
-    
+
     if (storyContent.sections && storyContent.sections.length > 0) {
       parts.push(storyContent.sections[0].content);
     }
-    
+
     return parts.join(' ').trim();
   } catch (error) {
     console.error('Error extracting story preview:', error);
@@ -50,7 +50,7 @@ const extractStoryPreview = (content: any): string => {
 export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     // Check if session exists
     if (!session?.user) {
       return new NextResponse('Unauthorized', { status: 401 });
@@ -95,8 +95,8 @@ export async function GET(request: Request) {
           isPublic: true,
           title: {
             contains: query,
-            mode: 'insensitive'
-          }
+            mode: 'insensitive',
+          },
         },
         select: {
           id: true,
@@ -109,28 +109,26 @@ export async function GET(request: Request) {
     ]);
 
     // Filter stories by content after fetching
-    const filteredStories = stories.filter(story => {
+    const filteredStories = stories.filter((story) => {
       const preview = extractStoryPreview(story.content);
       return preview.toLowerCase().includes(query.toLowerCase());
     });
 
     // Format results
     const formattedResults = [
-      ...dreams.map(dream => ({
+      ...dreams.map((dream) => ({
         id: dream.id,
         type: 'dream' as const,
         title: dream.title || 'Untitled Dream',
-        preview: typeof dream.content === 'string' 
-          ? dream.content.slice(0, 150) 
-          : dream.content || '',
+        preview:
+          typeof dream.content === 'string' ? dream.content.slice(0, 150) : dream.content || '',
         userId: dream.userId,
       })),
-      ...filteredStories.map(story => {
+      ...filteredStories.map((story) => {
         let storyContent: StoryContent;
         try {
-          storyContent = typeof story.content === 'string' 
-            ? JSON.parse(story.content) 
-            : story.content;
+          storyContent =
+            typeof story.content === 'string' ? JSON.parse(story.content) : story.content;
         } catch {
           storyContent = {};
         }
@@ -148,9 +146,8 @@ export async function GET(request: Request) {
     return NextResponse.json(formattedResults);
   } catch (error) {
     console.error('Search error:', error);
-    return new NextResponse(
-      error instanceof Error ? error.message : 'Internal Server Error', 
-      { status: 500 }
-    );
+    return new NextResponse(error instanceof Error ? error.message : 'Internal Server Error', {
+      status: 500,
+    });
   }
-} 
+}
