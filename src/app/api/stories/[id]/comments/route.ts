@@ -11,15 +11,12 @@ const routeContextSchema = z.object({
   }),
 });
 
-export async function POST(
-  req: Request,
-  context: z.infer<typeof routeContextSchema>
-) {
+export async function POST(req: Request, context: z.infer<typeof routeContextSchema>) {
   try {
     const { params } = routeContextSchema.parse(context);
     const { content } = await req.json();
 
-    const session = await getServerSession(authOptions) as Session & {
+    const session = (await getServerSession(authOptions)) as Session & {
       user: {
         id: string;
         email: string;
@@ -64,17 +61,13 @@ export async function POST(
     return NextResponse.json(comment);
   } catch (error) {
     console.error('Error creating comment:', error);
-    return new NextResponse(
-      error instanceof Error ? error.message : 'Failed to create comment',
-      { status: 500 }
-    );
+    return new NextResponse(error instanceof Error ? error.message : 'Failed to create comment', {
+      status: 500,
+    });
   }
 }
 
-export async function GET(
-  req: Request,
-  context: z.infer<typeof routeContextSchema>
-) {
+export async function GET(req: Request, context: z.infer<typeof routeContextSchema>) {
   try {
     const { params } = routeContextSchema.parse(context);
 
@@ -98,10 +91,9 @@ export async function GET(
     return NextResponse.json(comments);
   } catch (error) {
     console.error('Error fetching comments:', error);
-    return new NextResponse(
-      error instanceof Error ? error.message : 'Failed to fetch comments',
-      { status: 500 }
-    );
+    return new NextResponse(error instanceof Error ? error.message : 'Failed to fetch comments', {
+      status: 500,
+    });
   }
 }
 
@@ -110,14 +102,14 @@ export async function DELETE(request: Request, context: z.infer<typeof routeCont
     const { params } = routeContextSchema.parse(context);
     const storyId: string = params.id;
 
-    const session = await getServerSession(authOptions) as Session & {
+    const session = (await getServerSession(authOptions)) as Session & {
       user: {
         id: string;
         email: string;
         name: string;
       };
     };
-    
+
     if (!session?.user?.id) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
@@ -154,4 +146,4 @@ export async function DELETE(request: Request, context: z.infer<typeof routeCont
     console.error('Error deleting comment:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
-} 
+}
