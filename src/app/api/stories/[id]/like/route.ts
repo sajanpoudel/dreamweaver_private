@@ -11,14 +11,11 @@ const routeContextSchema = z.object({
   }),
 });
 
-export async function POST(
-  req: Request,
-  context: z.infer<typeof routeContextSchema>
-) {
+export async function POST(req: Request, context: z.infer<typeof routeContextSchema>) {
   try {
     const { params } = routeContextSchema.parse(context);
 
-    const session = await getServerSession(authOptions) as Session & {
+    const session = (await getServerSession(authOptions)) as Session & {
       user: {
         id: string;
         email: string;
@@ -77,10 +74,9 @@ export async function POST(
     });
   } catch (error) {
     console.error('Error handling like:', error);
-    return new NextResponse(
-      error instanceof Error ? error.message : 'Failed to handle like',
-      { status: 500 }
-    );
+    return new NextResponse(error instanceof Error ? error.message : 'Failed to handle like', {
+      status: 500,
+    });
   }
 }
 
@@ -91,14 +87,14 @@ export async function GET(request: Request, context: z.infer<typeof routeContext
 
     console.log('Fetching like status for story:', storyId);
 
-    const session = await getServerSession(authOptions) as Session & {
+    const session = (await getServerSession(authOptions)) as Session & {
       user: {
         id: string;
         email: string;
         name: string;
       };
     };
-    
+
     if (!session?.user?.id) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
@@ -107,10 +103,7 @@ export async function GET(request: Request, context: z.infer<typeof routeContext
     const story = await db.dreamStory.findFirst({
       where: {
         id: storyId,
-        OR: [
-          { userId: session.user.id },
-          { isPublic: true }
-        ]
+        OR: [{ userId: session.user.id }, { isPublic: true }],
       },
     });
 
@@ -144,4 +137,4 @@ export async function GET(request: Request, context: z.infer<typeof routeContext
     }
     return new NextResponse('Internal Server Error', { status: 500 });
   }
-} 
+}
