@@ -10,6 +10,7 @@ import {
   DreamCheckpoint,
 } from '@prisma/client';
 import { db } from './prisma';
+import { extractCommonElements } from './dream-helpers';
 
 // Move OpenAI initialization to server-side only
 let openai: any;
@@ -563,21 +564,6 @@ function calculateDreamFrequency(dreams: DreamWithRelations[]): {
   else trend = 'stable';
 
   return { averageDreamsPerWeek, trend };
-}
-
-function extractCommonElements<T extends { name: string }>(items: T[]) {
-  const frequency = items.reduce(
-    (acc, item) => {
-      acc[item.name] = (acc[item.name] || 0) + 1;
-      return acc;
-    },
-    {} as Record<string, number>
-  );
-
-  return Object.entries(frequency)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 5)
-    .map(([name, count]) => ({ name, count }));
 }
 
 function determineEmotionCategory(emotion: string): 'primary' | 'secondary' | 'complex' {
