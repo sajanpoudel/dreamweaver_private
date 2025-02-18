@@ -23,3 +23,8 @@ export function determineEmotionCategory(emotion: string): 'primary' | 'secondar
   if (secondaryEmotions.includes(emotion.toLowerCase())) return 'secondary';
   return 'complex';
 }
+
+export function hasCommonElements(arr1: string[], arr2: string[] | unknown): boolean {
+  const arr2Strings = Array.isArray(arr2) ? arr2 : (JSON.parse(String(arr2)) as string[]);
+  return arr1.some((el) => arr2Strings.includes(el));
+}

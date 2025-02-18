@@ -10,7 +10,7 @@ import {
   DreamCheckpoint,
 } from '@prisma/client';
 import { db } from './prisma';
-import { extractCommonElements, determineEmotionCategory } from './dream-helpers';
+import { extractCommonElements, determineEmotionCategory, hasCommonElements } from './dream-helpers';
 
 // Move OpenAI initialization to server-side only
 let openai: any;
@@ -677,7 +677,3 @@ async function updateDreamPatterns(
   return patterns;
 }
 
-function hasCommonElements(arr1: string[], arr2: string[] | Prisma.JsonValue): boolean {
-  const arr2Strings = Array.isArray(arr2) ? arr2 : (JSON.parse(String(arr2)) as string[]);
-  return arr1.some((el) => arr2Strings.includes(el));
-}
