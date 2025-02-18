@@ -10,7 +10,7 @@ import {
   DreamCheckpoint,
 } from '@prisma/client';
 import { db } from './prisma';
-import { extractCommonElements } from './dream-helpers';
+import { extractCommonElements, determineEmotionCategory } from './dream-helpers';
 
 // Move OpenAI initialization to server-side only
 let openai: any;
@@ -564,15 +564,6 @@ function calculateDreamFrequency(dreams: DreamWithRelations[]): {
   else trend = 'stable';
 
   return { averageDreamsPerWeek, trend };
-}
-
-function determineEmotionCategory(emotion: string): 'primary' | 'secondary' | 'complex' {
-  const primaryEmotions = ['joy', 'sadness', 'anger', 'fear', 'disgust', 'surprise'];
-  const secondaryEmotions = ['shame', 'guilt', 'pride', 'anxiety', 'hope'];
-
-  if (primaryEmotions.includes(emotion.toLowerCase())) return 'primary';
-  if (secondaryEmotions.includes(emotion.toLowerCase())) return 'secondary';
-  return 'complex';
 }
 
 export function parseAnalysis(analysisString: string | null): DreamAnalysis | null {
