@@ -10,7 +10,7 @@ import {
   DreamCheckpoint,
 } from '@prisma/client';
 import { db } from './prisma';
-import { extractCommonElements, determineEmotionCategory, hasCommonElements } from './dream-helpers';
+import { extractCommonElements, determineEmotionCategory, hasCommonElements, calculateDreamFrequency } from './dream-helpers';
 
 // Move OpenAI initialization to server-side only
 let openai: any;
@@ -526,44 +526,6 @@ function analyzePatterns<T extends { name: string }>(items: T[][]) {
   });
 
   return patterns;
-}
-
-function calculateDreamFrequency(dreams: DreamWithRelations[]): {
-  averageDreamsPerWeek: number;
-  trend: 'increasing' | 'decreasing' | 'stable';
-} {
-  if (dreams.length < 2) {
-    return { averageDreamsPerWeek: 0, trend: 'stable' };
-  }
-
-  const timeSpanDays =
-    (dreams[0].createdAt.getTime() - dreams[dreams.length - 1].createdAt.getTime()) /
-    (1000 * 60 * 60 * 24);
-  const averageDreamsPerWeek = (dreams.length / timeSpanDays) * 7;
-
-  // Calculate trend by comparing recent frequency to overall average
-  const halfwayPoint = Math.floor(dreams.length / 2);
-  const recentDreams = dreams.slice(0, halfwayPoint);
-  const olderDreams = dreams.slice(halfwayPoint);
-
-  const recentTimeSpan =
-    (recentDreams[0].createdAt.getTime() -
-      recentDreams[recentDreams.length - 1].createdAt.getTime()) /
-    (1000 * 60 * 60 * 24);
-  const olderTimeSpan =
-    (olderDreams[0].createdAt.getTime() - olderDreams[olderDreams.length - 1].createdAt.getTime()) /
-    (1000 * 60 * 60 * 24);
-
-  const recentFrequency = (recentDreams.length / recentTimeSpan) * 7;
-  const olderFrequency = (olderDreams.length / olderTimeSpan) * 7;
-
-  let trend: 'increasing' | 'decreasing' | 'stable';
-  const difference = recentFrequency - olderFrequency;
-  if (difference > 0.5) trend = 'increasing';
-  else if (difference < -0.5) trend = 'decreasing';
-  else trend = 'stable';
-
-  return { averageDreamsPerWeek, trend };
 }
 
 export function parseAnalysis(analysisString: string | null): DreamAnalysis | null {
