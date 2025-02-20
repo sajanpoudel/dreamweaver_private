@@ -1,4 +1,4 @@
-import SignInForm from "@/components/auth/SignInForm";
+import SignInForm from '@/components/auth/SignInForm';
 
 export default function SignInPage() {
   return (
@@ -9,11 +9,8 @@ export default function SignInPage() {
             Sign in to Dreamly
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Or{" "}
-            <a
-              href="/auth/signup"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
-            >
+            Or{' '}
+            <a href="/auth/signup" className="font-medium text-indigo-600 hover:text-indigo-500">
               create a new account
             </a>
           </p>
@@ -22,4 +19,4 @@ export default function SignInPage() {
       </div>
     </div>
   );
-} 
+}
