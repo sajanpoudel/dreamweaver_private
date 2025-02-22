@@ -10,7 +10,7 @@ import {
   DreamCheckpoint,
 } from '@prisma/client';
 import { db } from './prisma';
-import { extractCommonElements, determineEmotionCategory, hasCommonElements, calculateDreamFrequency } from './dream-helpers';
+import { extractCommonElements, determineEmotionCategory, hasCommonElements, calculateDreamFrequency, analyzePatterns } from './dream-helpers';
 
 // Move OpenAI initialization to server-side only
 let openai: any;
@@ -485,47 +485,6 @@ function prepareDreamContext(
       })
       .filter(Boolean),
   };
-}
-
-function analyzePatterns<T extends { name: string }>(items: T[][]) {
-  const patterns: Record<
-    string,
-    {
-      frequency: number;
-      firstSeen: Date;
-      lastSeen: Date;
-      occurrences: number;
-      trend: 'increasing' | 'decreasing' | 'stable';
-    }
-  > = {};
-
-  items.forEach((itemGroup, index) => {
-    itemGroup.forEach((item) => {
-      if (!patterns[item.name]) {
-        patterns[item.name] = {
-          frequency: 1,
-          firstSeen: new Date(),
-          lastSeen: new Date(),
-          occurrences: 1,
-          trend: 'stable',
-        };
-      } else {
-        patterns[item.name].occurrences++;
-        patterns[item.name].frequency = patterns[item.name].occurrences / items.length;
-        patterns[item.name].lastSeen = new Date();
-
-        // Calculate trend based on recent occurrences
-        const recentOccurrences = items
-          .slice(Math.max(0, index - 3), index + 1)
-          .filter((group) => group.some((i) => i.name === item.name)).length;
-        const trend = recentOccurrences / 4; // Last 4 dreams
-        patterns[item.name].trend =
-          trend > 0.5 ? 'increasing' : trend < 0.25 ? 'decreasing' : 'stable';
-      }
-    });
-  });
-
-  return patterns;
 }
 
 export function parseAnalysis(analysisString: string | null): DreamAnalysis | null {

@@ -66,3 +66,44 @@ export function calculateDreamFrequency(dreams: { createdAt: Date }[]): {
 
   return { averageDreamsPerWeek, trend };
 }
+
+export function analyzePatterns<T extends { name: string }>(items: T[][]) {
+  const patterns: Record<
+    string,
+    {
+      frequency: number;
+      firstSeen: Date;
+      lastSeen: Date;
+      occurrences: number;
+      trend: 'increasing' | 'decreasing' | 'stable';
+    }
+  > = {};
+
+  items.forEach((itemGroup, index) => {
+    itemGroup.forEach((item) => {
+      if (!patterns[item.name]) {
+        patterns[item.name] = {
+          frequency: 1,
+          firstSeen: new Date(),
+          lastSeen: new Date(),
+          occurrences: 1,
+          trend: 'stable',
+        };
+      } else {
+        patterns[item.name].occurrences++;
+        patterns[item.name].frequency = patterns[item.name].occurrences / items.length;
+        patterns[item.name].lastSeen = new Date();
+
+        // Calculate trend based on recent occurrences
+        const recentOccurrences = items
+          .slice(Math.max(0, index - 3), index + 1)
+          .filter((group) => group.some((i) => i.name === item.name)).length;
+        const trend = recentOccurrences / 4; // Last 4 dreams
+        patterns[item.name].trend =
+          trend > 0.5 ? 'increasing' : trend < 0.25 ? 'decreasing' : 'stable';
+      }
+    });
+  });
+
+  return patterns;
+}
