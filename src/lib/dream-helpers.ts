@@ -107,3 +107,9 @@ export function analyzePatterns<T extends { name: string }>(items: T[][]) {
 
   return patterns;
 }
+
+/** Share of the larger list that two lists have in common. Two empty lists share nothing. */
+export function overlapRatio(common: number, a: number, b: number): number {
+  const largest = Math.max(a, b);
+  return largest === 0 ? 0 : common / largest;
+}
