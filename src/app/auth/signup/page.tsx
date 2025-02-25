@@ -1,4 +1,4 @@
-import SignUpForm from "@/components/auth/SignUpForm";
+import SignUpForm from '@/components/auth/SignUpForm';
 
 export default function SignUpPage() {
   return (
@@ -9,11 +9,8 @@ export default function SignUpPage() {
             Create your account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Or{" "}
-            <a
-              href="/auth/signin"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
-            >
+            Or{' '}
+            <a href="/auth/signin" className="font-medium text-indigo-600 hover:text-indigo-500">
               sign in to your account
             </a>
           </p>
@@ -22,4 +19,4 @@ export default function SignUpPage() {
       </div>
     </div>
   );
-} 
+}
