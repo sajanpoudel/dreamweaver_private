@@ -29,20 +29,20 @@ export default async function DashboardPage() {
             id: true,
             name: true,
             description: true,
-          }
+          },
         },
         themes: {
           select: {
             id: true,
             name: true,
-          }
+          },
         },
         emotions: {
           select: {
             id: true,
             name: true,
-          }
-        }
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',
@@ -57,14 +57,14 @@ export default async function DashboardPage() {
     const themeCounts = new Map();
     const emotionCounts = new Map();
 
-    dreams.forEach(dream => {
-      dream.symbols.forEach(symbol => {
+    dreams.forEach((dream) => {
+      dream.symbols.forEach((symbol) => {
         symbolCounts.set(symbol.name, (symbolCounts.get(symbol.name) || 0) + 1);
       });
-      dream.themes.forEach(theme => {
+      dream.themes.forEach((theme) => {
         themeCounts.set(theme.name, (themeCounts.get(theme.name) || 0) + 1);
       });
-      dream.emotions.forEach(emotion => {
+      dream.emotions.forEach((emotion) => {
         emotionCounts.set(emotion.name, (emotionCounts.get(emotion.name) || 0) + 1);
       });
     });
@@ -98,4 +98,4 @@ export default async function DashboardPage() {
     console.error('Dashboard error:', error);
     throw error;
   }
-} 
+}
