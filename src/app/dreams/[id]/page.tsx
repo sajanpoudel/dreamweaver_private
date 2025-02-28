@@ -15,10 +15,7 @@ export default async function DreamPage({ params }: { params: { id: string } }) 
   try {
     const dream = await db.dream.findFirst({
       where: {
-        AND: [
-          { id: params.id },
-          { userId: session.user.id }
-        ]
+        AND: [{ id: params.id }, { userId: session.user.id }],
       },
       include: {
         symbols: true,
@@ -36,4 +33,4 @@ export default async function DreamPage({ params }: { params: { id: string } }) 
     console.error('Error fetching dream:', error);
     throw error;
   }
-} 
+}
