@@ -11,6 +11,7 @@ import {
 } from '@prisma/client';
 import { db } from './prisma';
 import { extractCommonElements, determineEmotionCategory, hasCommonElements, calculateDreamFrequency, analyzePatterns } from './dream-helpers';
+import { overlapRatio } from './dream-helpers';
 
 // Move OpenAI initialization to server-side only
 let openai: any;
@@ -523,11 +524,9 @@ async function findSimilarDreams(
 
     // Calculate similarity score (weighted average)
     const score =
-      (commonSymbols.length / Math.max(currentDream.symbols.length, pastDream.symbols.length)) *
-        0.4 +
-      (commonThemes.length / Math.max(currentDream.themes.length, pastDream.themes.length)) * 0.3 +
-      (commonEmotions.length / Math.max(currentDream.emotions.length, pastDream.emotions.length)) *
-        0.3;
+      overlapRatio(commonSymbols.length, currentDream.symbols.length, pastDream.symbols.length) * 0.4 +
+      overlapRatio(commonThemes.length, currentDream.themes.length, pastDream.themes.length) * 0.3 +
+      overlapRatio(commonEmotions.length, currentDream.emotions.length, pastDream.emotions.length) * 0.3;
 
     if (score > 0.3) {
       // Only include dreams with significant similarity
