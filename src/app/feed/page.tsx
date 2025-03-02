@@ -40,11 +40,13 @@ export default async function FeedPage() {
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
         <div className="bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-purple-500/20 p-8 rounded-2xl backdrop-blur-sm border border-purple-500/20">
           <h2 className="text-2xl font-semibold text-purple-200 mb-3">No Dream Stories Yet</h2>
-          <p className="text-purple-200/80">Be the first to share your dream story with the community!</p>
+          <p className="text-purple-200/80">
+            Be the first to share your dream story with the community!
+          </p>
         </div>
       </div>
     );
   }
 
   return <DreamFeed stories={stories} currentUserId={session.user.id} />;
-} 
+}
