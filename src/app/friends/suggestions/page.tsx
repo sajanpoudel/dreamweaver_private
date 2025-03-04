@@ -58,7 +58,7 @@ export default function FriendSuggestions() {
       }
 
       toast.success('Friend request sent');
-      setSuggestions(prev => prev.filter(s => s.id !== userId));
+      setSuggestions((prev) => prev.filter((s) => s.id !== userId));
     } catch (error) {
       console.error('Error sending friend request:', error);
       toast.error('Failed to send friend request');
@@ -82,9 +82,7 @@ export default function FriendSuggestions() {
           </Link>
         </Button>
         <h1 className="text-2xl font-bold text-purple-100">Find Friends</h1>
-        <p className="text-purple-200/60 mt-1">
-          Connect with dreamers who share your interests
-        </p>
+        <p className="text-purple-200/60 mt-1">Connect with dreamers who share your interests</p>
       </div>
 
       <motion.div
@@ -94,10 +92,7 @@ export default function FriendSuggestions() {
         className="grid gap-4"
       >
         {suggestions.map((friend) => (
-          <Card
-            key={friend.id}
-            className="backdrop-blur-lg bg-white/5 border-purple-500/20"
-          >
+          <Card key={friend.id} className="backdrop-blur-lg bg-white/5 border-purple-500/20">
             <div className="p-6">
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-4">
@@ -106,9 +101,7 @@ export default function FriendSuggestions() {
                     <AvatarFallback>{friend.name?.[0]}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <div className="text-lg font-medium text-purple-100">
-                      {friend.name}
-                    </div>
+                    <div className="text-lg font-medium text-purple-100">{friend.name}</div>
                     <div className="text-sm text-purple-200/60 mt-0.5">
                       {friend.mutualFriends} mutual friends
                     </div>
@@ -141,9 +134,7 @@ export default function FriendSuggestions() {
         {suggestions.length === 0 && (
           <Card className="backdrop-blur-lg bg-white/5 border-purple-500/20">
             <div className="p-8 text-center">
-              <p className="text-purple-200/60 mb-4">
-                No more suggestions available at the moment
-              </p>
+              <p className="text-purple-200/60 mb-4">No more suggestions available at the moment</p>
               <Button
                 variant="ghost"
                 className="bg-purple-500/10 hover:bg-purple-500/20 text-purple-100"
@@ -157,4 +148,4 @@ export default function FriendSuggestions() {
       </motion.div>
     </div>
   );
-} 
+}
