@@ -10,8 +10,7 @@ import {
   DreamCheckpoint,
 } from '@prisma/client';
 import { db } from './prisma';
-import { extractCommonElements, determineEmotionCategory, hasCommonElements, calculateDreamFrequency, analyzePatterns } from './dream-helpers';
-import { overlapRatio } from './dream-helpers';
+import { extractCommonElements, determineEmotionCategory, hasCommonElements, calculateDreamFrequency, analyzePatterns, overlapRatio } from './dream-helpers';
 
 // Move OpenAI initialization to server-side only
 let openai: any;
