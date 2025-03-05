@@ -11,19 +11,13 @@ export const metadata: Metadata = {
   description: 'Your personal dream journal and analysis companion',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} bg-[#1a1c2e]`}>
         <Providers>
           <div className="min-h-screen flex flex-col">
-            <main className="flex-1">
-              {children}
-            </main>
+            <main className="flex-1">{children}</main>
           </div>
           <Toaster />
         </Providers>
