@@ -70,11 +70,7 @@ export default function DreamsPage() {
     <div className="min-h-screen bg-[#0f0f1a] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]">
       <DashboardHeader />
       <main className="container mx-auto px-4 py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 text-transparent bg-clip-text mb-2">
             My Dream Collection
           </h1>
@@ -88,10 +84,7 @@ export default function DreamsPage() {
             className="flex flex-col items-center justify-center h-64 text-center"
           >
             <p className="text-white mb-4">You haven't recorded any dreams yet.</p>
-            <Link 
-              href="/dashboard"
-              className="text-purple-200 hover:text-purple-100 underline"
-            >
+            <Link href="/dashboard" className="text-purple-200 hover:text-purple-100 underline">
               Go to Dashboard to record your first dream
             </Link>
           </motion.div>
@@ -105,7 +98,10 @@ export default function DreamsPage() {
                 transition={{ delay: index * 0.1 }}
                 className="group"
               >
-                <Link href={`/dreams/${dream.id}`} className="block transform transition-all duration-300 hover:-translate-y-1">
+                <Link
+                  href={`/dreams/${dream.id}`}
+                  className="block transform transition-all duration-300 hover:-translate-y-1"
+                >
                   <Card className="relative overflow-hidden backdrop-blur-lg bg-gradient-to-br from-gray-900/90 to-gray-800/90 border border-purple-500/20 hover:border-purple-500/40 transition-all duration-500 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-purple-500/20">
                     <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -164,4 +160,4 @@ export default function DreamsPage() {
       </main>
     </div>
   );
-} 
+}
