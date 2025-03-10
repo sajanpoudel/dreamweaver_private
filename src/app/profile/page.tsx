@@ -23,7 +23,11 @@ interface ProfileFormData {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { data: session, status, update } = useSession({
+  const {
+    data: session,
+    status,
+    update,
+  } = useSession({
     required: true,
     onUnauthenticated() {
       router.push('/auth/signin');
@@ -68,7 +72,7 @@ export default function ProfilePage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleImageClick = () => {
@@ -99,7 +103,7 @@ export default function ProfilePage() {
       }
 
       const data = await response.json();
-      setFormData(prev => ({ ...prev, image: data.url }));
+      setFormData((prev) => ({ ...prev, image: data.url }));
       toast.success('Image uploaded successfully');
     } catch (error) {
       console.error('Error uploading image:', error);
@@ -132,9 +136,7 @@ export default function ProfilePage() {
 
       if (!response.ok) {
         if (response.status === 400 && data.errors) {
-          data.errors.forEach((error: any) => 
-            toast.error(error.message || 'Validation error')
-          );
+          data.errors.forEach((error: any) => toast.error(error.message || 'Validation error'));
           return;
         }
         throw new Error(data.message || 'Failed to update profile');
@@ -153,7 +155,7 @@ export default function ProfilePage() {
 
       // Force a hard refresh to update all components
       window.location.reload();
-      
+
       toast.success('Profile updated successfully');
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -207,7 +209,7 @@ export default function ProfilePage() {
                       accept="image/*"
                       onChange={handleImageUpload}
                     />
-                    <Avatar 
+                    <Avatar
                       className="w-32 h-32 border-4 border-white/10 shadow-xl cursor-pointer group-hover:border-purple-500/50 transition-all duration-300"
                       onClick={handleImageClick}
                     >
@@ -216,7 +218,7 @@ export default function ProfilePage() {
                         {formData.name?.charAt(0)?.toUpperCase() || '?'}
                       </AvatarFallback>
                     </Avatar>
-                    <div 
+                    <div
                       className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer"
                       onClick={handleImageClick}
                     >
@@ -229,7 +231,9 @@ export default function ProfilePage() {
                       </div>
                     </div>
                   </div>
-                  <p className="text-center mt-4 text-sm text-gray-400">Click to upload profile picture</p>
+                  <p className="text-center mt-4 text-sm text-gray-400">
+                    Click to upload profile picture
+                  </p>
                 </div>
               </div>
 
@@ -250,7 +254,10 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-sm text-gray-300 flex items-center gap-2">
+                    <Label
+                      htmlFor="email"
+                      className="text-sm text-gray-300 flex items-center gap-2"
+                    >
                       <Mail className="w-4 h-4" /> Email
                     </Label>
                     <Input
@@ -302,4 +309,4 @@ export default function ProfilePage() {
       </main>
     </div>
   );
-} 
+}
