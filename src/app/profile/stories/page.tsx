@@ -63,7 +63,7 @@ export default function StoriesPage() {
       try {
         setIsLoading(true);
         const response = await fetch('/api/stories/user', {
-          credentials: 'include'
+          credentials: 'include',
         });
         if (response.ok) {
           const data = await response.json();
@@ -79,7 +79,7 @@ export default function StoriesPage() {
                 const parsedContent = JSON.parse(story.content);
                 return {
                   ...story,
-                  content: parsedContent
+                  content: parsedContent,
                 };
               } catch (e) {
                 console.error('Error parsing story content:', e);
@@ -96,8 +96,8 @@ export default function StoriesPage() {
                 sections: [],
                 conclusion: '',
                 themes: [],
-                interpretation: ''
-              }
+                interpretation: '',
+              },
             };
           });
           setStories(parsedStories);
@@ -132,11 +132,7 @@ export default function StoriesPage() {
     <div className="min-h-screen bg-[#0f0f1a] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]">
       <DashboardHeader />
       <main className="container mx-auto px-4 py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 text-transparent bg-clip-text mb-2">
             My Stories
           </h1>
@@ -150,10 +146,7 @@ export default function StoriesPage() {
             className="flex flex-col items-center justify-center h-64 text-center"
           >
             <p className="text-white mb-4">You haven't published any stories yet.</p>
-            <Link 
-              href="/dashboard"
-              className="text-purple-200 hover:text-purple-100 underline"
-            >
+            <Link href="/dashboard" className="text-purple-200 hover:text-purple-100 underline">
               Go to Dashboard to create your first story
             </Link>
           </motion.div>
@@ -167,10 +160,11 @@ export default function StoriesPage() {
                 transition={{ delay: index * 0.1 }}
                 className="group w-full"
               >
-                <Link href={`/stories/${story.id}`} className="block transform transition-all duration-300 hover:-translate-y-1">
-                  <Card 
-                    className="relative overflow-hidden backdrop-blur-lg bg-gradient-to-br from-gray-900/90 to-gray-800/90 border border-purple-500/20 hover:border-purple-500/40 transition-all duration-500 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-purple-500/20"
-                  >
+                <Link
+                  href={`/stories/${story.id}`}
+                  className="block transform transition-all duration-300 hover:-translate-y-1"
+                >
+                  <Card className="relative overflow-hidden backdrop-blur-lg bg-gradient-to-br from-gray-900/90 to-gray-800/90 border border-purple-500/20 hover:border-purple-500/40 transition-all duration-500 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-purple-500/20">
                     <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     <div className="absolute inset-0 bg-gradient-to-tl from-transparent via-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -178,10 +172,11 @@ export default function StoriesPage() {
                       <div className="flex flex-col md:flex-row gap-6">
                         <div className="relative w-full md:w-[300px] aspect-[16/9] md:aspect-[4/3] rounded-lg overflow-hidden border border-purple-500/20 bg-gray-900/50">
                           {(() => {
-                            const content = typeof story.content === 'string' 
-                              ? JSON.parse(story.content) 
-                              : story.content;
-                            
+                            const content =
+                              typeof story.content === 'string'
+                                ? JSON.parse(story.content)
+                                : story.content;
+
                             const firstImage = content.sections?.[0]?.imageUrl;
 
                             return firstImage ? (
@@ -209,25 +204,31 @@ export default function StoriesPage() {
                               <div className="space-y-1 min-w-0 flex-grow">
                                 <h2 className="text-lg font-semibold text-white group-hover:text-purple-200 transition-colors duration-300 line-clamp-1">
                                   {(() => {
-                                    const content = typeof story.content === 'string' 
-                                      ? JSON.parse(story.content) 
-                                      : story.content;
+                                    const content =
+                                      typeof story.content === 'string'
+                                        ? JSON.parse(story.content)
+                                        : story.content;
                                     return content.title || story.title;
                                   })()}
                                 </h2>
                                 {(() => {
-                                  const content = typeof story.content === 'string' 
-                                    ? JSON.parse(story.content) 
-                                    : story.content;
-                                  return content.subtitle && (
-                                    <p className="text-sm text-gray-400 line-clamp-1">
-                                      {content.subtitle}
-                                    </p>
+                                  const content =
+                                    typeof story.content === 'string'
+                                      ? JSON.parse(story.content)
+                                      : story.content;
+                                  return (
+                                    content.subtitle && (
+                                      <p className="text-sm text-gray-400 line-clamp-1">
+                                        {content.subtitle}
+                                      </p>
+                                    )
                                   );
                                 })()}
                               </div>
                               <span className="text-xs text-gray-400 bg-black/20 px-2 py-0.5 rounded-full backdrop-blur-md whitespace-nowrap flex-shrink-0">
-                                {story.publishedAt ? formatDate(new Date(story.publishedAt)) : 'Draft'}
+                                {story.publishedAt
+                                  ? formatDate(new Date(story.publishedAt))
+                                  : 'Draft'}
                               </span>
                             </div>
                             <p className="text-sm text-gray-400 line-clamp-1">
@@ -235,9 +236,10 @@ export default function StoriesPage() {
                             </p>
                             <p className="text-sm text-gray-300 line-clamp-2 group-hover:text-gray-200 transition-colors duration-300">
                               {(() => {
-                                const content = typeof story.content === 'string' 
-                                  ? JSON.parse(story.content) 
-                                  : story.content;
+                                const content =
+                                  typeof story.content === 'string'
+                                    ? JSON.parse(story.content)
+                                    : story.content;
                                 return content.introduction || '';
                               })()}
                             </p>
@@ -275,4 +277,4 @@ export default function StoriesPage() {
       </main>
     </div>
   );
-} 
+}
