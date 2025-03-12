@@ -29,17 +29,17 @@ export default async function SpacePage({ params }: PageProps) {
         some: {
           name: {
             equals: params.id.replace(/-/g, ' '),
-            mode: 'insensitive'
-          }
-        }
-      }
+            mode: 'insensitive',
+          },
+        },
+      },
     },
     include: {
       user: {
         select: {
           name: true,
           image: true,
-        }
+        },
       },
       symbols: true,
       themes: true,
@@ -47,18 +47,18 @@ export default async function SpacePage({ params }: PageProps) {
         select: {
           title: true,
           content: true,
-        }
+        },
       },
       _count: {
         select: {
           likes: true,
           comments: true,
-        }
-      }
+        },
+      },
     },
     orderBy: {
-      publishedAt: 'desc'
-    }
+      publishedAt: 'desc',
+    },
   });
 
   // Get related dreams based on common symbols
@@ -67,22 +67,22 @@ export default async function SpacePage({ params }: PageProps) {
       isPublic: true,
       publishedAt: { not: null },
       id: {
-        notIn: dreams.map(d => d.id)
+        notIn: dreams.map((d) => d.id),
       },
       symbols: {
         some: {
           name: {
-            in: dreams.flatMap(d => d.symbols.map(s => s.name))
-          }
-        }
-      }
+            in: dreams.flatMap((d) => d.symbols.map((s) => s.name)),
+          },
+        },
+      },
     },
     include: {
       user: {
         select: {
           name: true,
           image: true,
-        }
+        },
       },
       symbols: true,
       themes: true,
@@ -90,27 +90,28 @@ export default async function SpacePage({ params }: PageProps) {
         select: {
           title: true,
           content: true,
-        }
+        },
       },
       _count: {
         select: {
           likes: true,
           comments: true,
-        }
-      }
+        },
+      },
     },
     orderBy: {
-      publishedAt: 'desc'
+      publishedAt: 'desc',
     },
-    take: 5
+    take: 5,
   });
 
   // Combine all symbols and themes to create space info
-  const allSymbols = new Set(dreams.flatMap(d => d.symbols.map(s => s.name)));
-  const allThemes = new Set(dreams.flatMap(d => d.themes.map(t => t.name)));
+  const allSymbols = new Set(dreams.flatMap((d) => d.symbols.map((s) => s.name)));
+  const allThemes = new Set(dreams.flatMap((d) => d.themes.map((t) => t.name)));
 
-  const spaceName = params.id.split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+  const spaceName = params.id
+    .split('-')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 
   return (
@@ -132,9 +133,7 @@ export default async function SpacePage({ params }: PageProps) {
                 <Sparkles className="w-8 h-8 text-purple-200" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-purple-100 mb-2">
-                  {spaceName} Dreams
-                </h1>
+                <h1 className="text-2xl font-bold text-purple-100 mb-2">{spaceName} Dreams</h1>
                 <p className="text-purple-200/60 mb-4">
                   {dreams.length} dreams · {allSymbols.size} symbols · {allThemes.size} themes
                 </p>
@@ -156,9 +155,7 @@ export default async function SpacePage({ params }: PageProps) {
         <div className="space-y-6">
           {dreams.length === 0 ? (
             <Card className="backdrop-blur-lg bg-white/5 border-purple-500/20 p-6 text-center">
-              <p className="text-purple-200/60">
-                No dreams found in this space yet.
-              </p>
+              <p className="text-purple-200/60">No dreams found in this space yet.</p>
             </Card>
           ) : (
             <>
@@ -175,7 +172,7 @@ export default async function SpacePage({ params }: PageProps) {
                       symbols: dreamStory.symbols,
                       themes: dreamStory.themes,
                       likes: dreamStory._count.likes,
-                      comments: dreamStory._count.comments
+                      comments: dreamStory._count.comments,
                     }}
                   />
                 ))}
@@ -183,9 +180,7 @@ export default async function SpacePage({ params }: PageProps) {
 
               {relatedDreams.length > 0 && (
                 <div className="mt-12">
-                  <h2 className="text-xl font-semibold text-purple-100 mb-6">
-                    Related Dreams
-                  </h2>
+                  <h2 className="text-xl font-semibold text-purple-100 mb-6">Related Dreams</h2>
                   <div className="grid grid-cols-1 gap-6">
                     {relatedDreams.map((dreamStory) => (
                       <DreamCard
@@ -199,7 +194,7 @@ export default async function SpacePage({ params }: PageProps) {
                           symbols: dreamStory.symbols,
                           themes: dreamStory.themes,
                           likes: dreamStory._count.likes,
-                          comments: dreamStory._count.comments
+                          comments: dreamStory._count.comments,
                         }}
                       />
                     ))}
@@ -212,4 +207,4 @@ export default async function SpacePage({ params }: PageProps) {
       </main>
     </div>
   );
-} 
+}
