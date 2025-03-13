@@ -12,4 +12,4 @@ export default function SpacesPage() {
       </main>
     </div>
   );
-} 
+}
