@@ -22,10 +22,7 @@ export default async function StoryPage({ params }: PageProps) {
     const story = await db.dreamStory.findFirst({
       where: {
         id: params.id,
-        OR: [
-          { userId: session.user.id },
-          { isPublic: true }
-        ]
+        OR: [{ userId: session.user.id }, { isPublic: true }],
       },
       include: {
         user: {
@@ -66,7 +63,7 @@ export default async function StoryPage({ params }: PageProps) {
             themes: {
               some: {
                 id: {
-                  in: story.themes.map(theme => theme.id),
+                  in: story.themes.map((theme) => theme.id),
                 },
               },
             },
@@ -75,7 +72,7 @@ export default async function StoryPage({ params }: PageProps) {
             symbols: {
               some: {
                 id: {
-                  in: story.symbols.map(symbol => symbol.id),
+                  in: story.symbols.map((symbol) => symbol.id),
                 },
               },
             },
@@ -112,8 +109,8 @@ export default async function StoryPage({ params }: PageProps) {
     });
 
     return (
-      <StoryView 
-        story={story} 
+      <StoryView
+        story={story}
         isOwner={story.userId === session.user.id}
         currentUserId={session.user.id}
         relatedStories={relatedStories}
@@ -123,4 +120,4 @@ export default async function StoryPage({ params }: PageProps) {
     console.error('Error loading story:', error);
     redirect('/feed');
   }
-} 
+}
