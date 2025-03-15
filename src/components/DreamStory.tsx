@@ -51,9 +51,10 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
     setError(null);
     try {
       const result = await generateStory(dreamId);
-      const storyData = typeof result.story.content === 'string' 
-        ? { ...result.story, ...JSON.parse(result.story.content) }
-        : result.story;
+      const storyData =
+        typeof result.story.content === 'string'
+          ? { ...result.story, ...JSON.parse(result.story.content) }
+          : result.story;
       setStory(storyData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate story');
@@ -122,7 +123,7 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
                 className="relative"
               >
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">{section.title}</h2>
-                
+
                 {section.imageUrl && (
                   <div className="relative h-[400px] mb-8 rounded-xl overflow-hidden">
                     <Image
@@ -181,4 +182,4 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
       )}
     </div>
   );
-} 
+}
