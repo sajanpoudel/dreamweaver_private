@@ -20,11 +20,9 @@ export default async function StoriesPage() {
       },
     });
 
-    const userThemes = new Set(
-      userPreferences.flatMap(dream => dream.themes.map(t => t.name))
-    );
+    const userThemes = new Set(userPreferences.flatMap((dream) => dream.themes.map((t) => t.name)));
     const userSymbols = new Set(
-      userPreferences.flatMap(dream => dream.symbols.map(s => s.name))
+      userPreferences.flatMap((dream) => dream.symbols.map((s) => s.name))
     );
 
     // Fetch public stories with their themes and symbols
@@ -43,16 +41,14 @@ export default async function StoriesPage() {
           },
         },
       },
-      orderBy: [
-        { publishedAt: 'desc' },
-      ],
+      orderBy: [{ publishedAt: 'desc' }],
     });
 
     // Calculate relevance scores based on theme and symbol matches
-    const storiesWithRelevance = stories.map(story => {
-      const themeMatches = story.themes.filter(t => userThemes.has(t.name)).length;
-      const symbolMatches = story.symbols.filter(s => userSymbols.has(s.name)).length;
-      const relevanceScore = (themeMatches * 2) + symbolMatches; // Themes weighted more heavily
+    const storiesWithRelevance = stories.map((story) => {
+      const themeMatches = story.themes.filter((t) => userThemes.has(t.name)).length;
+      const symbolMatches = story.symbols.filter((s) => userSymbols.has(s.name)).length;
+      const relevanceScore = themeMatches * 2 + symbolMatches; // Themes weighted more heavily
 
       return {
         ...story,
@@ -62,9 +58,7 @@ export default async function StoriesPage() {
 
     // Sort by relevance score and then by publish date
     const sortedStories = storiesWithRelevance
-      .filter((story): story is typeof story & { publishedAt: Date } => 
-        story.publishedAt !== null
-      )
+      .filter((story): story is typeof story & { publishedAt: Date } => story.publishedAt !== null)
       .sort((a, b) => {
         if (b.relevanceScore !== a.relevanceScore) {
           return b.relevanceScore - a.relevanceScore;
@@ -77,4 +71,4 @@ export default async function StoriesPage() {
     console.error('Stories page error:', error);
     throw error;
   }
-} 
+}
