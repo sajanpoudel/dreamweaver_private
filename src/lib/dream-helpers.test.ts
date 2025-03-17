@@ -16,4 +16,8 @@ describe('dream-helpers', () => {
   it('is zero when both lists are empty', () => {
     expect(overlapRatio(0, 0, 0)).toBe(0);
   });
+
+  it('is one for identical lists', () => {
+    expect(overlapRatio(3, 3, 3)).toBe(1);
+  });
 });
