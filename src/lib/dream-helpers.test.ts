@@ -20,4 +20,8 @@ describe('dream-helpers', () => {
   it('is one for identical lists', () => {
     expect(overlapRatio(3, 3, 3)).toBe(1);
   });
+
+  it('is zero when nothing is shared', () => {
+    expect(overlapRatio(0, 2, 5)).toBe(0);
+  });
 });
