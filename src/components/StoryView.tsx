@@ -44,7 +44,10 @@ export function StoryView({ story, onLike, onComment, showActions = true }: Stor
 
           <TabsContent value="story">
             <h2 className="text-2xl font-bold mb-4">{story.title}</h2>
-            <div className="prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: story.content }} />
+            <div
+              className="prose prose-invert max-w-none"
+              dangerouslySetInnerHTML={{ __html: story.content }}
+            />
           </TabsContent>
 
           <TabsContent value="analysis">
@@ -65,7 +68,9 @@ export function StoryView({ story, onLike, onComment, showActions = true }: Stor
                   <h3 className="text-xl font-semibold mb-3">Themes</h3>
                   <div className="flex flex-wrap gap-2">
                     {analysis.themes.map((theme, index) => (
-                      <Badge key={index} variant="outline">{theme}</Badge>
+                      <Badge key={index} variant="outline">
+                        {theme}
+                      </Badge>
                     ))}
                   </div>
                 </div>
@@ -95,7 +100,9 @@ export function StoryView({ story, onLike, onComment, showActions = true }: Stor
                         )}
                         <div className="flex gap-2 mt-2">
                           <Badge variant="secondary">{insight.category}</Badge>
-                          <Badge variant="outline">{Math.round(insight.confidence * 100)}% confidence</Badge>
+                          <Badge variant="outline">
+                            {Math.round(insight.confidence * 100)}% confidence
+                          </Badge>
                         </div>
                       </div>
                     ))}
@@ -120,11 +127,7 @@ export function StoryView({ story, onLike, onComment, showActions = true }: Stor
               <span>{story._count?.likes || 0}</span>
             </Button>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex items-center gap-2"
-            >
+            <Button variant="ghost" size="sm" className="flex items-center gap-2">
               <MessageCircle size={18} />
               <span>{story._count?.comments || 0}</span>
             </Button>
@@ -177,4 +180,4 @@ export function StoryView({ story, onLike, onComment, showActions = true }: Stor
       </CardContent>
     </Card>
   );
-} 
+}
