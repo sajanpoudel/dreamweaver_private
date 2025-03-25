@@ -21,7 +21,7 @@ export function NewCommunityForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.description) {
       toast.error('Please fill in all required fields');
       return;
@@ -56,34 +56,40 @@ export function NewCommunityForm() {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="name" className="text-purple-100">Community Name</Label>
+          <Label htmlFor="name" className="text-purple-100">
+            Community Name
+          </Label>
           <Input
             id="name"
             placeholder="Enter community name"
             value={formData.name}
-            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+            onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
             className="bg-purple-500/10 border-purple-500/20 text-purple-100 placeholder:text-purple-200/60"
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="description" className="text-purple-100">Description</Label>
+          <Label htmlFor="description" className="text-purple-100">
+            Description
+          </Label>
           <Textarea
             id="description"
             placeholder="Describe your community..."
             value={formData.description}
-            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+            onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
             className="min-h-[100px] bg-purple-500/10 border-purple-500/20 text-purple-100 placeholder:text-purple-200/60"
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="guidelines" className="text-purple-100">Community Guidelines</Label>
+          <Label htmlFor="guidelines" className="text-purple-100">
+            Community Guidelines
+          </Label>
           <Textarea
             id="guidelines"
             placeholder="Set guidelines for your community..."
             value={formData.guidelines}
-            onChange={(e) => setFormData(prev => ({ ...prev, guidelines: e.target.value }))}
+            onChange={(e) => setFormData((prev) => ({ ...prev, guidelines: e.target.value }))}
             className="min-h-[100px] bg-purple-500/10 border-purple-500/20 text-purple-100 placeholder:text-purple-200/60"
           />
         </div>
@@ -92,7 +98,7 @@ export function NewCommunityForm() {
           <Switch
             id="isPrivate"
             checked={formData.isPrivate}
-            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isPrivate: checked }))}
+            onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, isPrivate: checked }))}
             className="data-[state=checked]:bg-purple-500"
           />
           <Label htmlFor="isPrivate" className="text-purple-100">
@@ -121,4 +127,4 @@ export function NewCommunityForm() {
       </div>
     </form>
   );
-} 
+}
