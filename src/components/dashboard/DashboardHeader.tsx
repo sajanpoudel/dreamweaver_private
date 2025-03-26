@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useSession } from "next-auth/react";
-import { Button } from "@/components/ui/button";
-import { Compass, PenLine, BarChart2 } from "lucide-react";
+import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import { Button } from '@/components/ui/button';
+import { Compass, PenLine, BarChart2 } from 'lucide-react';
 import { SearchBar } from '@/components/search/SearchBar';
-import { UserNav } from "@/components/dashboard/UserNav";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { UserNav } from '@/components/dashboard/UserNav';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 export function DashboardHeader() {
   const { data: session } = useSession({
@@ -38,10 +38,10 @@ export function DashboardHeader() {
               variant="ghost"
               size="icon"
               className={cn(
-                "w-10 h-10 rounded-full transition-colors",
-                pathname === "/feed"
-                  ? "bg-purple-500/10 text-purple-200"
-                  : "text-white/80 hover:bg-purple-500/5 hover:text-purple-200"
+                'w-10 h-10 rounded-full transition-colors',
+                pathname === '/feed'
+                  ? 'bg-purple-500/10 text-purple-200'
+                  : 'text-white/80 hover:bg-purple-500/5 hover:text-purple-200'
               )}
             >
               <Compass className="h-5 w-5" />
@@ -53,10 +53,10 @@ export function DashboardHeader() {
               variant="ghost"
               size="icon"
               className={cn(
-                "w-10 h-10 rounded-full transition-colors",
-                pathname === "/dashboard"
-                  ? "bg-purple-500/10 text-purple-200"
-                  : "text-white/80 hover:bg-purple-500/5 hover:text-purple-200"
+                'w-10 h-10 rounded-full transition-colors',
+                pathname === '/dashboard'
+                  ? 'bg-purple-500/10 text-purple-200'
+                  : 'text-white/80 hover:bg-purple-500/5 hover:text-purple-200'
               )}
             >
               <BarChart2 className="h-5 w-5" />
@@ -82,4 +82,4 @@ export function DashboardHeader() {
       </div>
     </header>
   );
-} 
+}
