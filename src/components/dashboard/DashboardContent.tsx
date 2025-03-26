@@ -6,19 +6,19 @@ import { DreamList } from '../dreams/DreamList';
 import { DreamStats } from '../dreams/DreamStats';
 import { Dream as PrismaDream } from '@prisma/client';
 import { useRouter } from 'next/navigation';
-import { 
-  BarChart3, 
-  Brain, 
-  Calendar, 
-  Clock, 
-  Sparkles, 
-  TrendingUp, 
+import {
+  BarChart3,
+  Brain,
+  Calendar,
+  Clock,
+  Sparkles,
+  TrendingUp,
   Moon,
   Heart,
   CloudRain,
   Sun,
   Waves,
-  LucideIcon
+  LucideIcon,
 } from 'lucide-react';
 import { Card } from '../ui/card';
 import { Progress } from '../ui/progress';
@@ -98,22 +98,20 @@ interface InsightSectionProps {
   icon: LucideIcon;
 }
 
-const AnalyticsCard = ({ 
-  title, 
-  value, 
-  icon: Icon, 
+const AnalyticsCard = ({
+  title,
+  value,
+  icon: Icon,
   description,
-  gradient = "from-purple-500/20 to-pink-500/20",
-  iconColor = "text-purple-300"
+  gradient = 'from-purple-500/20 to-pink-500/20',
+  iconColor = 'text-purple-300',
 }: AnalyticsCardProps) => (
   <Card className="p-6 backdrop-blur-sm bg-white/5 border border-purple-500/20">
     <div className="flex items-start justify-between">
       <div>
         <p className="text-sm text-purple-200/70">{title}</p>
         <h3 className="text-2xl font-bold text-white mt-1">{value}</h3>
-        {description && (
-          <p className="text-sm text-purple-200/50 mt-1">{description}</p>
-        )}
+        {description && <p className="text-sm text-purple-200/50 mt-1">{description}</p>}
       </div>
       <div className={`p-3 rounded-xl bg-gradient-to-br ${gradient} border border-purple-500/20`}>
         <Icon className={`w-5 h-5 ${iconColor}`} />
@@ -146,7 +144,7 @@ export function DashboardContent({
   topSymbols,
   topThemes,
   topEmotions,
-  analytics
+  analytics,
 }: DashboardContentProps) {
   const router = useRouter();
 
@@ -159,12 +157,12 @@ export function DashboardContent({
       dreamFrequency: 0,
       longestStreak: 0,
       totalDreamingDays: 0,
-      monthlyAverage: 0
+      monthlyAverage: 0,
     },
     personalInsights: '',
     mentalStateAnalysis: '',
     recommendedActions: [],
-    overallWellbeingScore: 50
+    overallWellbeingScore: 50,
   };
 
   // Merge provided analytics with defaults
@@ -173,8 +171,8 @@ export function DashboardContent({
     ...analytics,
     timeAnalysis: {
       ...defaultAnalytics.timeAnalysis,
-      ...(analytics?.timeAnalysis || {})
-    }
+      ...(analytics?.timeAnalysis || {}),
+    },
   };
 
   return (
@@ -207,8 +205,8 @@ export function DashboardContent({
                   {safeAnalytics.overallWellbeingScore}%
                 </div>
               </div>
-              <Progress 
-                value={safeAnalytics.overallWellbeingScore} 
+              <Progress
+                value={safeAnalytics.overallWellbeingScore}
                 className="w-32 h-32 [&>div]:bg-gradient-to-r [&>div]:from-purple-500 [&>div]:to-pink-500"
               />
             </div>
@@ -294,7 +292,9 @@ export function DashboardContent({
                     <div>
                       <div className="flex justify-between mb-2">
                         <span className="text-purple-200">Overall Wellbeing</span>
-                        <span className="text-purple-100 font-semibold">{safeAnalytics.overallWellbeingScore ?? 50}%</span>
+                        <span className="text-purple-100 font-semibold">
+                          {safeAnalytics.overallWellbeingScore ?? 50}%
+                        </span>
                       </div>
                       <Progress value={safeAnalytics.overallWellbeingScore ?? 50} className="h-2" />
                     </div>
@@ -302,43 +302,65 @@ export function DashboardContent({
                       <div className="space-y-4">
                         {(() => {
                           try {
-                            const analysis = typeof safeAnalytics.mentalStateAnalysis === 'string' 
-                              ? JSON.parse(safeAnalytics.mentalStateAnalysis)
-                              : safeAnalytics.mentalStateAnalysis;
+                            const analysis =
+                              typeof safeAnalytics.mentalStateAnalysis === 'string'
+                                ? JSON.parse(safeAnalytics.mentalStateAnalysis)
+                                : safeAnalytics.mentalStateAnalysis;
 
                             return (
                               <>
                                 {analysis.overallMood && (
                                   <div className="p-4 rounded-lg bg-white/5 border border-purple-500/10">
-                                    <h4 className="text-sm font-medium text-purple-200 mb-2">Overall Mood</h4>
-                                    <p className="text-purple-200/70 text-sm">{analysis.overallMood}</p>
+                                    <h4 className="text-sm font-medium text-purple-200 mb-2">
+                                      Overall Mood
+                                    </h4>
+                                    <p className="text-purple-200/70 text-sm">
+                                      {analysis.overallMood}
+                                    </p>
                                   </div>
                                 )}
-                                
+
                                 {analysis.dominantEmotions?.length > 0 && (
                                   <div className="p-4 rounded-lg bg-white/5 border border-purple-500/10">
-                                    <h4 className="text-sm font-medium text-purple-200 mb-2">Dominant Emotions</h4>
+                                    <h4 className="text-sm font-medium text-purple-200 mb-2">
+                                      Dominant Emotions
+                                    </h4>
                                     <div className="flex flex-wrap gap-2">
-                                      {analysis.dominantEmotions.map((emotion: any, index: number) => (
-                                        <span key={index} className="px-2 py-1 rounded-full bg-purple-500/20 text-purple-200/70 text-xs">
-                                          {typeof emotion === 'string' ? emotion : emotion.emotion || emotion.name || 'Unknown'}
-                                        </span>
-                                      ))}
+                                      {analysis.dominantEmotions.map(
+                                        (emotion: any, index: number) => (
+                                          <span
+                                            key={index}
+                                            className="px-2 py-1 rounded-full bg-purple-500/20 text-purple-200/70 text-xs"
+                                          >
+                                            {typeof emotion === 'string'
+                                              ? emotion
+                                              : emotion.emotion || emotion.name || 'Unknown'}
+                                          </span>
+                                        )
+                                      )}
                                     </div>
                                   </div>
                                 )}
 
                                 {analysis.stressAndAnxietyLevels && (
                                   <div className="p-4 rounded-lg bg-white/5 border border-purple-500/10">
-                                    <h4 className="text-sm font-medium text-purple-200 mb-2">Stress & Anxiety Levels</h4>
-                                    <p className="text-purple-200/70 text-sm">{analysis.stressAndAnxietyLevels}</p>
+                                    <h4 className="text-sm font-medium text-purple-200 mb-2">
+                                      Stress & Anxiety Levels
+                                    </h4>
+                                    <p className="text-purple-200/70 text-sm">
+                                      {analysis.stressAndAnxietyLevels}
+                                    </p>
                                   </div>
                                 )}
 
                                 {analysis.emotionalInsights && (
                                   <div className="p-4 rounded-lg bg-white/5 border border-purple-500/10">
-                                    <h4 className="text-sm font-medium text-purple-200 mb-2">Emotional Insights</h4>
-                                    <p className="text-purple-200/70 text-sm">{analysis.emotionalInsights}</p>
+                                    <h4 className="text-sm font-medium text-purple-200 mb-2">
+                                      Emotional Insights
+                                    </h4>
+                                    <p className="text-purple-200/70 text-sm">
+                                      {analysis.emotionalInsights}
+                                    </p>
                                   </div>
                                 )}
                               </>
@@ -346,7 +368,10 @@ export function DashboardContent({
                           } catch (error) {
                             return (
                               <div className="p-4 rounded-lg bg-white/5 border border-purple-500/10">
-                                <p className="text-purple-200/70 text-sm">{safeAnalytics.mentalStateAnalysis || 'No analysis available yet.'}</p>
+                                <p className="text-purple-200/70 text-sm">
+                                  {safeAnalytics.mentalStateAnalysis ||
+                                    'No analysis available yet.'}
+                                </p>
                               </div>
                             );
                           }
@@ -362,12 +387,17 @@ export function DashboardContent({
               <InsightSection title="Dream Patterns" icon={Brain}>
                 <div className="grid gap-6">
                   {(safeAnalytics.patterns || []).map((pattern, index) => (
-                    <div key={index} className="p-4 rounded-lg bg-white/5 border border-purple-500/10">
+                    <div
+                      key={index}
+                      className="p-4 rounded-lg bg-white/5 border border-purple-500/10"
+                    >
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="text-lg font-semibold text-purple-200">{pattern.pattern}</h3>
                         <div className="flex items-center gap-2">
                           <Progress value={pattern.frequency ?? 0} className="w-24" />
-                          <span className="text-sm text-purple-200/70">{pattern.frequency ?? 0}%</span>
+                          <span className="text-sm text-purple-200/70">
+                            {pattern.frequency ?? 0}%
+                          </span>
                         </div>
                       </div>
                       <p className="text-purple-200/70 text-sm mb-2">{pattern.description}</p>
@@ -389,22 +419,32 @@ export function DashboardContent({
               <InsightSection title="Emotional Landscape" icon={Heart}>
                 <div className="grid gap-6">
                   {(safeAnalytics.emotions || []).map((emotion, index) => (
-                    <div key={index} className="p-4 rounded-lg bg-white/5 border border-purple-500/10">
+                    <div
+                      key={index}
+                      className="p-4 rounded-lg bg-white/5 border border-purple-500/10"
+                    >
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
                           <h3 className="text-lg font-semibold text-purple-200">
                             {emotion.name || emotion.emotion}
                           </h3>
-                          <div className={`px-2 py-0.5 rounded-full text-xs ${
-                            emotion.trend === 'increasing' ? 'bg-green-500/20 text-green-300' :
-                            emotion.trend === 'decreasing' ? 'bg-red-500/20 text-red-300' :
-                            'bg-blue-500/20 text-blue-300'
-                          }`}>
+                          <div
+                            className={`px-2 py-0.5 rounded-full text-xs ${
+                              emotion.trend === 'increasing'
+                                ? 'bg-green-500/20 text-green-300'
+                                : emotion.trend === 'decreasing'
+                                  ? 'bg-red-500/20 text-red-300'
+                                  : 'bg-blue-500/20 text-blue-300'
+                            }`}
+                          >
                             {emotion.trend || 'stable'}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Progress value={emotion.frequency ?? emotion.intensity ?? 0} className="w-24" />
+                          <Progress
+                            value={emotion.frequency ?? emotion.intensity ?? 0}
+                            className="w-24"
+                          />
                           <span className="text-sm text-purple-200/70">
                             {emotion.frequency ?? emotion.intensity ?? 0}%
                           </span>
@@ -414,7 +454,10 @@ export function DashboardContent({
                       {Array.isArray(emotion.suggestions) && emotion.suggestions.length > 0 && (
                         <div className="mt-2 space-y-1">
                           {emotion.suggestions.map((suggestion, idx) => (
-                            <div key={idx} className="text-xs text-purple-200/50 flex items-center gap-2">
+                            <div
+                              key={idx}
+                              className="text-xs text-purple-200/50 flex items-center gap-2"
+                            >
                               <div className="w-1 h-1 rounded-full bg-purple-400" />
                               {suggestion}
                             </div>
@@ -437,20 +480,24 @@ export function DashboardContent({
                 <div className="grid gap-4">
                   {(() => {
                     try {
-                      const actions = typeof safeAnalytics.recommendedActions === 'string'
-                        ? JSON.parse(safeAnalytics.recommendedActions)
-                        : safeAnalytics.recommendedActions;
+                      const actions =
+                        typeof safeAnalytics.recommendedActions === 'string'
+                          ? JSON.parse(safeAnalytics.recommendedActions)
+                          : safeAnalytics.recommendedActions;
 
                       if (Array.isArray(actions) && actions.length > 0) {
                         return actions.map((action, index) => (
-                          <div key={index} className="p-4 rounded-lg bg-white/5 border border-purple-500/10 flex items-start gap-3">
+                          <div
+                            key={index}
+                            className="p-4 rounded-lg bg-white/5 border border-purple-500/10 flex items-start gap-3"
+                          >
                             <div className="p-2 rounded-lg bg-purple-500/20 mt-0.5">
                               <div className="w-2 h-2 rounded-full bg-purple-400" />
                             </div>
                             <div>
                               <p className="text-purple-200/70">
-                                {typeof action === 'string' 
-                                  ? action 
+                                {typeof action === 'string'
+                                  ? action
                                   : action.action || action.description || JSON.stringify(action)}
                               </p>
                             </div>
@@ -460,7 +507,7 @@ export function DashboardContent({
                     } catch (error) {
                       console.error('Error parsing recommended actions:', error);
                     }
-                    
+
                     return (
                       <div className="text-center p-6 text-purple-200/50">
                         No recommended actions available yet.
@@ -475,4 +522,4 @@ export function DashboardContent({
       </div>
     </div>
   );
-} 
+}
