@@ -1,14 +1,14 @@
-import { useSession, signOut } from "next-auth/react";
+import { useSession, signOut } from 'next-auth/react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getImageUrl } from "@/lib/utils";
-import Link from "next/link";
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { getImageUrl } from '@/lib/utils';
+import Link from 'next/link';
 
 export function UserNav() {
   const { data: session } = useSession();
@@ -23,7 +23,10 @@ export function UserNav() {
           </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56 bg-gray-900/95 backdrop-blur-xl border border-white/10 text-white">
+      <DropdownMenuContent
+        align="end"
+        className="w-56 bg-gray-900/95 backdrop-blur-xl border border-white/10 text-white"
+      >
         <div className="flex items-center justify-start gap-2 p-2">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium">{session?.user?.name || 'User'}</p>
@@ -47,7 +50,7 @@ export function UserNav() {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator className="bg-white/10" />
-        <DropdownMenuItem 
+        <DropdownMenuItem
           className="focus:bg-white/10 cursor-pointer text-red-400 focus:text-red-400"
           onClick={() => signOut()}
         >
@@ -56,4 +59,4 @@ export function UserNav() {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-} 
+}
