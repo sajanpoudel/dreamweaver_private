@@ -120,9 +120,7 @@ export function DreamActions({ dream }: DreamActionsProps) {
                 <Input
                   id="title"
                   value={formData.title}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, title: e.target.value }))
-                  }
+                  onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
                   placeholder="Give your dream a title"
                   className="bg-white/5 border-purple-500/20 text-purple-100 placeholder:text-purple-200/50"
                 />
@@ -135,9 +133,7 @@ export function DreamActions({ dream }: DreamActionsProps) {
                 <Textarea
                   id="content"
                   value={formData.content}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, content: e.target.value }))
-                  }
+                  onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
                   placeholder="Describe your dream in detail..."
                   className="min-h-[200px] bg-white/5 border-purple-500/20 text-purple-100 placeholder:text-purple-200/50"
                 />
@@ -211,4 +207,4 @@ export function DreamActions({ dream }: DreamActionsProps) {
       </motion.div>
     </div>
   );
-} 
+}
