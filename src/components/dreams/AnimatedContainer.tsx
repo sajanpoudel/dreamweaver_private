@@ -42,4 +42,4 @@ export function AnimatedContainer({
       {children}
     </motion.div>
   );
-} 
+}
