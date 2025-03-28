@@ -41,7 +41,6 @@ export function DreamAnalysis({ dreamId, initialAnalysis }: DreamAnalysisProps) 
     }
   };
 
-
   return (
     <div className="space-y-8">
       {!analysis && (
@@ -52,8 +51,8 @@ export function DreamAnalysis({ dreamId, initialAnalysis }: DreamAnalysisProps) 
               <Brain className="h-12 w-12 text-purple-500" />
               <h3 className="text-lg font-medium text-purple-200">Dream Analysis</h3>
               <p className="text-sm text-purple-200/80 text-center max-w-md">
-                Analyze your dream to uncover its hidden meanings, symbols, and patterns.
-                Our AI-powered analysis will provide deep insights into your subconscious mind.
+                Analyze your dream to uncover its hidden meanings, symbols, and patterns. Our
+                AI-powered analysis will provide deep insights into your subconscious mind.
               </p>
               <Button
                 onClick={analyzeHandler}
@@ -80,7 +79,7 @@ export function DreamAnalysis({ dreamId, initialAnalysis }: DreamAnalysisProps) 
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-12 space-y-4">
           <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
-          <p className="text-purple-200">Analyzing your dream...</p> 
+          <p className="text-purple-200">Analyzing your dream...</p>
         </div>
       ) : analysis ? (
         <Card className="relative backdrop-blur-lg bg-white/5 rounded-2xl shadow-[0_0_15px_rgba(168,85,247,0.15)] border border-purple-500/20 overflow-hidden">
@@ -123,7 +122,9 @@ export function DreamAnalysis({ dreamId, initialAnalysis }: DreamAnalysisProps) 
                         <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 rounded-xl blur-2xl"></div>
                         <div className="relative z-10">
                           <div className="flex justify-between items-start mb-2">
-                            <span className="text-sm font-medium text-purple-200">{character.type}</span>
+                            <span className="text-sm font-medium text-purple-200">
+                              {character.type}
+                            </span>
                             <span className="text-xs px-2 py-1 rounded-full bg-purple-500/20 text-purple-200">
                               Familiarity: {Math.round(character.familiarity * 100)}%
                             </span>
@@ -267,7 +268,9 @@ export function DreamAnalysis({ dreamId, initialAnalysis }: DreamAnalysisProps) 
                         <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 rounded-xl blur-2xl"></div>
                         <div className="relative z-10">
                           <div className="flex justify-between items-start mb-2">
-                            <span className="text-sm font-medium text-purple-200">{pattern.type}</span>
+                            <span className="text-sm font-medium text-purple-200">
+                              {pattern.type}
+                            </span>
                             <span className="text-xs px-2 py-1 rounded-full bg-purple-500/20 text-purple-200">
                               {Math.round(pattern.confidence * 100)}% confidence
                             </span>
@@ -389,4 +392,4 @@ export function DreamAnalysis({ dreamId, initialAnalysis }: DreamAnalysisProps) 
       ) : null}
     </div>
   );
-} 
+}
