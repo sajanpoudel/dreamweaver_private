@@ -35,11 +35,7 @@ export function DreamCard({ dream }: DreamCardProps) {
   const commentsCount = dream._count?.comments ?? dream.comments ?? 0;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="relative"
-    >
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative">
       <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 rounded-2xl blur-3xl"></div>
       <Link href={`/stories/${dream.id}`}>
         <Card className="relative backdrop-blur-lg bg-white/5 hover:bg-white/10 rounded-2xl shadow-[0_0_15px_rgba(168,85,247,0.15)] border border-purple-500/20 transition-all duration-300 hover:shadow-[0_0_20px_rgba(168,85,247,0.25)]">
@@ -103,4 +99,4 @@ export function DreamCard({ dream }: DreamCardProps) {
       </Link>
     </motion.div>
   );
-} 
+}
