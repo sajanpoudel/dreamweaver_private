@@ -17,9 +17,8 @@ export function DreamFeed({ stories, currentUserId }: DreamFeedProps) {
   return (
     <div className="max-w-[680px] mx-auto space-y-4">
       {stories.map((story) => {
-        const content = typeof story.content === 'string' 
-          ? JSON.parse(story.content) 
-          : story.content;
+        const content =
+          typeof story.content === 'string' ? JSON.parse(story.content) : story.content;
 
         const firstImage = content.sections?.[0]?.imageUrl;
 
@@ -40,7 +39,10 @@ export function DreamFeed({ stories, currentUserId }: DreamFeedProps) {
                     <AvatarFallback>{story.user?.name?.[0] || '?'}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <Link href={`/profile/${story.user?.id}`} className="text-sm font-medium text-purple-100 hover:text-purple-200 transition-colors">
+                    <Link
+                      href={`/profile/${story.user?.id}`}
+                      className="text-sm font-medium text-purple-100 hover:text-purple-200 transition-colors"
+                    >
                       {story.user?.name}
                     </Link>
                     <p className="text-xs text-purple-200/60">
@@ -48,7 +50,11 @@ export function DreamFeed({ stories, currentUserId }: DreamFeedProps) {
                     </p>
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-200/60 hover:text-purple-200">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-purple-200/60 hover:text-purple-200"
+                >
                   <MoreHorizontal className="h-5 w-5" />
                 </Button>
               </div>
@@ -71,7 +77,10 @@ export function DreamFeed({ stories, currentUserId }: DreamFeedProps) {
                       alt={content.title || 'Dream story image'}
                       fill
                       className="object-cover"
-                      unoptimized={firstImage.startsWith('data:') || firstImage.includes('blob.core.windows.net')}
+                      unoptimized={
+                        firstImage.startsWith('data:') ||
+                        firstImage.includes('blob.core.windows.net')
+                      }
                     />
                   </div>
                 )}
@@ -81,16 +90,28 @@ export function DreamFeed({ stories, currentUserId }: DreamFeedProps) {
               <div className="px-4 py-3 border-t border-purple-500/10">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-6">
-                    <Button variant="ghost" size="sm" className="text-purple-200/60 hover:text-purple-200 -ml-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-purple-200/60 hover:text-purple-200 -ml-2"
+                    >
                       <Heart className="h-4 w-4 mr-2" />
                       {story._count?.likes || 0}
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-purple-200/60 hover:text-purple-200 -ml-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-purple-200/60 hover:text-purple-200 -ml-2"
+                    >
                       <MessageCircle className="h-4 w-4 mr-2" />
                       {story._count?.comments || 0}
                     </Button>
                   </div>
-                  <Button variant="ghost" size="sm" className="text-purple-200/60 hover:text-purple-200">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-purple-200/60 hover:text-purple-200"
+                  >
                     <Share2 className="h-4 w-4 mr-2" />
                     Share
                   </Button>
@@ -108,4 +129,4 @@ export function DreamFeed({ stories, currentUserId }: DreamFeedProps) {
       )}
     </div>
   );
-} 
+}
