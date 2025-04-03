@@ -48,31 +48,39 @@ const THEME_COLORS = [
   '#E879F9', // fuchsia-400
 ];
 
-export function DreamStats({ totalDreams, topSymbols = [], topThemes = [], topEmotions = [], onNewDream }: DreamStatsProps) {
+export function DreamStats({
+  totalDreams,
+  topSymbols = [],
+  topThemes = [],
+  topEmotions = [],
+  onNewDream,
+}: DreamStatsProps) {
   // Ensure we have data to display
-  const pieData = topEmotions.length > 0 
-    ? topEmotions.map(emotion => ({
-        id: emotion.name,
-        label: emotion.name,
-        value: emotion.count,
-      }))
-    : [{ id: 'No Data', label: 'No Emotions Recorded', value: 1 }];
+  const pieData =
+    topEmotions.length > 0
+      ? topEmotions.map((emotion) => ({
+          id: emotion.name,
+          label: emotion.name,
+          value: emotion.count,
+        }))
+      : [{ id: 'No Data', label: 'No Emotions Recorded', value: 1 }];
 
   // Prepare combined data for bar chart with fallback
-  const combinedData = (topSymbols.length > 0 || topThemes.length > 0)
-    ? Array.from(new Set([...topSymbols, ...topThemes].map(item => item.name)))
-        .map(name => {
-          const symbol = topSymbols.find(s => s.name === name);
-          const theme = topThemes.find(t => t.name === name);
-          return {
-            name,
-            symbols: symbol?.count || 0,
-            themes: theme?.count || 0
-          };
-        })
-        .sort((a, b) => (b.symbols + b.themes) - (a.symbols + a.themes))
-        .slice(0, 7)
-    : [{ name: 'No Data', symbols: 0, themes: 0 }];
+  const combinedData =
+    topSymbols.length > 0 || topThemes.length > 0
+      ? Array.from(new Set([...topSymbols, ...topThemes].map((item) => item.name)))
+          .map((name) => {
+            const symbol = topSymbols.find((s) => s.name === name);
+            const theme = topThemes.find((t) => t.name === name);
+            return {
+              name,
+              symbols: symbol?.count || 0,
+              themes: theme?.count || 0,
+            };
+          })
+          .sort((a, b) => b.symbols + b.themes - (a.symbols + a.themes))
+          .slice(0, 7)
+      : [{ name: 'No Data', symbols: 0, themes: 0 }];
 
   return (
     <div className="space-y-8">
@@ -102,7 +110,7 @@ export function DreamStats({ totalDreams, topSymbols = [], topThemes = [], topEm
               colors={COLORS}
               borderColor={{ from: 'color', modifiers: [['darker', 0.2]] }}
               enableArcLinkLabels={true}
-              arcLinkLabel={d => `${d.id} (${d.value})`}
+              arcLinkLabel={(d) => `${d.id} (${d.value})`}
               arcLinkLabelsSkipAngle={7}
               arcLinkLabelsTextColor="#f0abfc"
               arcLinkLabelsThickness={2}
@@ -130,11 +138,11 @@ export function DreamStats({ totalDreams, topSymbols = [], topThemes = [], topEm
                     {
                       on: 'hover',
                       style: {
-                        itemTextColor: '#f5d0fe'
-                      }
-                    }
-                  ]
-                }
+                        itemTextColor: '#f5d0fe',
+                      },
+                    },
+                  ],
+                },
               ]}
             />
           </motion.div>
@@ -148,51 +156,52 @@ export function DreamStats({ totalDreams, topSymbols = [], topThemes = [], topEm
           >
             <div className="absolute top-0 right-0 w-64 h-64 bg-fuchsia-500/5 rounded-full filter blur-3xl"></div>
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/5 rounded-full filter blur-3xl"></div>
-            <h3 className="relative text-lg font-semibold text-fuchsia-100 mb-4">
-              Dream Elements
-            </h3>
+            <h3 className="relative text-lg font-semibold text-fuchsia-100 mb-4">Dream Elements</h3>
             <ResponsiveContainer width="100%" height="85%">
               <BarChart
                 data={combinedData}
                 layout="vertical"
                 margin={{ top: 5, right: 20, left: 10, bottom: 20 }}
               >
-                <XAxis 
-                  type="number" 
+                <XAxis
+                  type="number"
                   stroke="#f0abfc"
                   tickCount={5}
                   domain={[0, 'auto']}
                   tick={{ fill: '#f0abfc' }}
                 />
-                <YAxis 
-                  type="category" 
-                  dataKey="name" 
+                <YAxis
+                  type="category"
+                  dataKey="name"
                   stroke="#f0abfc"
                   tick={{ fill: '#f0abfc' }}
                   width={135}
                   fontSize={12}
                 />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(240, 171, 252, 0.1)' }} />
-                <Legend 
-                  verticalAlign="bottom" 
+                <Tooltip
+                  content={<CustomTooltip />}
+                  cursor={{ fill: 'rgba(240, 171, 252, 0.1)' }}
+                />
+                <Legend
+                  verticalAlign="bottom"
                   height={36}
                   wrapperStyle={{ paddingTop: '10px' }}
                   formatter={(value) => <span style={{ color: '#f0abfc' }}>{value}</span>}
                 />
-                <Bar 
-                  dataKey="symbols" 
-                  name="Symbols" 
-                  fill={THEME_COLORS[0]} 
-                  radius={[0, 4, 4, 0]} 
-                  maxBarSize={20} 
+                <Bar
+                  dataKey="symbols"
+                  name="Symbols"
+                  fill={THEME_COLORS[0]}
+                  radius={[0, 4, 4, 0]}
+                  maxBarSize={20}
                   stackId="stack"
                 />
-                <Bar 
-                  dataKey="themes" 
-                  name="Themes" 
-                  fill={THEME_COLORS[1]} 
-                  radius={[0, 4, 4, 0]} 
-                  maxBarSize={20} 
+                <Bar
+                  dataKey="themes"
+                  name="Themes"
+                  fill={THEME_COLORS[1]}
+                  radius={[0, 4, 4, 0]}
+                  maxBarSize={20}
                   stackId="stack"
                 />
               </BarChart>
@@ -230,7 +239,7 @@ export function DreamStats({ totalDreams, topSymbols = [], topThemes = [], topEm
               {/* Record Dream Section */}
               <div className="flex items-center justify-between">
                 <h3 className="text-fuchsia-100 text-base font-medium">Record Dream</h3>
-                <button 
+                <button
                   onClick={onNewDream}
                   className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-fuchsia-500/20 to-indigo-500/20 border border-fuchsia-500/20 text-fuchsia-200 hover:text-fuchsia-100 hover:border-fuchsia-400/30 transition-colors"
                 >
@@ -243,4 +252,4 @@ export function DreamStats({ totalDreams, topSymbols = [], topThemes = [], topEm
       </div>
     </div>
   );
-} 
+}
