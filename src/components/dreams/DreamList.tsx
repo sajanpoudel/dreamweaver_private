@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import Link from 'next/link';
 import { formatDate } from '@/lib/utils';
@@ -38,14 +38,10 @@ export function DreamList({ dreams }: DreamListProps) {
                 <CardTitle className="text-lg font-semibold text-white line-clamp-1">
                   {dream.title || 'Untitled Dream'}
                 </CardTitle>
-                <p className="text-sm text-purple-200">
-                  {formatDate(dream.createdAt)}
-                </p>
+                <p className="text-sm text-purple-200">{formatDate(dream.createdAt)}</p>
               </CardHeader>
               <CardContent>
-                <p className="text-purple-100 line-clamp-3 mb-4">
-                  {dream.content}
-                </p>
+                <p className="text-purple-100 line-clamp-3 mb-4">{dream.content}</p>
                 <div className="space-y-2">
                   {dream.symbols.length > 0 && (
                     <div className="flex flex-wrap gap-2">
@@ -79,4 +75,4 @@ export function DreamList({ dreams }: DreamListProps) {
       ))}
     </div>
   );
-} 
+}
