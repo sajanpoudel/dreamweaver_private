@@ -20,9 +20,7 @@ export function DreamMetadata({ symbols, themes, emotions }: DreamMetadataProps)
                 <li key={symbol.id} className="text-sm">
                   <span className="font-medium">{symbol.name}</span>
                   {symbol.meaning && (
-                    <p className="text-muted-foreground text-xs mt-1">
-                      {symbol.meaning}
-                    </p>
+                    <p className="text-muted-foreground text-xs mt-1">{symbol.meaning}</p>
                   )}
                 </li>
               ))}
@@ -78,4 +76,4 @@ export function DreamMetadata({ symbols, themes, emotions }: DreamMetadataProps)
       </Card>
     </div>
   );
-} 
+}
