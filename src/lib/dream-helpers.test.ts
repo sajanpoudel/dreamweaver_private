@@ -24,4 +24,10 @@ describe('dream-helpers', () => {
   it('is zero when nothing is shared', () => {
     expect(overlapRatio(0, 2, 5)).toBe(0);
   });
+
+  it('names the six basic emotions primary', () => {
+    for (const emotion of ['joy', 'sadness', 'anger', 'fear', 'disgust', 'surprise']) {
+      expect(determineEmotionCategory(emotion)).toBe('primary');
+    }
+  });
 });
