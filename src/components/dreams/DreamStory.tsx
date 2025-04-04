@@ -162,7 +162,7 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
             sections: [],
             conclusion: '',
             themes: [],
-            interpretation: ''
+            interpretation: '',
           });
         }
       } catch (err) {
@@ -179,9 +179,10 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
     setError(null);
     try {
       const result = await generateStory(dreamId);
-      const storyData = typeof result.story.content === 'string' 
-        ? { ...result.story, ...JSON.parse(result.story.content) }
-        : result.story;
+      const storyData =
+        typeof result.story.content === 'string'
+          ? { ...result.story, ...JSON.parse(result.story.content) }
+          : result.story;
       setStory(storyData);
     } catch (err) {
       console.error('Story generation error:', err);
@@ -207,7 +208,7 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
 
   const handleEdit = () => {
     if (!story) return;
-    
+
     // Parse HTML content for rich text editor
     const parseHtmlContent = (html: string) => {
       // If the content is already wrapped in <p> tags, extract the inner content
@@ -220,34 +221,34 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
     setEditedStory({
       ...story,
       introduction: parseHtmlContent(story.introduction),
-      sections: story.sections.map(section => ({
+      sections: story.sections.map((section) => ({
         ...section,
-        content: parseHtmlContent(section.content)
+        content: parseHtmlContent(section.content),
       })),
       conclusion: parseHtmlContent(story.conclusion),
-      interpretation: parseHtmlContent(story.interpretation)
+      interpretation: parseHtmlContent(story.interpretation),
     });
     setIsEditing(true);
   };
 
   const handleSave = async () => {
     if (!editedStory) return;
-    
+
     try {
       // Format the content to match the expected structure
       const formattedContent = {
         title: editedStory.title,
         subtitle: editedStory.subtitle,
         introduction: editedStory.introduction,
-        sections: editedStory.sections.map(section => ({
+        sections: editedStory.sections.map((section) => ({
           title: section.title,
           content: section.content,
           imageUrl: section.imageUrl,
-          imagePrompt: section.imagePrompt
+          imagePrompt: section.imagePrompt,
         })),
         conclusion: editedStory.conclusion,
         themes: editedStory.themes,
-        interpretation: editedStory.interpretation
+        interpretation: editedStory.interpretation,
       };
 
       // Use the story ID instead of dreamId for the PUT request
@@ -266,9 +267,10 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
 
       const updatedStory = await response.json();
       // Parse the content if it's a string
-      const storyData = typeof updatedStory.content === 'string'
-        ? { ...updatedStory, ...JSON.parse(updatedStory.content) }
-        : updatedStory;
+      const storyData =
+        typeof updatedStory.content === 'string'
+          ? { ...updatedStory, ...JSON.parse(updatedStory.content) }
+          : updatedStory;
 
       setStory(storyData);
       setIsEditing(false);
@@ -299,12 +301,13 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
                 Transform Your Dream
               </h2>
               <p className="text-purple-200/80">
-                Let AI craft a beautiful narrative from your dream, complete with imagery and interpretation
+                Let AI craft a beautiful narrative from your dream, complete with imagery and
+                interpretation
               </p>
             </div>
-            
+
             <motion.button
-              whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(168,85,247,0.3)" }}
+              whileHover={{ scale: 1.02, boxShadow: '0 0 20px rgba(168,85,247,0.3)' }}
               whileTap={{ scale: 0.98 }}
               onClick={handleGenerateStory}
               disabled={isLoading}
@@ -349,7 +352,7 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
               className="text-2xl font-bold mb-4 bg-purple-500/10 border-purple-500/20 text-purple-100"
               placeholder="Story Title"
             />
-            
+
             <Input
               value={editedStory.subtitle}
               onChange={(e) => setEditedStory({ ...editedStory, subtitle: e.target.value })}
@@ -559,7 +562,7 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
 
           {/* Introduction */}
           <div className="mb-12">
-            <div 
+            <div
               className="text-xl leading-relaxed text-purple-100 prose prose-invert max-w-none"
               dangerouslySetInnerHTML={{ __html: story.introduction }}
             />
@@ -588,7 +591,7 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
                 className="relative"
               >
                 <h2 className="text-2xl font-bold text-purple-100 mb-6">{section.title}</h2>
-                
+
                 {section.imageUrl && (
                   <div className="relative h-[400px] mb-8 rounded-xl overflow-hidden shadow-lg">
                     <Image
@@ -602,7 +605,7 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
                   </div>
                 )}
 
-                <div 
+                <div
                   className="prose prose-invert max-w-none text-purple-200/90"
                   dangerouslySetInnerHTML={{ __html: section.content }}
                 />
@@ -613,7 +616,7 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
           {/* Conclusion */}
           <div className="mt-12 mb-8">
             <h2 className="text-2xl font-bold text-purple-100 mb-6">Conclusion</h2>
-            <div 
+            <div
               className="text-purple-200/90 leading-relaxed prose prose-invert max-w-none"
               dangerouslySetInnerHTML={{ __html: story.conclusion }}
             />
@@ -622,7 +625,7 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
           {/* Interpretation */}
           <div className="bg-purple-500/10 p-6 rounded-xl border border-purple-500/20">
             <h3 className="text-xl font-semibold text-purple-100 mb-4">Dream Interpretation</h3>
-            <div 
+            <div
               className="text-purple-200/90 prose prose-invert max-w-none"
               dangerouslySetInnerHTML={{ __html: story.interpretation }}
             />
@@ -669,4 +672,4 @@ export default function DreamStory({ dreamId }: { dreamId: string }) {
       </motion.div>
     </div>
   );
-} 
+}
