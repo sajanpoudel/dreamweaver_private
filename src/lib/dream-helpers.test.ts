@@ -30,4 +30,10 @@ describe('dream-helpers', () => {
       expect(determineEmotionCategory(emotion)).toBe('primary');
     }
   });
+
+  it('names shame, guilt, pride, anxiety and hope secondary', () => {
+    for (const emotion of ['shame', 'guilt', 'pride', 'anxiety', 'hope']) {
+      expect(determineEmotionCategory(emotion)).toBe('secondary');
+    }
+  });
 });
