@@ -45,4 +45,12 @@ describe('dream-helpers', () => {
     expect(determineEmotionCategory('JOY')).toBe('primary');
     expect(determineEmotionCategory('Guilt')).toBe('secondary');
   });
+
+  it('counts how often each name appears', () => {
+    const result = extractCommonElements([{ name: 'a' }, { name: 'b' }, { name: 'a' }]);
+    expect(result).toEqual([
+      { name: 'a', count: 2 },
+      { name: 'b', count: 1 },
+    ]);
+  });
 });
