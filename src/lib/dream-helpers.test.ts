@@ -40,4 +40,9 @@ describe('dream-helpers', () => {
   it('treats other emotions as complex', () => {
     expect(determineEmotionCategory('nostalgia')).toBe('complex');
   });
+
+  it('ignores case', () => {
+    expect(determineEmotionCategory('JOY')).toBe('primary');
+    expect(determineEmotionCategory('Guilt')).toBe('secondary');
+  });
 });
