@@ -59,4 +59,8 @@ describe('dream-helpers', () => {
     const result = extractCommonElements(names.map((name) => ({ name })));
     expect(result.map((r) => r.name)).toEqual(['f', 'c', 'b', 'a', 'd']);
   });
+
+  it('returns nothing for no items', () => {
+    expect(extractCommonElements([])).toEqual([]);
+  });
 });
