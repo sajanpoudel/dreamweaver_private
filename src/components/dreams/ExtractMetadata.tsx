@@ -35,18 +35,12 @@ export function ExtractMetadata({ dreamId }: ExtractMetadataProps) {
 
   return (
     <div className="space-y-2">
-      <Button
-        onClick={extractMetadata}
-        disabled={isExtracting}
-        className="flex items-center gap-2"
-      >
+      <Button onClick={extractMetadata} disabled={isExtracting} className="flex items-center gap-2">
         {isExtracting && <Loader2 className="h-4 w-4 animate-spin" />}
         {isExtracting ? 'Extracting...' : 'Extract Metadata'}
       </Button>
 
-      {error && (
-        <p className="text-sm text-red-500">{error}</p>
-      )}
+      {error && <p className="text-sm text-red-500">{error}</p>}
     </div>
   );
-} 
+}
