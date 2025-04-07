@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { formatDate } from '../../lib/utils'
+import { formatDate } from '../../lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { DreamActions } from '../dreams/DreamActions';
 import { DreamAnalysis } from '../dreams/DreamAnalysis';
@@ -60,20 +60,20 @@ export function DreamView({ dream }: DreamViewProps) {
               <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 text-transparent bg-clip-text">
                 {dream.title || 'Untitled Dream'}
               </CardTitle>
-              <p className="text-sm text-purple-200/80">
-                {formatDate(dream.createdAt)}
-              </p>
+              <p className="text-sm text-purple-200/80">{formatDate(dream.createdAt)}</p>
             </CardHeader>
             <CardContent>
               <p className="text-purple-100 whitespace-pre-wrap">{dream.content}</p>
-              
-              {(dream.symbols.length > 0 || dream.themes.length > 0 || dream.emotions.length > 0) && (
+
+              {(dream.symbols.length > 0 ||
+                dream.themes.length > 0 ||
+                dream.emotions.length > 0) && (
                 <div className="mt-6 space-y-4">
                   {dream.symbols.length > 0 && (
                     <div>
                       <h3 className="text-sm font-medium text-purple-200 mb-2">Symbols</h3>
                       <div className="flex flex-wrap gap-2">
-                        {dream.symbols.map(symbol => (
+                        {dream.symbols.map((symbol) => (
                           <span
                             key={symbol.name}
                             className="px-2 py-1 text-xs rounded-full bg-purple-500/20 text-purple-200 border border-purple-500/20"
@@ -84,12 +84,12 @@ export function DreamView({ dream }: DreamViewProps) {
                       </div>
                     </div>
                   )}
-                  
+
                   {dream.themes.length > 0 && (
                     <div>
                       <h3 className="text-sm font-medium text-purple-200 mb-2">Themes</h3>
                       <div className="flex flex-wrap gap-2">
-                        {dream.themes.map(theme => (
+                        {dream.themes.map((theme) => (
                           <span
                             key={theme.name}
                             className="px-2 py-1 text-xs rounded-full bg-blue-500/20 text-blue-200 border border-blue-500/20"
@@ -100,12 +100,12 @@ export function DreamView({ dream }: DreamViewProps) {
                       </div>
                     </div>
                   )}
-                  
+
                   {dream.emotions.length > 0 && (
                     <div>
                       <h3 className="text-sm font-medium text-purple-200 mb-2">Emotions</h3>
                       <div className="flex flex-wrap gap-2">
-                        {dream.emotions.map(emotion => (
+                        {dream.emotions.map((emotion) => (
                           <span
                             key={emotion.name}
                             className="px-2 py-1 text-xs rounded-full bg-pink-500/20 text-pink-200 border border-pink-500/20"
@@ -140,4 +140,4 @@ export function DreamView({ dream }: DreamViewProps) {
       </div>
     </div>
   );
-} 
+}
