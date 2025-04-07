@@ -53,4 +53,10 @@ describe('dream-helpers', () => {
       { name: 'b', count: 1 },
     ]);
   });
+
+  it('sorts by count and keeps the top five', () => {
+    const names = ['a', 'b', 'b', 'c', 'c', 'c', 'd', 'e', 'f', 'f', 'f', 'f'];
+    const result = extractCommonElements(names.map((name) => ({ name })));
+    expect(result.map((r) => r.name)).toEqual(['f', 'c', 'b', 'a', 'd']);
+  });
 });
