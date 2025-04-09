@@ -8,7 +8,7 @@ import { Textarea } from '../ui/textarea';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
 import { SpeechInput } from '../dreams/SpeechInput';
-import { toast } from 'sonner'
+import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import React from 'react';
 
@@ -22,7 +22,7 @@ export function NewDreamForm() {
   });
 
   const handleSpeechInput = useCallback((text: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       content: (prev.content + ' ' + text).trim(),
     }));
@@ -68,14 +68,14 @@ export function NewDreamForm() {
           type="text"
           placeholder="Dream Title"
           value={formData.title}
-          onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+          onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
           className="w-full bg-transparent border-none text-3xl font-bold text-white placeholder:text-white/20 focus:outline-none focus:ring-0"
         />
         <div className="relative">
           <textarea
             placeholder="Describe your dream..."
             value={formData.content}
-            onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+            onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
             className="w-full min-h-[400px] bg-transparent border-none text-lg text-purple-100 placeholder:text-white/20 focus:outline-none focus:ring-0 resize-none pr-12"
           />
           <div className="absolute bottom-4 right-4">
@@ -88,7 +88,7 @@ export function NewDreamForm() {
           <Switch
             id="isPublic"
             checked={formData.isPublic}
-            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isPublic: checked }))}
+            onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, isPublic: checked }))}
             className="data-[state=checked]:bg-purple-500"
           />
           <Label htmlFor="isPublic" className="text-purple-200">
@@ -96,15 +96,15 @@ export function NewDreamForm() {
           </Label>
         </div>
         <div className="flex items-center gap-4">
-          <Button 
+          <Button
             type="button"
-            variant="ghost" 
+            variant="ghost"
             className="text-purple-200 hover:text-purple-100 hover:bg-purple-500/10"
             disabled={isLoading}
           >
             Save as Draft
           </Button>
-          <Button 
+          <Button
             type="submit"
             className="bg-gradient-to-r from-purple-500/80 to-pink-500/80 hover:from-purple-500 hover:to-pink-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.2)] transition-all duration-300 disabled:opacity-50"
             disabled={isLoading}
@@ -115,4 +115,4 @@ export function NewDreamForm() {
       </div>
     </form>
   );
-} 
+}
