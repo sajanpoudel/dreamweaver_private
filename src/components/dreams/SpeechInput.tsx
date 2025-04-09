@@ -79,11 +79,7 @@ export function SpeechInput({ onTranscript }: SpeechInputProps) {
       onClick={isListening ? stopListening : startListening}
       className="text-purple-200/80 hover:text-purple-200 hover:bg-purple-500/10"
     >
-      {isListening ? (
-        <MicOff className="h-5 w-5 text-pink-500" />
-      ) : (
-        <Mic className="h-5 w-5" />
-      )}
+      {isListening ? <MicOff className="h-5 w-5 text-pink-500" /> : <Mic className="h-5 w-5" />}
     </Button>
   );
-} 
+}
