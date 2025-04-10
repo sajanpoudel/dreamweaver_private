@@ -67,4 +67,8 @@ describe('dream-helpers', () => {
   it('finds a shared element in an array', () => {
     expect(hasCommonElements(['a', 'b'], ['b', 'c'])).toBe(true);
   });
+
+  it('returns false when nothing is shared', () => {
+    expect(hasCommonElements(['a'], ['b'])).toBe(false);
+  });
 });
