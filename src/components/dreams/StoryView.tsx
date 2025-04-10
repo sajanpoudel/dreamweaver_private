@@ -92,11 +92,11 @@ export function StoryView({ story, isOwner }: StoryViewProps) {
           'Content-Type': 'application/json',
         },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setLiked(data.liked);
-        setLikeCount(prev => data.liked ? prev + 1 : prev - 1);
+        setLikeCount((prev) => (data.liked ? prev + 1 : prev - 1));
         toast.success(data.liked ? 'Story liked!' : 'Story unliked');
       }
     } catch (error) {
@@ -122,7 +122,7 @@ export function StoryView({ story, isOwner }: StoryViewProps) {
 
       if (response.ok) {
         const comment = await response.json();
-        setComments(prev => [comment, ...prev]);
+        setComments((prev) => [comment, ...prev]);
         setNewComment('');
         toast.success('Comment added successfully!');
       }
@@ -143,15 +143,12 @@ export function StoryView({ story, isOwner }: StoryViewProps) {
 
   const handleDeleteComment = async (commentId: string) => {
     try {
-      const response = await fetch(
-        `/api/stories/${story.id}/comments?commentId=${commentId}`,
-        {
-          method: 'DELETE',
-        }
-      );
+      const response = await fetch(`/api/stories/${story.id}/comments?commentId=${commentId}`, {
+        method: 'DELETE',
+      });
 
       if (response.ok) {
-        setComments(prev => prev.filter(comment => comment.id !== commentId));
+        setComments((prev) => prev.filter((comment) => comment.id !== commentId));
         toast.success('Comment deleted successfully!');
       }
     } catch (error) {
@@ -168,7 +165,10 @@ export function StoryView({ story, isOwner }: StoryViewProps) {
           window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
           break;
         case 'twitter':
-          window.open(`https://twitter.com/intent/tweet?url=${url}&text=${encodeURIComponent(storyContent.title)}`, '_blank');
+          window.open(
+            `https://twitter.com/intent/tweet?url=${url}&text=${encodeURIComponent(storyContent.title)}`,
+            '_blank'
+          );
           break;
         case 'medium':
           toast.info('Medium sharing coming soon!');
@@ -183,7 +183,9 @@ export function StoryView({ story, isOwner }: StoryViewProps) {
   const downloadStory = async () => {
     try {
       const storyText = `${storyContent.title}\n\n${storyContent.summary}\n\n${storyContent.scenes
-        .map((scene: any, index: number) => `Scene ${index + 1}:\n${scene.text}\n${scene.caption}\n`)
+        .map(
+          (scene: any, index: number) => `Scene ${index + 1}:\n${scene.text}\n${scene.caption}\n`
+        )
         .join('\n')}`;
 
       const blob = new Blob([storyText], { type: 'text/plain' });
@@ -217,17 +219,13 @@ export function StoryView({ story, isOwner }: StoryViewProps) {
               <div className="flex items-center gap-3">
                 <Avatar>
                   <AvatarImage src={story.user.image || undefined} />
-                  <AvatarFallback>
-                    {story.user.name?.charAt(0) || 'U'}
-                  </AvatarFallback>
+                  <AvatarFallback>{story.user.name?.charAt(0) || 'U'}</AvatarFallback>
                 </Avatar>
                 <div>
                   <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 text-transparent bg-clip-text">
                     {storyContent.title}
                   </h1>
-                  <p className="text-sm text-purple-200/60">
-                    by {story.user.name || 'Anonymous'}
-                  </p>
+                  <p className="text-sm text-purple-200/60">by {story.user.name || 'Anonymous'}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -285,9 +283,7 @@ export function StoryView({ story, isOwner }: StoryViewProps) {
                     </div>
                     <div className="p-4">
                       <p className="text-purple-200 mb-2">{scene.text}</p>
-                      <p className="text-sm text-purple-200/60 italic">
-                        {scene.caption}
-                      </p>
+                      <p className="text-sm text-purple-200/60 italic">{scene.caption}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -304,9 +300,7 @@ export function StoryView({ story, isOwner }: StoryViewProps) {
                   liked ? 'text-pink-500' : 'text-purple-200/60'
                 } hover:text-pink-500 hover:bg-purple-500/10`}
               >
-                <Heart 
-                  className={`h-4 w-4 ${liked ? 'fill-current' : ''} transition-colors`} 
-                />
+                <Heart className={`h-4 w-4 ${liked ? 'fill-current' : ''} transition-colors`} />
                 <span>{likeCount}</span>
               </Button>
               <Button
@@ -351,9 +345,7 @@ export function StoryView({ story, isOwner }: StoryViewProps) {
                     >
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={comment.user.image || undefined} />
-                        <AvatarFallback>
-                          {comment.user.name?.charAt(0) || 'U'}
-                        </AvatarFallback>
+                        <AvatarFallback>{comment.user.name?.charAt(0) || 'U'}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
@@ -366,9 +358,7 @@ export function StoryView({ story, isOwner }: StoryViewProps) {
                             })}
                           </p>
                         </div>
-                        <p className="text-sm text-purple-200/80 mt-1">
-                          {comment.content}
-                        </p>
+                        <p className="text-sm text-purple-200/80 mt-1">{comment.content}</p>
                       </div>
                       {isOwner && (
                         <Button
@@ -391,4 +381,4 @@ export function StoryView({ story, isOwner }: StoryViewProps) {
       </motion.div>
     </div>
   );
-} 
+}
