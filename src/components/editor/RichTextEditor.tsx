@@ -26,13 +26,13 @@ interface RichTextEditorProps {
   imageUrl?: string;
 }
 
-export function RichTextEditor({ 
-  content, 
-  onChange, 
+export function RichTextEditor({
+  content,
+  onChange,
   placeholder,
   onImageUpload,
   onImageRegenerate,
-  imageUrl 
+  imageUrl,
 }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
@@ -233,4 +233,4 @@ export function RichTextEditor({
       )}
     </div>
   );
-} 
+}
