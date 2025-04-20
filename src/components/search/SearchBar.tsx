@@ -10,11 +10,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -51,12 +47,12 @@ export function SearchBar() {
             'Content-Type': 'application/json',
           },
         });
-        
+
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(errorText || `Search failed: ${response.status}`);
         }
-        
+
         const data = await response.json();
         setResults(data);
       } catch (error) {
@@ -143,15 +139,19 @@ export function SearchBar() {
                       >
                         <div className="flex flex-col gap-1 py-2 w-full">
                           <div className="flex items-center gap-2">
-                            <span className={cn(
-                              "text-xs px-1.5 py-0.5 rounded transition-colors",
-                              result.type === 'dream' 
-                                ? 'bg-purple-500/20 text-purple-200 group-hover:bg-purple-500/30' 
-                                : 'bg-pink-500/20 text-pink-200 group-hover:bg-pink-500/30'
-                            )}>
+                            <span
+                              className={cn(
+                                'text-xs px-1.5 py-0.5 rounded transition-colors',
+                                result.type === 'dream'
+                                  ? 'bg-purple-500/20 text-purple-200 group-hover:bg-purple-500/30'
+                                  : 'bg-pink-500/20 text-pink-200 group-hover:bg-pink-500/30'
+                              )}
+                            >
                               {result.type === 'dream' ? 'Dream' : 'Story'}
                             </span>
-                            <span className="font-medium text-purple-100 group-hover:text-white transition-colors">{result.title}</span>
+                            <span className="font-medium text-purple-100 group-hover:text-white transition-colors">
+                              {result.title}
+                            </span>
                           </div>
                           <p className="text-sm text-purple-200/70 group-hover:text-purple-200 transition-colors line-clamp-2">
                             {formatPreview(result.preview)}
@@ -168,4 +168,4 @@ export function SearchBar() {
       </Popover>
     </div>
   );
-} 
+}
