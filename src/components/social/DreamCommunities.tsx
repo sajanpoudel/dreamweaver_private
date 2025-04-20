@@ -35,7 +35,9 @@ export function DreamCommunities() {
   const fetchCommunities = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/communities?filter=all&search=${encodeURIComponent(debouncedSearch)}`);
+      const response = await fetch(
+        `/api/communities?filter=all&search=${encodeURIComponent(debouncedSearch)}`
+      );
       if (response.ok) {
         const data = await response.json();
         setCommunities(data);
@@ -126,12 +128,10 @@ export function DreamCommunities() {
             className="w-full mt-4 bg-purple-500/10 hover:bg-purple-500/20 text-purple-100"
             asChild
           >
-            <Link href="/communities">
-              Browse All Communities
-            </Link>
+            <Link href="/communities">Browse All Communities</Link>
           </Button>
         </div>
       </Card>
     </motion.div>
   );
-} 
+}
