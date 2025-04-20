@@ -168,10 +168,7 @@ export function FriendsList() {
               </h3>
               <div className="space-y-3">
                 {pendingRequests.map((request) => (
-                  <div
-                    key={request.id}
-                    className="flex items-center justify-between group"
-                  >
+                  <div key={request.id} className="flex items-center justify-between group">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10 border border-purple-500/20">
                         <AvatarImage src={getImageUrl(request.requester.image)} />
@@ -181,9 +178,7 @@ export function FriendsList() {
                         <div className="text-sm font-medium text-purple-100 group-hover:text-purple-200 transition-colors">
                           {request.requester.name}
                         </div>
-                        <div className="text-xs text-purple-200/60">
-                          Wants to be friends
-                        </div>
+                        <div className="text-xs text-purple-200/60">Wants to be friends</div>
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -215,10 +210,7 @@ export function FriendsList() {
           {/* Friends List */}
           <div className="space-y-3">
             {friends.map((friend) => (
-              <div
-                key={friend.id}
-                className="flex items-center justify-between group"
-              >
+              <div key={friend.id} className="flex items-center justify-between group">
                 <div className="flex items-center gap-3">
                   <div className="relative">
                     <Avatar className="h-10 w-10 border border-purple-500/20">
@@ -284,4 +276,4 @@ export function FriendsList() {
       </Card>
     </motion.div>
   );
-} 
+}
