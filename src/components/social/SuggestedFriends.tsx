@@ -53,7 +53,7 @@ export function SuggestedFriends() {
       if (response.ok) {
         toast.success('Friend request sent');
         // Remove the user from suggestions
-        setSuggestions(prev => prev.filter(s => s.id !== userId));
+        setSuggestions((prev) => prev.filter((s) => s.id !== userId));
       } else {
         toast.error('Failed to send friend request');
       }
@@ -80,10 +80,7 @@ export function SuggestedFriends() {
 
           <div className="space-y-4">
             {suggestions.map((friend) => (
-              <div
-                key={friend.id}
-                className="flex items-start justify-between group"
-              >
+              <div key={friend.id} className="flex items-start justify-between group">
                 <div className="flex items-start gap-3">
                   <Avatar className="h-10 w-10 border border-purple-500/20">
                     <AvatarImage src={getImageUrl(friend.image)} />
@@ -137,4 +134,4 @@ export function SuggestedFriends() {
       </Card>
     </motion.div>
   );
-} 
+}
