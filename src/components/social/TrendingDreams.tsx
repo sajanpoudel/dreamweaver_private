@@ -62,21 +62,17 @@ export function TrendingDreams() {
               <p className="text-sm text-purple-200/60 text-center py-2">No trending dreams yet</p>
             ) : (
               dreams.map((dream) => (
-                <Link
-                  key={dream.id}
-                  href={`/stories/${dream.id}`}
-                  className="block group"
-                >
+                <Link key={dream.id} href={`/stories/${dream.id}`} className="block group">
                   <div className="p-2 rounded-lg hover:bg-purple-500/10 transition-colors">
                     <h3 className="text-sm font-medium text-purple-100 group-hover:text-purple-200 transition-colors line-clamp-2 mb-2">
                       {dream.title}
                     </h3>
-                    
+
                     <div className="flex items-center justify-between">
                       <span className="text-xs px-2 py-1 rounded-full bg-purple-500/10 text-purple-200">
                         {dream.theme}
                       </span>
-                      
+
                       <div className="flex items-center gap-3 text-purple-200/60">
                         <div className="flex items-center gap-1">
                           <Heart className="w-3 h-3" />
@@ -97,4 +93,4 @@ export function TrendingDreams() {
       </Card>
     </motion.div>
   );
-} 
+}
