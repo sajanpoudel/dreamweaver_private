@@ -67,7 +67,7 @@ export function UserProfile() {
       <Card className="relative overflow-hidden backdrop-blur-lg bg-white/5 border-purple-500/20">
         {/* Cover Image */}
         <div className="h-24 bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-purple-500/20" />
-        
+
         {/* Profile Content */}
         <div className="p-6">
           {/* Avatar */}
@@ -81,7 +81,9 @@ export function UserProfile() {
           {/* User Info */}
           <div className="space-y-1 mb-4">
             <h2 className="text-lg font-semibold text-purple-100">{session.user.name}</h2>
-            <p className="text-sm text-purple-200/60">@{session.user.name?.toLowerCase().replace(/\s+/g, '')}</p>
+            <p className="text-sm text-purple-200/60">
+              @{session.user.name?.toLowerCase().replace(/\s+/g, '')}
+            </p>
           </div>
 
           {/* Stats */}
@@ -132,4 +134,4 @@ export function UserProfile() {
       </Card>
     </motion.div>
   );
-} 
+}
