@@ -92,14 +92,9 @@ export function SpacesList() {
         animate={{ opacity: 1 }}
         className="col-span-full flex flex-col items-center justify-center h-64 text-center"
       >
-        <p className="text-red-400 mb-4">
-          {error}
-        </p>
+        <p className="text-red-400 mb-4">{error}</p>
         {error.includes('signed in') && (
-          <Link
-            href="/auth/signin"
-            className="text-purple-200 hover:text-purple-100 underline"
-          >
+          <Link href="/auth/signin" className="text-purple-200 hover:text-purple-100 underline">
             Sign in to view dream spaces
           </Link>
         )}
@@ -110,9 +105,7 @@ export function SpacesList() {
   return (
     <div className="space-y-12">
       {/* Show popular spaces only when not searching */}
-      {!debouncedSearch && (
-        <PopularSpaces spaces={popularSpaces} isLoading={isLoading} />
-      )}
+      {!debouncedSearch && <PopularSpaces spaces={popularSpaces} isLoading={isLoading} />}
 
       {/* Search section */}
       <div className="space-y-8">
@@ -161,7 +154,8 @@ export function SpacesList() {
                             {space.name}
                           </h2>
                           <p className="text-sm text-purple-200/60">
-                            {space.dreamCount} dreams · {space.symbolCount} symbols · {space.dreamerCount} dreamers
+                            {space.dreamCount} dreams · {space.symbolCount} symbols ·{' '}
+                            {space.dreamerCount} dreamers
                           </p>
                         </div>
                       </div>
@@ -192,9 +186,7 @@ export function SpacesList() {
               animate={{ opacity: 1 }}
               className="col-span-full flex flex-col items-center justify-center h-64 text-center"
             >
-              <p className="text-purple-200/60 mb-4">
-                {message || 'No dream spaces found'}
-              </p>
+              <p className="text-purple-200/60 mb-4">{message || 'No dream spaces found'}</p>
               {!search && (
                 <Link
                   href="/dreams/new"
@@ -209,4 +201,4 @@ export function SpacesList() {
       </div>
     </div>
   );
-} 
+}
