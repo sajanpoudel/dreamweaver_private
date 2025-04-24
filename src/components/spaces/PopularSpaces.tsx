@@ -96,4 +96,4 @@ export function PopularSpaces({ spaces, isLoading }: PopularSpacesProps) {
       </div>
     </div>
   );
-} 
+}
