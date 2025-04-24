@@ -75,4 +75,12 @@ describe('dream-helpers', () => {
   it('reads a JSON string of elements', () => {
     expect(hasCommonElements(['a'], '["a","z"]')).toBe(true);
   });
+
+  it('needs at least two dreams', () => {
+    expect(calculateDreamFrequency([])).toEqual({ averageDreamsPerWeek: 0, trend: 'stable' });
+    expect(calculateDreamFrequency([{ createdAt: new Date() }])).toEqual({
+      averageDreamsPerWeek: 0,
+      trend: 'stable',
+    });
+  });
 });
