@@ -72,14 +72,10 @@ export function StoryFeed({ stories }: StoryFeedProps) {
                       <div className="flex items-center gap-3 mb-3">
                         <Avatar className="h-8 w-8 border-2 border-purple-500/20">
                           <AvatarImage src={story.user.image || undefined} />
-                          <AvatarFallback>
-                            {story.user.name?.charAt(0) || '?'}
-                          </AvatarFallback>
+                          <AvatarFallback>{story.user.name?.charAt(0) || '?'}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="text-sm font-medium text-purple-100">
-                            {story.user.name}
-                          </p>
+                          <p className="text-sm font-medium text-purple-100">{story.user.name}</p>
                           <p className="text-xs text-purple-200/70">
                             {formatDate(story.publishedAt)}
                           </p>
@@ -90,11 +86,9 @@ export function StoryFeed({ stories }: StoryFeedProps) {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-purple-200/90 line-clamp-2 mb-4">
-                        {storyContent.summary}
-                      </p>
+                      <p className="text-purple-200/90 line-clamp-2 mb-4">{storyContent.summary}</p>
                       <div className="flex flex-wrap gap-2">
-                        {story.themes.slice(0, 3).map(theme => (
+                        {story.themes.slice(0, 3).map((theme) => (
                           <span
                             key={theme.name}
                             className="px-2 py-1 text-xs rounded-full bg-purple-500/20 text-purple-200 border border-purple-500/20"
@@ -136,4 +130,4 @@ export function StoryFeed({ stories }: StoryFeedProps) {
       </div>
     </div>
   );
-} 
+}
