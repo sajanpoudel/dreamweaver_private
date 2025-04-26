@@ -89,7 +89,7 @@ export function StoryView({ story, isOwner, currentUserId, relatedStories }: Sto
       sections: [],
       conclusion: '',
       themes: [],
-      interpretation: ''
+      interpretation: '',
     };
   })();
 
@@ -177,7 +177,9 @@ export function StoryView({ story, isOwner, currentUserId, relatedStories }: Sto
 
     switch (platform) {
       case 'twitter':
-        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`);
+        window.open(
+          `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`
+        );
         break;
       default:
         await navigator.clipboard.writeText(url);
@@ -263,9 +265,7 @@ export function StoryView({ story, isOwner, currentUserId, relatedStories }: Sto
           <div className="flex items-center justify-center gap-3 mb-6">
             <Avatar className="h-12 w-12 border-2 border-purple-500/20">
               <AvatarImage src={getImageUrl(story.user.image)} />
-              <AvatarFallback>
-                {story.user.name?.charAt(0) || '?'}
-              </AvatarFallback>
+              <AvatarFallback>{story.user.name?.charAt(0) || '?'}</AvatarFallback>
             </Avatar>
             <div>
               <p className="text-purple-100 font-medium">{story.user.name}</p>
@@ -278,9 +278,7 @@ export function StoryView({ story, isOwner, currentUserId, relatedStories }: Sto
             {storyContent.title}
           </h1>
           {storyContent.subtitle && (
-            <p className="text-xl text-purple-200/80 italic">
-              {storyContent.subtitle}
-            </p>
+            <p className="text-xl text-purple-200/80 italic">{storyContent.subtitle}</p>
           )}
         </div>
 
@@ -313,9 +311,7 @@ export function StoryView({ story, isOwner, currentUserId, relatedStories }: Sto
             >
               <div className="absolute inset-0 bg-purple-500/5 rounded-xl blur-sm"></div>
               <div className="relative space-y-6">
-                <h2 className="text-2xl font-semibold text-purple-100">
-                  {section.title}
-                </h2>
+                <h2 className="text-2xl font-semibold text-purple-100">{section.title}</h2>
 
                 {section.imageUrl && (
                   <div className="aspect-[16/9] relative overflow-hidden rounded-xl">
@@ -329,9 +325,7 @@ export function StoryView({ story, isOwner, currentUserId, relatedStories }: Sto
                 )}
 
                 <div className="prose prose-invert max-w-none">
-                  <p className="text-purple-200/90">
-                    {cleanHtmlContent(section.content)}
-                  </p>
+                  <p className="text-purple-200/90">{cleanHtmlContent(section.content)}</p>
                 </div>
               </div>
             </motion.div>
@@ -340,9 +334,7 @@ export function StoryView({ story, isOwner, currentUserId, relatedStories }: Sto
 
         {storyContent.conclusion && (
           <div className="mt-16 space-y-4">
-            <h2 className="text-2xl font-semibold text-purple-100">
-              Conclusion
-            </h2>
+            <h2 className="text-2xl font-semibold text-purple-100">Conclusion</h2>
             <p className="text-purple-200/90 leading-relaxed">
               {cleanHtmlContent(storyContent.conclusion)}
             </p>
@@ -351,20 +343,14 @@ export function StoryView({ story, isOwner, currentUserId, relatedStories }: Sto
 
         {storyContent.interpretation && (
           <div className="mt-8 p-6 bg-purple-500/10 rounded-xl border border-purple-500/20">
-            <h2 className="text-xl font-semibold text-purple-100 mb-4">
-              Dream Interpretation
-            </h2>
-            <p className="text-purple-200/90">
-              {cleanHtmlContent(storyContent.interpretation)}
-            </p>
+            <h2 className="text-xl font-semibold text-purple-100 mb-4">Dream Interpretation</h2>
+            <p className="text-purple-200/90">{cleanHtmlContent(storyContent.interpretation)}</p>
           </div>
         )}
 
         <div className="mt-16 space-y-6">
-          <h2 className="text-2xl font-semibold text-purple-100">
-            Comments ({comments.length})
-          </h2>
-          
+          <h2 className="text-2xl font-semibold text-purple-100">Comments ({comments.length})</h2>
+
           <div className="flex gap-4 mb-8">
             <Input
               value={newComment}
@@ -392,9 +378,7 @@ export function StoryView({ story, isOwner, currentUserId, relatedStories }: Sto
               >
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={comment.user.image || undefined} />
-                  <AvatarFallback>
-                    {comment.user.name?.charAt(0) || '?'}
-                  </AvatarFallback>
+                  <AvatarFallback>{comment.user.name?.charAt(0) || '?'}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
@@ -414,9 +398,7 @@ export function StoryView({ story, isOwner, currentUserId, relatedStories }: Sto
 
         {relatedStories.length > 0 && (
           <div className="mt-16">
-            <h2 className="text-2xl font-semibold text-purple-100 mb-6">
-              Related Stories
-            </h2>
+            <h2 className="text-2xl font-semibold text-purple-100 mb-6">Related Stories</h2>
             <div className="grid gap-6 md:grid-cols-2">
               {relatedStories.map((relatedStory) => {
                 const content = JSON.parse(relatedStory.content);
@@ -448,9 +430,7 @@ export function StoryView({ story, isOwner, currentUserId, relatedStories }: Sto
                               {relatedStory.user.name?.charAt(0) || '?'}
                             </AvatarFallback>
                           </Avatar>
-                          <p className="text-sm text-purple-200/90">
-                            {relatedStory.user.name}
-                          </p>
+                          <p className="text-sm text-purple-200/90">{relatedStory.user.name}</p>
                         </div>
                         <h3 className="text-lg font-semibold text-purple-100 line-clamp-2">
                           {content.title}
@@ -466,4 +446,4 @@ export function StoryView({ story, isOwner, currentUserId, relatedStories }: Sto
       </motion.div>
     </div>
   );
-} 
+}
