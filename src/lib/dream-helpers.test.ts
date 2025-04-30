@@ -83,4 +83,13 @@ describe('dream-helpers', () => {
       trend: 'stable',
     });
   });
+
+  it('computes dreams per week over the time span', () => {
+    const day = 24 * 60 * 60 * 1000;
+    const start = new Date('2025-01-29T00:00:00Z').getTime();
+    // newest first, one dream every day for 7 days
+    const dreams = [6, 5, 4, 3, 2, 1, 0].map((i) => ({ createdAt: new Date(start + i * day) }));
+    const result = calculateDreamFrequency(dreams);
+    expect(result.averageDreamsPerWeek).toBeCloseTo((7 / 6) * 7, 5);
+  });
 });
