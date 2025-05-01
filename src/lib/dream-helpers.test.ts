@@ -92,4 +92,9 @@ describe('dream-helpers', () => {
     const result = calculateDreamFrequency(dreams);
     expect(result.averageDreamsPerWeek).toBeCloseTo((7 / 6) * 7, 5);
   });
+
+  it('creates a pattern for every name', () => {
+    const patterns = analyzePatterns([[{ name: 'water' }], [{ name: 'flying' }]]);
+    expect(Object.keys(patterns).sort()).toEqual(['flying', 'water']);
+  });
 });
