@@ -97,4 +97,10 @@ describe('dream-helpers', () => {
     const patterns = analyzePatterns([[{ name: 'water' }], [{ name: 'flying' }]]);
     expect(Object.keys(patterns).sort()).toEqual(['flying', 'water']);
   });
+
+  it('counts repeated names as occurrences', () => {
+    const patterns = analyzePatterns([[{ name: 'water' }], [{ name: 'water' }], [{ name: 'water' }]]);
+    expect(patterns.water.occurrences).toBe(3);
+    expect(patterns.water.frequency).toBe(1);
+  });
 });
