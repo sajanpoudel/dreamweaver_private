@@ -103,4 +103,8 @@ describe('dream-helpers', () => {
     expect(patterns.water.occurrences).toBe(3);
     expect(patterns.water.frequency).toBe(1);
   });
+
+  it('starts new patterns as stable', () => {
+    expect(analyzePatterns([[{ name: 'house' }]]).house.trend).toBe('stable');
+  });
 });
