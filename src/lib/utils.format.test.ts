@@ -18,4 +18,9 @@ describe('formatDate', () => {
     expect(formatDate(ago(5))).toBe('just now');
     expect(formatDate(ago(59))).toBe('just now');
   });
+
+  it('counts minutes up to an hour', () => {
+    expect(formatDate(ago(60))).toBe('1m ago');
+    expect(formatDate(ago(59 * 60))).toBe('59m ago');
+  });
 });
