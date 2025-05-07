@@ -23,4 +23,9 @@ describe('formatDate', () => {
     expect(formatDate(ago(60))).toBe('1m ago');
     expect(formatDate(ago(59 * 60))).toBe('59m ago');
   });
+
+  it('counts hours up to a day', () => {
+    expect(formatDate(ago(3600))).toBe('1h ago');
+    expect(formatDate(ago(23 * 3600))).toBe('23h ago');
+  });
 });
