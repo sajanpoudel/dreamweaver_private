@@ -17,7 +17,7 @@ export const authOptions: NextAuthOptions = {
     signIn: '/auth/signin',
   },
   session: {
-    strategy: 'jwt'
+    strategy: 'jwt',
   },
   providers: [
     GoogleProvider({
@@ -25,14 +25,14 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
     CredentialsProvider({
-      name: "Sign in",
+      name: 'Sign in',
       credentials: {
         email: {
-          label: "Email",
-          type: "email",
-          placeholder: "example@example.com"
+          label: 'Email',
+          type: 'email',
+          placeholder: 'example@example.com',
         },
-        password: { label: "Password", type: "password" }
+        password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -41,18 +41,15 @@ export const authOptions: NextAuthOptions = {
 
         const user = await db.user.findUnique({
           where: {
-            email: credentials.email
-          }
+            email: credentials.email,
+          },
         });
 
         if (!user || !user.password) {
           return null;
         }
 
-        const isPasswordValid = await compare(
-          credentials.password,
-          user.password
-        );
+        const isPasswordValid = await compare(credentials.password, user.password);
 
         if (!isPasswordValid) {
           return null;
@@ -65,15 +62,15 @@ export const authOptions: NextAuthOptions = {
           image: user.image,
           bio: user.bio,
         } as ExtendedUser;
-      }
-    })
+      },
+    }),
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
       if (account?.provider === 'google') {
         try {
           const existingUser = await db.user.findUnique({
-            where: { email: user.email! }
+            where: { email: user.email! },
           });
 
           if (!existingUser) {
@@ -82,7 +79,7 @@ export const authOptions: NextAuthOptions = {
                 email: user.email!,
                 name: user.name,
                 image: user.image,
-              }
+              },
             });
           }
           return true;
@@ -121,4 +118,4 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
   },
-}; 
+};
