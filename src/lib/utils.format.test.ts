@@ -28,4 +28,9 @@ describe('formatDate', () => {
     expect(formatDate(ago(3600))).toBe('1h ago');
     expect(formatDate(ago(23 * 3600))).toBe('23h ago');
   });
+
+  it('counts days up to thirty', () => {
+    expect(formatDate(ago(86400))).toBe('1d ago');
+    expect(formatDate(ago(29 * 86400))).toBe('29d ago');
+  });
 });
