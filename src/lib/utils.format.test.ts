@@ -33,4 +33,8 @@ describe('formatDate', () => {
     expect(formatDate(ago(86400))).toBe('1d ago');
     expect(formatDate(ago(29 * 86400))).toBe('29d ago');
   });
+
+  it('shows month and day for older dates in the same year', () => {
+    expect(formatDate(new Date('2025-03-05T12:00:00Z'))).toMatch(/^Mar 5$/);
+  });
 });
