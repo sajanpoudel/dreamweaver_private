@@ -37,4 +37,8 @@ describe('formatDate', () => {
   it('shows month and day for older dates in the same year', () => {
     expect(formatDate(new Date('2025-03-05T12:00:00Z'))).toMatch(/^Mar 5$/);
   });
+
+  it('adds the year for dates in other years', () => {
+    expect(formatDate(new Date('2024-03-05T12:00:00Z'))).toBe('Mar 5, 2024');
+  });
 });
