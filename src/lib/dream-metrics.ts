@@ -1,4 +1,4 @@
-import { db } from './prisma';  
+import { db } from './prisma';
 import type { Dream, User, Prisma } from '@prisma/client';
 
 interface MetricsAnalysis {
@@ -20,20 +20,23 @@ interface MetricsAnalysis {
   };
 }
 
-export async function analyzeDreamMetrics(userId: string, timeRange: string = 'last_month'): Promise<MetricsAnalysis> {
+export async function analyzeDreamMetrics(
+  userId: string,
+  timeRange: string = 'last_month'
+): Promise<MetricsAnalysis> {
   // Get user's dream and status data
   const [dreams, statusHistory, sleepData] = await Promise.all([
     getDreamData(userId, timeRange),
     getStatusHistory(userId, timeRange),
-    getSleepData(userId, timeRange)
+    getSleepData(userId, timeRange),
   ]);
 
   // Calculate correlations
   const correlations = await calculateCorrelations(userId, dreams, statusHistory, sleepData);
-  
+
   // Analyze patterns
   const patterns = analyzePatterns(dreams);
-  
+
   // Calculate trends
   const trends = calculateTrends(dreams);
 
@@ -43,7 +46,7 @@ export async function analyzeDreamMetrics(userId: string, timeRange: string = 'l
   return {
     correlations,
     patterns,
-    trends
+    trends,
   };
 }
 
@@ -52,12 +55,12 @@ async function getDreamData(userId: string, timeRange: string) {
   return prisma.dream.findMany({
     where: {
       userId,
-      createdAt: { gte: startDate }
+      createdAt: { gte: startDate },
     },
     include: {
-      metrics: true
+      metrics: true,
     } as Prisma.DreamInclude,
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: 'desc' },
   });
 }
 
@@ -66,9 +69,9 @@ async function getStatusHistory(userId: string, timeRange: string) {
   return prisma.userStatus.findMany({
     where: {
       userId,
-      timestamp: { gte: startDate }
+      timestamp: { gte: startDate },
     },
-    orderBy: { timestamp: 'desc' }
+    orderBy: { timestamp: 'desc' },
   });
 }
 
@@ -77,9 +80,9 @@ async function getSleepData(userId: string, timeRange: string) {
   return prisma.sleepData.findMany({
     where: {
       userId,
-      date: { gte: startDate }
+      date: { gte: startDate },
     },
-    orderBy: { date: 'desc' }
+    orderBy: { date: 'desc' },
   });
 }
 
@@ -99,26 +102,33 @@ function getTimeRangeDate(timeRange: string): Date {
 
 async function calculateCorrelations(
   userId: string,
-  dreams: (Dream & { metrics: { recallQuality: number; emotionalIntensity: number; vividness: number; } | null })[],
-  statusHistory: { stressLevel: number; physicalHealth: number; dailyActivities: string[]; timestamp: Date; }[],
-  sleepData: { quality: number; date: Date; }[]
+  dreams: (Dream & {
+    metrics: { recallQuality: number; emotionalIntensity: number; vividness: number } | null;
+  })[],
+  statusHistory: {
+    stressLevel: number;
+    physicalHealth: number;
+    dailyActivities: string[];
+    timestamp: Date;
+  }[],
+  sleepData: { quality: number; date: Date }[]
 ) {
   // Calculate sleep quality correlation
   const sleepQuality = calculateCorrelation(
-    dreams.map(d => d.metrics?.recallQuality || 0),
-    sleepData.map(s => s.quality)
+    dreams.map((d) => d.metrics?.recallQuality || 0),
+    sleepData.map((s) => s.quality)
   );
 
   // Calculate stress level correlation
   const stressLevel = calculateCorrelation(
-    dreams.map(d => d.metrics?.emotionalIntensity || 0),
-    statusHistory.map(s => s.stressLevel)
+    dreams.map((d) => d.metrics?.emotionalIntensity || 0),
+    statusHistory.map((s) => s.stressLevel)
   );
 
   // Calculate physical health correlation
   const physicalHealth = calculateCorrelation(
-    dreams.map(d => d.metrics?.vividness || 0),
-    statusHistory.map(s => s.physicalHealth)
+    dreams.map((d) => d.metrics?.vividness || 0),
+    statusHistory.map((s) => s.physicalHealth)
   );
 
   // Analyze daily activities correlation
@@ -128,7 +138,7 @@ async function calculateCorrelations(
     sleepQuality,
     stressLevel,
     physicalHealth,
-    dailyActivities
+    dailyActivities,
   };
 }
 
@@ -161,13 +171,13 @@ function analyzeDailyActivities(
 ) {
   const activities: Record<string, { total: number; dreamDays: number }> = {};
 
-  statusHistory.forEach(status => {
+  statusHistory.forEach((status) => {
     const dailyActivities = status.dailyActivities;
-    const hadDream = dreams.some(dream => 
+    const hadDream = dreams.some((dream) =>
       isSameDay(new Date(dream.createdAt), new Date(status.timestamp))
     );
 
-    dailyActivities.forEach(activity => {
+    dailyActivities.forEach((activity) => {
       if (!activities[activity]) {
         activities[activity] = { total: 0, dreamDays: 0 };
       }
@@ -179,7 +189,7 @@ function analyzeDailyActivities(
   return Object.entries(activities)
     .map(([activity, stats]) => ({
       activity,
-      correlation: stats.dreamDays / stats.total
+      correlation: stats.dreamDays / stats.total,
     }))
     .sort((a, b) => b.correlation - a.correlation);
 }
@@ -188,47 +198,61 @@ function analyzePatterns(dreams: { createdAt: Date }[]) {
   return {
     timeOfDay: analyzeTimeOfDay(dreams),
     dayOfWeek: analyzeDayOfWeek(dreams),
-    seasonality: analyzeSeasonality(dreams)
+    seasonality: analyzeSeasonality(dreams),
   };
 }
 
 function calculateTrends(
-  dreams: (Dream & { metrics: { recallQuality: number; emotionalIntensity: number; lucidity: number } | null })[]
+  dreams: (Dream & {
+    metrics: { recallQuality: number; emotionalIntensity: number; lucidity: number } | null;
+  })[]
 ): MetricsAnalysis['trends'] {
   return {
-    recallQuality: calculateMetricTrend(dreams.map(d => d.metrics?.recallQuality || 0)),
-    emotionalIntensity: calculateMetricTrend(dreams.map(d => d.metrics?.emotionalIntensity || 0)) as 'increasing' | 'decreasing' | 'stable',
-    lucidity: calculateMetricTrend(dreams.map(d => d.metrics?.lucidity || 0)) as 'increasing' | 'decreasing' | 'stable'
+    recallQuality: calculateMetricTrend(dreams.map((d) => d.metrics?.recallQuality || 0)),
+    emotionalIntensity: calculateMetricTrend(
+      dreams.map((d) => d.metrics?.emotionalIntensity || 0)
+    ) as 'increasing' | 'decreasing' | 'stable',
+    lucidity: calculateMetricTrend(dreams.map((d) => d.metrics?.lucidity || 0)) as
+      'increasing' | 'decreasing' | 'stable',
   };
 }
 
 function calculateMetricTrend(values: number[]): 'improving' | 'declining' | 'stable' {
   if (values.length < 2) return 'stable';
-  
-  const trend = calculateCorrelation(values, values.map((_, i) => i));
+
+  const trend = calculateCorrelation(
+    values,
+    values.map((_, i) => i)
+  );
   if (trend > 0.3) return 'improving';
   if (trend < -0.3) return 'declining';
   return 'stable';
 }
 
-async function storeCorrelations(userId: string, correlations: Partial<MetricsAnalysis['correlations']>, sampleSize: number) {
-  const correlationEntries = Object.entries(correlations).filter(([key]) => 
-    key !== 'dailyActivities' && typeof correlations[key as keyof typeof correlations] === 'number'
+async function storeCorrelations(
+  userId: string,
+  correlations: Partial<MetricsAnalysis['correlations']>,
+  sampleSize: number
+) {
+  const correlationEntries = Object.entries(correlations).filter(
+    ([key]) =>
+      key !== 'dailyActivities' &&
+      typeof correlations[key as keyof typeof correlations] === 'number'
   ) as [string, number][];
-  
+
   await Promise.all(
     correlationEntries.map(([factor, correlation]) =>
       prisma.dreamCorrelation.upsert({
         where: {
           userId_factor: {
             userId,
-            factor
-          }
+            factor,
+          },
         },
         update: {
           correlation,
           sampleSize,
-          lastUpdated: new Date()
+          lastUpdated: new Date(),
         },
         create: {
           userId,
@@ -236,8 +260,8 @@ async function storeCorrelations(userId: string, correlations: Partial<MetricsAn
           correlation,
           sampleSize,
           confidence: calculateConfidence(sampleSize),
-          timeRange: 'last_month'
-        }
+          timeRange: 'last_month',
+        },
       })
     )
   );
@@ -249,14 +273,16 @@ function calculateConfidence(sampleSize: number): number {
 }
 
 function isSameDay(date1: Date, date2: Date): boolean {
-  return date1.getFullYear() === date2.getFullYear() &&
+  return (
+    date1.getFullYear() === date2.getFullYear() &&
     date1.getMonth() === date2.getMonth() &&
-    date1.getDate() === date2.getDate();
+    date1.getDate() === date2.getDate()
+  );
 }
 
 function analyzeTimeOfDay(dreams: { createdAt: Date }[]) {
   const hourCounts: Record<number, number> = {};
-  dreams.forEach(dream => {
+  dreams.forEach((dream) => {
     const hour = new Date(dream.createdAt).getHours();
     hourCounts[hour] = (hourCounts[hour] || 0) + 1;
   });
@@ -264,7 +290,7 @@ function analyzeTimeOfDay(dreams: { createdAt: Date }[]) {
   return Object.entries(hourCounts)
     .map(([hour, count]) => ({
       hour: parseInt(hour),
-      frequency: count / dreams.length
+      frequency: count / dreams.length,
     }))
     .sort((a, b) => a.hour - b.hour);
 }
@@ -272,30 +298,42 @@ function analyzeTimeOfDay(dreams: { createdAt: Date }[]) {
 function analyzeDayOfWeek(dreams: { createdAt: Date }[]) {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const dayCounts: Record<string, number> = {};
-  
-  dreams.forEach(dream => {
+
+  dreams.forEach((dream) => {
     const day = days[new Date(dream.createdAt).getDay()];
     dayCounts[day] = (dayCounts[day] || 0) + 1;
   });
 
-  return days.map(day => ({
+  return days.map((day) => ({
     day,
-    frequency: (dayCounts[day] || 0) / dreams.length
+    frequency: (dayCounts[day] || 0) / dreams.length,
   }));
 }
 
 function analyzeSeasonality(dreams: { createdAt: Date }[]) {
-  const months = ['January', 'February', 'March', 'April', 'May', 'June', 
-                 'July', 'August', 'September', 'October', 'November', 'December'];
+  const months = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
   const monthCounts: Record<string, number> = {};
-  
-  dreams.forEach(dream => {
+
+  dreams.forEach((dream) => {
     const month = months[new Date(dream.createdAt).getMonth()];
     monthCounts[month] = (monthCounts[month] || 0) + 1;
   });
 
-  return months.map(month => ({
+  return months.map((month) => ({
     month,
-    frequency: (monthCounts[month] || 0) / dreams.length
+    frequency: (monthCounts[month] || 0) / dreams.length,
   }));
-} 
+}
