@@ -7,4 +7,8 @@ describe('getImageUrl and getBaseUrl', () => {
     expect(getImageUrl(undefined)).toBe('/images/default-avatar.png');
     expect(getImageUrl('')).toBe('/images/default-avatar.png');
   });
+
+  it('keeps absolute paths', () => {
+    expect(getImageUrl('/images/me.png')).toBe('/images/me.png');
+  });
 });
