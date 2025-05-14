@@ -16,4 +16,8 @@ describe('getImageUrl and getBaseUrl', () => {
     expect(getImageUrl('https://example.com/a.png')).toBe('https://example.com/a.png');
     expect(getImageUrl('data:image/png;base64,AAAA')).toBe('data:image/png;base64,AAAA');
   });
+
+  it('looks up bare file names in uploads', () => {
+    expect(getImageUrl('abc.png')).toBe('/uploads/abc.png');
+  });
 });
