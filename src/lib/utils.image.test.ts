@@ -11,4 +11,9 @@ describe('getImageUrl and getBaseUrl', () => {
   it('keeps absolute paths', () => {
     expect(getImageUrl('/images/me.png')).toBe('/images/me.png');
   });
+
+  it('keeps http and data urls', () => {
+    expect(getImageUrl('https://example.com/a.png')).toBe('https://example.com/a.png');
+    expect(getImageUrl('data:image/png;base64,AAAA')).toBe('data:image/png;base64,AAAA');
+  });
 });
