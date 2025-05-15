@@ -20,4 +20,9 @@ describe('getImageUrl and getBaseUrl', () => {
   it('looks up bare file names in uploads', () => {
     expect(getImageUrl('abc.png')).toBe('/uploads/abc.png');
   });
+
+  it('reads the base url from the environment', () => {
+    process.env.NEXT_PUBLIC_BASE_URL = 'https://dreams.example';
+    expect(getBaseUrl()).toBe('https://dreams.example');
+  });
 });
