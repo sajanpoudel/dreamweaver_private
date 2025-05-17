@@ -1,4 +1,4 @@
-import { withAuth } from "next-auth/middleware";
+import { withAuth } from 'next-auth/middleware';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
@@ -33,9 +33,11 @@ export async function middleware(request: NextRequest) {
   }
 
   // Allow access to all image URLs
-  if (pathname.startsWith('/uploads/') || 
-      pathname.startsWith('/_next/image') || 
-      pathname.includes('.blob.core.windows.net')) {
+  if (
+    pathname.startsWith('/uploads/') ||
+    pathname.startsWith('/_next/image') ||
+    pathname.includes('.blob.core.windows.net')
+  ) {
     return NextResponse.next();
   }
 
@@ -53,4 +55,4 @@ export const config = {
     '/_next/image:path*',
     '/((?!auth|_next/static|_next/image|favicon.ico).*)',
   ],
-}; 
+};
