@@ -25,4 +25,9 @@ describe('getImageUrl and getBaseUrl', () => {
     process.env.NEXT_PUBLIC_BASE_URL = 'https://dreams.example';
     expect(getBaseUrl()).toBe('https://dreams.example');
   });
+
+  it('falls back to localhost', () => {
+    delete process.env.NEXT_PUBLIC_BASE_URL;
+    expect(getBaseUrl()).toBe('http://localhost:3000');
+  });
 });
