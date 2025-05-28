@@ -2,6 +2,7 @@ import { hash } from 'bcryptjs';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/prisma';
 
+/** POST /api/auth/register */
 export async function POST(req: Request) {
   try {
     const body = await req.json();
