@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/prisma';
 
 // Get community members
+/** GET /api/communities/:communityId/members */
 export async function GET(req: Request, { params }: { params: { communityId: string } }) {
   try {
     const session = await getServerSession(authOptions);
@@ -39,6 +40,7 @@ export async function GET(req: Request, { params }: { params: { communityId: str
 }
 
 // Join community
+/** POST /api/communities/:communityId/members */
 export async function POST(req: Request, { params }: { params: { communityId: string } }) {
   try {
     const session = await getServerSession(authOptions);
@@ -85,6 +87,7 @@ export async function POST(req: Request, { params }: { params: { communityId: st
 }
 
 // Update member role
+/** PATCH /api/communities/:communityId/members */
 export async function PATCH(req: Request, { params }: { params: { communityId: string } }) {
   try {
     const session = await getServerSession(authOptions);
@@ -136,6 +139,7 @@ export async function PATCH(req: Request, { params }: { params: { communityId: s
 }
 
 // Leave or remove member from community
+/** DELETE /api/communities/:communityId/members */
 export async function DELETE(req: Request, { params }: { params: { communityId: string } }) {
   try {
     const session = await getServerSession(authOptions);
