@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/prisma';
 
 // Get user's chats
+/** GET /api/chat */
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
@@ -91,6 +92,7 @@ export async function GET() {
 }
 
 // Create new chat
+/** POST /api/chat */
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -168,6 +170,7 @@ export async function POST(req: Request) {
 }
 
 // Update chat (group name, add/remove participants)
+/** PATCH /api/chat */
 export async function PATCH(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -238,6 +241,7 @@ export async function PATCH(req: Request) {
 }
 
 // Leave or delete chat
+/** DELETE /api/chat */
 export async function DELETE(req: Request) {
   try {
     const session = await getServerSession(authOptions);
