@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/prisma';
 
 // Get communities list
+/** GET /api/communities */
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -74,6 +75,7 @@ export async function GET(req: Request) {
 }
 
 // Create new community
+/** POST /api/communities */
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -140,6 +142,7 @@ export async function POST(req: Request) {
 }
 
 // Update community
+/** PATCH /api/communities */
 export async function PATCH(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -196,6 +199,7 @@ export async function PATCH(req: Request) {
 }
 
 // Delete community
+/** DELETE /api/communities */
 export async function DELETE(req: Request) {
   try {
     const session = await getServerSession(authOptions);
