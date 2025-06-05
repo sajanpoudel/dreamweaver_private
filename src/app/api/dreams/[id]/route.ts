@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/prisma';
 
 // Get a specific dream
+/** GET /api/dreams/:id */
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions);
@@ -35,6 +36,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 }
 
 // Update a dream
+/** PUT /api/dreams/:id */
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions);
@@ -80,6 +82,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 }
 
 // Delete a dream
+/** DELETE /api/dreams/:id */
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions);
