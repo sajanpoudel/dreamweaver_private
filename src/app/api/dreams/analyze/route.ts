@@ -3,6 +3,7 @@ import { getToken } from 'next-auth/jwt';
 import { db } from '@/lib/prisma';
 import { analyzeDream } from '@/lib/dream-analysis';
 
+/** POST /api/dreams/analyze */
 export async function POST(req: NextRequest) {
   try {
     const token = await getToken({ req });
