@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { analyzeDreams } from '@/lib/dream-analytics';
 
+/** GET /api/dreams/analytics */
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
