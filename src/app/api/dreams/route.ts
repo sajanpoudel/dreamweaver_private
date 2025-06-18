@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/prisma';
 
+/** POST /api/dreams */
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -117,6 +118,7 @@ export async function POST(req: Request) {
   }
 }
 
+/** GET /api/dreams */
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
