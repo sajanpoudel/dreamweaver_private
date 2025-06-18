@@ -8,6 +8,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+/** POST /api/dreams/extract */
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
