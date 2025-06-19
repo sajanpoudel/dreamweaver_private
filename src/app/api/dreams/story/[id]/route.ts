@@ -4,6 +4,7 @@ import { db } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import type { Session } from 'next-auth';
 
+/** PUT /api/dreams/story/:id */
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
     const session = (await getServerSession(authOptions)) as Session & {
