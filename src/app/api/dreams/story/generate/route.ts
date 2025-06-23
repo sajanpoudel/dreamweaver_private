@@ -9,6 +9,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+/** POST /api/dreams/story/generate */
 export async function POST(request: Request) {
   try {
     const session = (await getServerSession(authOptions)) as Session & {
