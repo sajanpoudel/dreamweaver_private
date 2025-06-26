@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/prisma';
 
 // Get friends list and friend requests
+/** GET /api/friends */
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
@@ -75,6 +76,7 @@ export async function GET() {
 }
 
 // Send friend request
+/** POST /api/friends */
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -123,6 +125,7 @@ export async function POST(req: Request) {
 }
 
 // Update friend request status
+/** PATCH /api/friends */
 export async function PATCH(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -168,6 +171,7 @@ export async function PATCH(req: Request) {
 }
 
 // Remove friend
+/** DELETE /api/friends */
 export async function DELETE(req: Request) {
   try {
     const session = await getServerSession(authOptions);
