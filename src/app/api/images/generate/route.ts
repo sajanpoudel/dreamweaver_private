@@ -8,6 +8,7 @@ import path from 'path';
 
 const openai = new OpenAI();
 
+/** POST /api/images/generate */
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
