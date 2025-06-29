@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/prisma';
 
+/** GET /api/spaces */
 export async function GET(request: Request) {
   try {
     // Get session and handle authentication
