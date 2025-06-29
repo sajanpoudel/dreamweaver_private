@@ -47,6 +47,7 @@ const extractStoryPreview = (content: any): string => {
   }
 };
 
+/** GET /api/search */
 export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
