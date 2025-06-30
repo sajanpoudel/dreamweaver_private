@@ -11,6 +11,7 @@ const routeContextSchema = z.object({
   }),
 });
 
+/** POST /api/stories/:id/comments */
 export async function POST(req: Request, context: z.infer<typeof routeContextSchema>) {
   try {
     const { params } = routeContextSchema.parse(context);
@@ -67,6 +68,7 @@ export async function POST(req: Request, context: z.infer<typeof routeContextSch
   }
 }
 
+/** GET /api/stories/:id/comments */
 export async function GET(req: Request, context: z.infer<typeof routeContextSchema>) {
   try {
     const { params } = routeContextSchema.parse(context);
@@ -97,6 +99,7 @@ export async function GET(req: Request, context: z.infer<typeof routeContextSche
   }
 }
 
+/** DELETE /api/stories/:id/comments */
 export async function DELETE(request: Request, context: z.infer<typeof routeContextSchema>) {
   try {
     const { params } = routeContextSchema.parse(context);
