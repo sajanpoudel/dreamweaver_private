@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 
+/** GET /api/stories/user */
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
