@@ -7,6 +7,7 @@ import { nanoid } from 'nanoid';
 // Only import Vercel Blob in production
 const vercelBlob = process.env.VERCEL === '1' ? require('@vercel/blob') : null;
 
+/** POST /api/upload */
 export async function POST(request: Request) {
   try {
     // Check authentication
