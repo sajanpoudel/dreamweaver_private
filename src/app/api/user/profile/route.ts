@@ -12,6 +12,7 @@ const profileUpdateSchema = z.object({
   image: z.string().nullish(),
 });
 
+/** PUT /api/user/profile */
 export async function PUT(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -66,6 +67,7 @@ export async function PUT(req: Request) {
   }
 }
 
+/** GET /api/user/profile */
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
