@@ -5,6 +5,7 @@ import { db } from '@/lib/prisma';
 import { DashboardContent } from '@/components/dashboard/DashboardContent';
 import { analyzeDreams } from '@/lib/dream-analytics';
 
+/** Page rendered at /dashboard. */
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
 
