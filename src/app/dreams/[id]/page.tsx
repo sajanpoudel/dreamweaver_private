@@ -5,6 +5,7 @@ import { db } from '@/lib/prisma';
 import { DreamView } from '@/components/dreams/DreamView';
 import React from 'react';
 
+/** Page rendered at /dreams/:id. */
 export default async function DreamPage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
 
