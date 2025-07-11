@@ -5,6 +5,7 @@ import { NewDreamForm } from '@/components/dreams/NewDreamForm';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import React from 'react';
 
+/** Page rendered at /dreams/new. */
 export default async function NewDreamPage() {
   const session = await getServerSession(authOptions);
 
