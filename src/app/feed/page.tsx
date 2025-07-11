@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/prisma';
 import { DreamFeed } from '@/components/dreams/DreamFeed';
 
+/** Page rendered at /feed. */
 export default async function FeedPage() {
   const session = await getServerSession(authOptions);
 
