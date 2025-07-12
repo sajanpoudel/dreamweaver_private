@@ -20,6 +20,7 @@ interface Dream {
   emotions: Array<{ id: string; name: string }>;
 }
 
+/** Page rendered at /profile/dreams. */
 export default function DreamsPage() {
   const { data: session } = useSession();
   const router = useRouter();
