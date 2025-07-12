@@ -18,6 +18,7 @@ interface SuggestedFriend {
   dreamInterests: string[];
 }
 
+/** Page rendered at /friends/suggestions. */
 export default function FriendSuggestions() {
   const [suggestions, setSuggestions] = useState<SuggestedFriend[]>([]);
   const [isLoading, setIsLoading] = useState(false);
