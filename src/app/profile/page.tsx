@@ -21,6 +21,7 @@ interface ProfileFormData {
   image: string;
 }
 
+/** Page rendered at /profile. */
 export default function ProfilePage() {
   const router = useRouter();
   const {
