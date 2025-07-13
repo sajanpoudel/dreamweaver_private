@@ -45,6 +45,7 @@ interface Story {
   readTime?: string;
 }
 
+/** Page rendered at /profile/stories. */
 export default function StoriesPage() {
   const router = useRouter();
   const { data: session, status } = useSession({
