@@ -16,4 +16,11 @@ describe('DreamMetadata', () => {
     expect(screen.getByText('Themes')).toBeInTheDocument();
     expect(screen.getByText('Emotions')).toBeInTheDocument();
   });
+
+  it('says when nothing was identified', () => {
+    render(<DreamMetadata symbols={[]} themes={[]} emotions={[]} />);
+    expect(screen.getByText('No symbols identified')).toBeInTheDocument();
+    expect(screen.getByText('No themes identified')).toBeInTheDocument();
+    expect(screen.getByText('No emotions identified')).toBeInTheDocument();
+  });
 });
