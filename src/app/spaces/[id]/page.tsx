@@ -14,6 +14,7 @@ interface PageProps {
   };
 }
 
+/** Page rendered at /spaces/:id. */
 export default async function SpacePage({ params }: PageProps) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
