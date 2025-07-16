@@ -28,4 +28,10 @@ describe('DreamMetadata', () => {
     const { container } = render(<DreamMetadata symbols={[symbols[1]]} themes={[]} emotions={[]} />);
     expect(container.querySelectorAll('li p')).toHaveLength(0);
   });
+
+  it('lists themes', () => {
+    render(<DreamMetadata symbols={[]} themes={themes} emotions={[]} />);
+    expect(screen.getByText('Escape')).toBeInTheDocument();
+    expect(screen.queryByText('No themes identified')).not.toBeInTheDocument();
+  });
 });
