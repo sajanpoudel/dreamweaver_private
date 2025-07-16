@@ -23,4 +23,9 @@ describe('DreamMetadata', () => {
     expect(screen.getByText('No themes identified')).toBeInTheDocument();
     expect(screen.getByText('No emotions identified')).toBeInTheDocument();
   });
+
+  it('skips the meaning of a symbol that has none', () => {
+    const { container } = render(<DreamMetadata symbols={[symbols[1]]} themes={[]} emotions={[]} />);
+    expect(container.querySelectorAll('li p')).toHaveLength(0);
+  });
 });
