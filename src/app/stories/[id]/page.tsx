@@ -10,6 +10,7 @@ interface PageProps {
   };
 }
 
+/** Page rendered at /stories/:id. */
 export default async function StoryPage({ params }: PageProps) {
   const session = await getServerSession(authOptions);
 
