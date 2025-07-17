@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { db } from '@/lib/prisma';
 import { StoryFeed } from '@/components/stories/StoryFeed';
 
+/** Page rendered at /stories. */
 export default async function StoriesPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
