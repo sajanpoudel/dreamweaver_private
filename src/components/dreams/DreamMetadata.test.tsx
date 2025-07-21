@@ -34,4 +34,10 @@ describe('DreamMetadata', () => {
     expect(screen.getByText('Escape')).toBeInTheDocument();
     expect(screen.queryByText('No themes identified')).not.toBeInTheDocument();
   });
+
+  it('draws an intensity bar scaled out of ten', () => {
+    const { container } = render(<DreamMetadata symbols={[]} themes={[]} emotions={emotions} />);
+    const bar = container.querySelector('.bg-primary') as HTMLElement;
+    expect(bar.style.width).toBe('50%');
+  });
 });
