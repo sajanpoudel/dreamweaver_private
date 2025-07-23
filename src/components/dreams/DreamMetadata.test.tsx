@@ -40,4 +40,11 @@ describe('DreamMetadata', () => {
     const bar = container.querySelector('.bg-primary') as HTMLElement;
     expect(bar.style.width).toBe('50%');
   });
+
+  it('shows a full bar for an intensity of ten', () => {
+    const { container } = render(
+      <DreamMetadata symbols={[]} themes={[]} emotions={[{ id: 'e2', name: 'Joy', intensity: 10 }]} />
+    );
+    expect((container.querySelector('.bg-primary') as HTMLElement).style.width).toBe('100%');
+  });
 });
