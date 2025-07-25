@@ -7,4 +7,9 @@ describe('DreamHeader', () => {
     render(<DreamHeader />);
     expect(screen.getByRole('heading', { name: 'Your Dream Journal' })).toBeInTheDocument();
   });
+
+  it('shows the tagline', () => {
+    render(<DreamHeader />);
+    expect(screen.getByText(/Explore your subconscious mind/)).toBeInTheDocument();
+  });
 });
