@@ -100,7 +100,3 @@ The application uses PostgreSQL with Prisma as the ORM. The main models are:
 3. Make your changes
 4. Push to your fork: `git push origin feature/your-feature`
 5. Create a pull request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
