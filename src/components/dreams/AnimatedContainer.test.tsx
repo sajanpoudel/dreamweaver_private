@@ -7,4 +7,9 @@ describe('AnimatedContainer', () => {
     render(<AnimatedContainer>Hello</AnimatedContainer>);
     expect(screen.getByText('Hello')).toBeInTheDocument();
   });
+
+  it('applies the className', () => {
+    render(<AnimatedContainer className="p-4">Hi</AnimatedContainer>);
+    expect(screen.getByText('Hi')).toHaveClass('p-4');
+  });
 });
