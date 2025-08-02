@@ -17,4 +17,15 @@ describe('AnimatedContainer', () => {
     render(<AnimatedContainer animation="fade">Fade</AnimatedContainer>);
     expect(screen.getByText('Fade')).toHaveStyle({ opacity: '0' });
   });
+
+  it('supports the slide and scale animations', () => {
+    render(
+      <>
+        <AnimatedContainer animation="slide">Slide</AnimatedContainer>
+        <AnimatedContainer animation="scale">Scale</AnimatedContainer>
+      </>
+    );
+    expect(screen.getByText('Slide')).toBeInTheDocument();
+    expect(screen.getByText('Scale')).toBeInTheDocument();
+  });
 });
