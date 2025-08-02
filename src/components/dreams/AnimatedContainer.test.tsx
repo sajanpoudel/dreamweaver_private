@@ -12,4 +12,9 @@ describe('AnimatedContainer', () => {
     render(<AnimatedContainer className="p-4">Hi</AnimatedContainer>);
     expect(screen.getByText('Hi')).toHaveClass('p-4');
   });
+
+  it('starts hidden for the fade animation', () => {
+    render(<AnimatedContainer animation="fade">Fade</AnimatedContainer>);
+    expect(screen.getByText('Fade')).toHaveStyle({ opacity: '0' });
+  });
 });
