@@ -7,4 +7,9 @@ describe('NewDreamButton', () => {
     render(<NewDreamButton />);
     expect(screen.getByRole('link')).toHaveAttribute('href', '/dreams/new');
   });
+
+  it('has a clear label', () => {
+    render(<NewDreamButton />);
+    expect(screen.getByRole('button', { name: /Record New Dream/ })).toBeInTheDocument();
+  });
 });
