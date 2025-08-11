@@ -25,7 +25,9 @@ describe('DreamMetadata', () => {
   });
 
   it('skips the meaning of a symbol that has none', () => {
-    const { container } = render(<DreamMetadata symbols={[symbols[1]]} themes={[]} emotions={[]} />);
+    const { container } = render(
+      <DreamMetadata symbols={[symbols[1]]} themes={[]} emotions={[]} />
+    );
     expect(container.querySelectorAll('li p')).toHaveLength(0);
   });
 
@@ -43,7 +45,11 @@ describe('DreamMetadata', () => {
 
   it('shows a full bar for an intensity of ten', () => {
     const { container } = render(
-      <DreamMetadata symbols={[]} themes={[]} emotions={[{ id: 'e2', name: 'Joy', intensity: 10 }]} />
+      <DreamMetadata
+        symbols={[]}
+        themes={[]}
+        emotions={[{ id: 'e2', name: 'Joy', intensity: 10 }]}
+      />
     );
     expect((container.querySelector('.bg-primary') as HTMLElement).style.width).toBe('100%');
   });
