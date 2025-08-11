@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { DreamMetadata } from './DreamMetadata';
 
 const symbols = [
-  { id: 's1', name: 'Water', meaning: 'Emotions' },
+  { id: 's1', name: 'Water', meaning: 'Feelings' },
   { id: 's2', name: 'Door', meaning: null },
 ];
 const themes = [{ id: 't1', name: 'Escape' }];
