@@ -53,4 +53,10 @@ describe('DreamMetadata', () => {
     );
     expect((container.querySelector('.bg-primary') as HTMLElement).style.width).toBe('100%');
   });
+
+  it('lists symbols with their meaning', () => {
+    render(<DreamMetadata symbols={symbols} themes={[]} emotions={[]} />);
+    expect(screen.getByText('Water')).toBeInTheDocument();
+    expect(screen.getByText('Feelings')).toBeInTheDocument();
+  });
 });
